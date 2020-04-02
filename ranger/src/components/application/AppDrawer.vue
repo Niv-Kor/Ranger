@@ -15,7 +15,7 @@
                     @click='onItemClick(item)'
                 >
                     <v-list-item-icon>
-                        <v-icon :color='colors.primaryDark'>{{ item.icon }}</v-icon>
+                        <v-icon :color='colors.secondary'>{{ item.icon }}</v-icon>
                     </v-list-item-icon>
                     <v-list-item-content>
                         <v-list-item-title >{{ item.title }}</v-list-item-title>
@@ -31,7 +31,7 @@
                     @click='onItemClick(item)'
                 >
                     <v-list-item-icon>
-                        <v-icon :color='colors.primaryDark'>{{ item.icon }}</v-icon>
+                        <v-icon :color='colors.secondary'>{{ item.icon }}</v-icon>
                     </v-list-item-icon>
                     <v-list-item-content>
                         <v-list-item-title>{{ item.title }}</v-list-item-title>
@@ -52,7 +52,7 @@
                     <v-spacer></v-spacer>
                     <v-btn
                         class='confirmation-btn'
-                        :color='colors.primary'
+                        :color='colors.secondary'
                         text
                         @click='confirmLogout = false'
                     >
@@ -60,7 +60,7 @@
                     </v-btn>
                     <v-btn
                         class='confirmation-btn'
-                        :color='colors.primary'
+                        :color='colors.secondary'
                         text
                         @click='logout'
                     >
