@@ -6,8 +6,8 @@ const IO = SOCKET.listen(SERVER);
 const SERVER_PORT = 19200;
 const DB_CONFIG = {
     server: 'sql5053.site4now.net',
-    database: 'DB_A56FAD_suricatt',
-    user: 'DB_A56FAD_suricatt_admin',
+    database: 'DB_A56FAD_sharpeye',
+    user: 'DB_A56FAD_sharpeye_admin',
     password: 'P2413567cu221',
     port: 1433,
     options: {

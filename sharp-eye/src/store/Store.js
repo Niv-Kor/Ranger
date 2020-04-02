@@ -10,9 +10,9 @@ Vue.use(Vuex);
 export const STORE = new Vuex.Store({
     state: {
         colors: {
-            primary: '#b048d2',
-            primaryDark: '#642f76',
-            secondary: '#d2c348',
+            primary: '#4fbe18',
+            primaryDark: '#337115',
+            secondary: '#de0d4d',
             neutral: '#666666'
         },
         regex: {
