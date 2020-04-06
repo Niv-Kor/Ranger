@@ -40,7 +40,7 @@ export default {
     styleObj() {
       if (!this.userAuthenticated)
         return {
-          "background-image": 'url(' + require("./assets/background.png") + ')',
+          'background-image': 'url(' + require("./assets/background.png") + ')',
           'background-repeat': 'no-repeat',
           'background-position': '-60mm'
         };

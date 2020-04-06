@@ -27,7 +27,6 @@
                 @drawerClosed='drawer = false'
             />
         </v-app-bar>
-        
         <v-content>
             <v-container fluid fill-height>
                 <router-view />
@@ -37,8 +36,8 @@
             v-if='buttonFunc(currentPage)'
             @click="$store.commit('emitPopupEvent', { page: currentPage, flag: true })"
         />
-        <survey-uploader
-            :model="buttonFunc('/user-surveys').popupModel"
+        <journal-dialog-box
+            :model="buttonFunc('/journals').popupModel"
             @close="$store.commit('emitPopupEvent', { page: currentPage, flag: false })"
         />
     </div>
@@ -48,13 +47,13 @@
     import { mapGetters } from 'vuex';
     import AppDrawer from './AppDrawer';
     import PlusButton from './PlusButton';
-    import SurveyUploader from './dialogs/SurveyUploader';
+    import JournalDialogBox from './dialogs/journal/JournalDialogBox';
 
     export default {
         components: {
             AppDrawer,
             PlusButton,
-            SurveyUploader
+            JournalDialogBox
         },
         data() {
             return {

@@ -11,6 +11,10 @@ CONSTANTS.IO.on('connection', socket => {
     socket.on('validate_user', user => {
         ACTIONS.validateUser(socket, user);
     });
+
+    socket.on('create_journal', data => {
+        ACTIONS.createJournal(socket, data);
+    });
 });
 
 CONSTANTS.SERVER.listen(CONSTANTS.SERVER_PORT, function(error) {

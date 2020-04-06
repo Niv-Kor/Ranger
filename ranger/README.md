@@ -1,4 +1,4 @@
-# sharp-eye
+# ranger
 
 ## Project setup
 ```

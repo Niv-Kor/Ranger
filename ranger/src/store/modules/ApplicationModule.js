@@ -1,13 +1,13 @@
 const state = {
     buttonFunction: [
         {
-            page: '/user-surveys',
+            page: '/journals',
             title: 'Upload a survey',
             popupModel: false,
             tabColor: 'red'
         },
         {
-            page: '/surveys',
+            page: '/performance',
             title: 'Fill a survey',
             popupModel: false,
             tabColor: 'green'

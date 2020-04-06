@@ -1,8 +1,9 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import io from 'socket.io-client';
 import Auth from './modules/AuthenticationModule'
 import App from './modules/ApplicationModule';
-import io from 'socket.io-client';
+import JournalCreation from './modules/JournalCreationModule';
 
 const SERVER_DOMAIN = 'http://localhost:19200';
 Vue.use(Vuex);
@@ -10,10 +11,10 @@ Vue.use(Vuex);
 export const STORE = new Vuex.Store({
     state: {
         colors: {
-            primary: '#4fbe18',
+            primary: '#4FBE18',
             primaryDark: '#337115',
-            secondary: '#de0d4d',
-            neutral: '#666666'
+            secondary: '#DE0D4D',
+            neutral: '#78909C'
         },
         regex: {
             email: /^[0-9A-Za-z_-]{1,}@[0-9A-Za-z_-]{1,}\.[0-9A-Za-z.]{1,}$/,
@@ -34,6 +35,7 @@ export const STORE = new Vuex.Store({
     },
     modules: {
         Auth,
-        App
+        App,
+        JournalCreation
     }
 });

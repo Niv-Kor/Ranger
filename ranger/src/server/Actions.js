@@ -2,7 +2,8 @@ const CONSTANTS = require('./Constants')
 
 module.exports = {
     validateUser,
-    signUser
+    signUser,
+    createJournal
 };
 
 /**
@@ -64,4 +65,32 @@ async function validateUser(socket, user) {
     let recSet = await runProcedure('validateUser', params);
     let isValid = recSet[0]['is_valid'];
     socket.emit('validate_user', isValid);
+}
+
+/**
+ * Create a new shooting journal for a user.
+ * 
+ * @param {SocketIO.Socket} socket - The socket used by the server.
+ * @param {Object} data - {
+ *                              user: '{user email}',
+ *                              discipline: '{journal discipline}',
+ *                              name: '{journal name}',
+ *                              storedTarget: '{stored target path}',
+ *                              customTarget: '{custom target image}',
+ *                              isTargetCustom: '{true if the target is customized}',
+ *                        }
+ */
+async function createJournal(socket, data) {
+    let params = [
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline },
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name },
+        { name: 'stored_default_target', type: CONSTANTS.SQL.VarChar(128), value: data.storedTarget },
+        { name: 'custom_default_target', type: CONSTANTS.SQL.VarBinary(CONSTANTS.SQL.MAX), value: data.customTarget },
+        { name: 'is_target_custom', type: CONSTANTS.SQL.TinyInt(1), value: data.isTargetCustom }
+    ];
+
+    runProcedure('CreateJournal', params)
+        .then(() => { socket.emit('create_journal', true); })
+        .catch(err => { console.log('error: ', err); socket.emit('create_journal', false); })
 }

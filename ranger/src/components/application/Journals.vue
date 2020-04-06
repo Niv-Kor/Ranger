@@ -3,12 +3,12 @@
         class='container'
         fluid
     >
-        <h1>My Surveys</h1>
+        <h1>Shooting Journals</h1>
         <p
         class='no-surveys-message'
         v-if='!list.length'
         >
-            You don't own any surveys.<br>
+            You don't own any journals.<br>
             Use the '+' button below<br>
             to get started.
         </p>

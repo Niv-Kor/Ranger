@@ -90,15 +90,15 @@
                             func: () => {}
                         },
                         { 
-                            title: 'My surveys',
-                            icon: 'mdi-file-document',
-                            path: '/home/user-surveys',
+                            title: 'My Journals',
+                            icon: 'mdi-notebook',
+                            path: '/home/journals',
                             func: () => {}
                         },
                         {
-                            title: 'Respond',
-                            icon: 'mdi-pen',
-                            path: '/home/surveys',
+                            title: 'Performance',
+                            icon: 'mdi-chart-arc',
+                            path: '/home/performance',
                             func: () => {}
                         },
                     ],
