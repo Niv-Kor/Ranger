@@ -1,4 +1,6 @@
-const CONSTANTS = require('./Constants')
+const CONSTANTS = require('./Constants');
+const LOGGER = require('./Logger');
+const TEMP = require('tempfile');
 
 module.exports = {
     validateUser,
@@ -72,25 +74,59 @@ async function validateUser(socket, user) {
  * 
  * @param {SocketIO.Socket} socket - The socket used by the server.
  * @param {Object} data - {
- *                              user: '{user email}',
- *                              discipline: '{journal discipline}',
- *                              name: '{journal name}',
- *                              storedTarget: '{stored target path}',
- *                              customTarget: '{custom target image}',
- *                              isTargetCustom: '{true if the target is customized}',
+ *                            user: <String>{user email},
+ *                            discipline: <String>{journal discipline},
+ *                            name: <String>{journal name},
+ *                            storedTarget: <String>{stored target path},
+ *                            customTarget: {
+ *                                            base64Img: <String>{base64 represntation of the image},
+ *                                            chosenName: <String>{name of the image}
+ *                                            fileType: <String>{image file type}
+ *                                          }
+ *                            isTargetCustom: <Boolean>{true if the target is customized},
  *                        }
  */
 async function createJournal(socket, data) {
+    let uploadedTargetDestPath = '';
+
+    //determine uploaded image file path
+    if (data.isTargetCustom) {
+        let srcName = data.customTarget.chosenName;
+        let destName = data.user + '_' + srcName;
+        uploadedTargetDestPath = '/db/custom targets/' + destName;
+    }
+
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline },
         { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name },
         { name: 'stored_default_target', type: CONSTANTS.SQL.VarChar(128), value: data.storedTarget },
-        { name: 'custom_default_target', type: CONSTANTS.SQL.VarBinary(CONSTANTS.SQL.MAX), value: data.customTarget },
+        { name: 'custom_default_target', type: CONSTANTS.SQL.VarChar(512), value: uploadedTargetDestPath },
         { name: 'is_target_custom', type: CONSTANTS.SQL.TinyInt(1), value: data.isTargetCustom }
     ];
 
+    //store new journal in the db
     runProcedure('CreateJournal', params)
-        .then(() => { socket.emit('create_journal', true); })
-        .catch(err => { console.log('error: ', err); socket.emit('create_journal', false); })
+        .then(() => {
+            //store custom target photo in the server
+            if (data.isTargetCustom) {
+                //write to temp file
+                let fileType = data.customTarget.fileType;
+                let tempFile = TEMP('.' + fileType);
+                let base64src = data.customTarget.base64Img;
+                let base64Img = base64src.split(';base64,').pop();
+                
+                //convert from base64 to image
+                CONSTANTS.FILE_SYSTEM.writeFile(tempFile, base64Img, {encoding: 'base64'}, () => {
+                    //upload to FTP server
+                    CONSTANTS.FTP_CLIENT.put(tempFile, uploadedTargetDestPath, () => {});
+                });
+            }
+
+            socket.emit('create_journal', true);
+        })
+        .catch(err => {
+            LOGGER.error('Journal Creation Error', err)
+            socket.emit('create_journal', false);
+        })
 }

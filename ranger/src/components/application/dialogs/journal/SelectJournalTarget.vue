@@ -13,6 +13,11 @@
             >
                 (This can always be changed later)
             </p>
+            <input
+                type='file'
+                accept='image/png, image/jpeg'
+                @change='fileUploaded'
+            />
         </v-container>
         <v-row no-gutters>
             <v-icon
@@ -83,7 +88,7 @@
 
 <script>
     import { mapGetters } from 'vuex';
-
+    
     const ARCHERY_CONTEXT = require.context('../../../../assets/targets/small/archery', false, /\.png$/);
     const FIREARM_CONTEXT = require.context('../../../../assets/targets/small/firearm', false, /\.png$/);
 
@@ -145,13 +150,15 @@
             ...mapGetters({
                 colors: 'getColors',
                 storedDiscipline: 'getNewJournalDiscipline',
-                storedTarget: 'getNewJournalTarget'
+                storedTarget: 'getNewJournalTarget',
+                uploadedTarget: 'getNewJournalUploadedTarget'
             }),
 
         },
         watch: {
             selectedTarget(value) {
-                let srcName = this.getDisciplineProperty()[value].srcName;
+                console.log('value: ', value);
+                let srcName = this.getDisciplineProperty()[value].src.name;
                 this.$store.commit('setNewJournalTarget', srcName);
             },
         },
@@ -179,7 +186,26 @@
                 let property = this.getDisciplineProperty()[this.selectedTarget];
                 let width = property.labelWidth;
                 return { 'width': width }
-            }
+            },
+            fileUploaded: async function() {
+				let file = await event.target.files[0];
+                let reader = new FileReader();
+                let image = null;
+
+                reader.onload = (ev) => {
+                    image = ev.target.result;
+
+                    //compose the image data
+                    let uploadedTargetObj = {
+                        base64Img: image,
+                        chosenName: file.name
+                    };
+
+                    this.$store.commit('setNewJournalUploadedTarget', uploadedTargetObj);
+                };
+
+                await reader.readAsDataURL(file);
+			},
         }
     }
 </script>

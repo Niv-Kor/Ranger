@@ -17,6 +17,7 @@ CONSTANTS.IO.on('connection', socket => {
     });
 });
 
+//connect to data base
 CONSTANTS.SERVER.listen(CONSTANTS.SERVER_PORT, function(error) {
     CONSTANTS.SQL.connect(CONSTANTS.DB_CONFIG)
         .then(() => {
@@ -26,3 +27,9 @@ CONSTANTS.SERVER.listen(CONSTANTS.SERVER_PORT, function(error) {
         })
         .catch(err => LOGGER.error('Microsoft SQL Server DB has encountered a problem.', err));
 })
+
+//connect to FTP client
+CONSTANTS.FTP_CLIENT.connect(CONSTANTS.FTP_CONFIG);
+CONSTANTS.FTP_CLIENT.on('ready', () => {
+    LOGGER.log('FileZilla FTP Client is properly connected.');
+});

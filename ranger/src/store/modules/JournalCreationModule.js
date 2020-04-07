@@ -2,7 +2,11 @@ const state = {
     newJournalName: '',
     newJournalDiscipline: '',
     newJournalOtherDiscipline: '',
-    newJournalDefaultTarget: ''
+    newJournalDefaultTarget: '',
+    newJournaluploadedTarget: {
+        tempName: '',
+        chosenName: ''
+    }
 }
 
 const getters = {
@@ -17,6 +21,9 @@ const getters = {
     },
     getNewJournalTarget: state => {
         return state.newJournalDefaultTarget;
+    },
+    getNewJournalUploadedTarget: state => {
+        return state.newJournaluploadedTarget;
     }
 };
 
@@ -33,6 +40,9 @@ const mutations = {
     setNewJournalTarget: (state, value) => {
         state.newJournalDefaultTarget = value;
     },
+    setNewJournalUploadedTarget: (state, value) => {
+        state.newJournaluploadedTarget = value;
+    },
 };
 
 const actions = {
@@ -41,18 +51,20 @@ const actions = {
         commit('setNewJournalDiscipline', '');
         commit('setNewJournalOtherDiscipline', '');
         commit('setNewJournalTarget', '');
+        commit('setNewJournalUploadedTarget', null);
     },
-    async createJournal({ state, rootState }) {
-        console.log('user email: ', rootState.Auth.authEmail);
-
+    createJournal: async ({ state, rootState }) => {
+        let storedUploadedTarget = state.newJournaluploadedTarget;
+        let isTargetCustom = storedUploadedTarget != null;
+        
         return new Promise((resolve, reject) => {
             rootState.socket.emit('create_journal', {
                 user: rootState.Auth.authEmail,
                 discipline: state.newJournalDiscipline,
                 name: state.newJournalName,
                 storedTarget: state.newJournalDefaultTarget,
-                customTarget: null,
-                isTargetCustom: false,
+                customTarget: state.newJournaluploadedTarget,
+                isTargetCustom: isTargetCustom,
             });
 
             rootState.socket.on('create_journal', res => {
