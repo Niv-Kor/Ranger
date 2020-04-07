@@ -4,7 +4,7 @@ const state = {
     newJournalOtherDiscipline: '',
     newJournalDefaultTarget: '',
     newJournaluploadedTarget: {
-        tempName: '',
+        base64Data: '',
         chosenName: ''
     }
 }
@@ -48,14 +48,14 @@ const mutations = {
 const actions = {
     initNewJournalValues: ({ commit }) => {
         commit('setNewJournalName', '');
-        commit('setNewJournalDiscipline', '');
+        commit('setNewJournalDiscipline', 'Firearm');
         commit('setNewJournalOtherDiscipline', '');
         commit('setNewJournalTarget', '');
-        commit('setNewJournalUploadedTarget', null);
+        commit('setNewJournalUploadedTarget', { base64Data: '', chosenName: '' });
     },
     createJournal: async ({ state, rootState }) => {
         let storedUploadedTarget = state.newJournaluploadedTarget;
-        let isTargetCustom = storedUploadedTarget != null;
+        let isTargetCustom = storedUploadedTarget.base64Data !== '';
         
         return new Promise((resolve, reject) => {
             rootState.socket.emit('create_journal', {

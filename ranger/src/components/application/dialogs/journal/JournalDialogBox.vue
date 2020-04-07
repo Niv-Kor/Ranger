@@ -120,6 +120,7 @@
         methods: {
             close: function() {
                 this.$emit('close');
+                this.$store.dispatch('initNewJournalValues');
                 
                 //let the dialog close completely before tabs reorganization
                 let vm = this;
@@ -135,6 +136,7 @@
             },
             createJournal: function() {
                 this.$store.dispatch('createJournal');
+                this.close();
             }
         }
     }

@@ -1,6 +1,6 @@
 const CONSTANTS = require('./Constants');
 const LOGGER = require('./Logger');
-const TEMP = require('tempfile');
+const FTP_SERVER = require('./FTPServer');
 
 module.exports = {
     validateUser,
@@ -87,16 +87,74 @@ async function validateUser(socket, user) {
  *                        }
  */
 async function createJournal(socket, data) {
-    let uploadedTargetDestPath = '';
+    //check if the journal already exists
+    let existanceCheckParams = [
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline },
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name }
+    ];
 
-    //determine uploaded image file path
-    if (data.isTargetCustom) {
-        let srcName = data.customTarget.chosenName;
-        let destName = data.user + '_' + srcName;
-        uploadedTargetDestPath = '/db/custom targets/' + destName;
+    let existanceCheck = await runProcedure('JournalExists', existanceCheckParams);
+    let journalExists = existanceCheck[0]['journal_exists'];
+
+    //journal exists - reject
+    if (journalExists) {
+        socket.emit('create_journal', {
+            exitCode: 1,
+            message: 'A journal of ' + data.discipline + ' with that name alredy exists.'
+        });
+
+        return;
     }
 
-    let params = [
+    let uploadedTargetDestPath = '';
+
+    //add custom target if needed
+    if (data.isTargetCustom) {
+        let chosenName = data.customTarget.chosenName.split('.')[0];
+        let base64 = data.customTarget.base64Data;
+        let imageType = base64.split('data:image/').pop().split(';')[0];
+        let destName = data.user + '_' + chosenName;
+        let dir = '/db/custom targets/';
+        uploadedTargetDestPath = dir + destName + imageType;
+
+        let tagetExistanceCheckParams = [
+            { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
+            { name: 'image_name', type: CONSTANTS.SQL.VarChar(128), value: chosenName },
+            { name: 'image_type', type: CONSTANTS.SQL.VarChar(16), value: imageType },
+        ];
+
+        let targetExistanceCheck = await runProcedure('CustomTargetExists', tagetExistanceCheckParams);
+        let targetExists = targetExistanceCheck[0]['target_exists'];
+        
+        //custom target exists - reject
+        if (targetExists) {
+            socket.emit('create_journal', {
+                exitCode: 2,
+                message: 'A target with the name ' + chosenName + ' alredy exists.'
+            });
+
+            return;
+        }
+        else {
+            let customTargetParams = [
+                { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
+                { name: 'image_name', type: CONSTANTS.SQL.VarChar(128), value: chosenName },
+                { name: 'image_type', type: CONSTANTS.SQL.VarChar(16), value: imageType },
+                { name: 'image_path', type: CONSTANTS.SQL.VarChar(512), value: uploadedTargetDestPath }
+            ];
+
+            //add to db
+            await runProcedure('AddCustomTarget', customTargetParams);
+
+            //store custom target photo in the server
+            let compression = 400;
+            FTP_SERVER.uploadImage(base64, destName, dir, compression);
+        }
+    }
+
+    //create new journal
+    let journalParams = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline },
         { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name },
@@ -105,28 +163,17 @@ async function createJournal(socket, data) {
         { name: 'is_target_custom', type: CONSTANTS.SQL.TinyInt(1), value: data.isTargetCustom }
     ];
 
-    //store new journal in the db
-    runProcedure('CreateJournal', params)
+    runProcedure('CreateJournal', journalParams)
         .then(() => {
-            //store custom target photo in the server
-            if (data.isTargetCustom) {
-                //write to temp file
-                let fileType = data.customTarget.fileType;
-                let tempFile = TEMP('.' + fileType);
-                let base64src = data.customTarget.base64Img;
-                let base64Img = base64src.split(';base64,').pop();
-                
-                //convert from base64 to image
-                CONSTANTS.FILE_SYSTEM.writeFile(tempFile, base64Img, {encoding: 'base64'}, () => {
-                    //upload to FTP server
-                    CONSTANTS.FTP_CLIENT.put(tempFile, uploadedTargetDestPath, () => {});
-                });
-            }
-
-            socket.emit('create_journal', true);
+            socket.emit('create_journal', {
+                exitCode: 0,
+                message: 'Journal created successfully.'
+            });
         })
         .catch(err => {
-            LOGGER.error('Journal Creation Error', err)
-            socket.emit('create_journal', false);
+            socket.emit('create_journal', {
+                exitCode: 3,
+                message: 'Unknown error: ' + err
+            });
         })
 }

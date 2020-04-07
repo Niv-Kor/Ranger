@@ -4,6 +4,7 @@ const SOCKET = require('socket.io');
 const FILE_SYSTEM = require('fs');
 const IO = SOCKET.listen(SERVER);
 const SERVER_PORT = 19200;
+const TEMP = require('tempfile');
 
 //Microsoft SQL Server
 const SQL = require('mssql');
@@ -35,6 +36,7 @@ module.exports = {
     SERVER,
     SOCKET,
     IO,
+    TEMP,
     FTP_CLIENT,
     SERVER_PORT,
     DB_CONFIG,

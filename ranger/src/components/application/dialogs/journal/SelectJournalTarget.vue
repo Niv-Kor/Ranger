@@ -157,7 +157,6 @@
         },
         watch: {
             selectedTarget(value) {
-                console.log('value: ', value);
                 let srcName = this.getDisciplineProperty()[value].src.name;
                 this.$store.commit('setNewJournalTarget', srcName);
             },
@@ -197,7 +196,7 @@
 
                     //compose the image data
                     let uploadedTargetObj = {
-                        base64Img: image,
+                        base64Data: image,
                         chosenName: file.name
                     };
 
