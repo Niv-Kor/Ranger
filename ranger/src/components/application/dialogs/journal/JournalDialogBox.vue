@@ -30,21 +30,9 @@
                     height=260
                     flat
                 >
-                    <template v-if='currentTab == 0'>
-                        <transition name='fade' mode='out-in'>
-                            <select-journal-name />
-                        </transition>
-                    </template>
-                    <template v-else-if='currentTab == 1'>
-                        <transition name='fade' mode='out-in'>
-                            <select-journal-discipline />
-                        </transition>
-                    </template>
-                    <template v-else-if='currentTab == 2'>
-                        <transition name='fade' mode='out-in'>
-                            <select-journal-target />
-                        </transition>
-                    </template>
+                            <select-journal-discipline v-show='currentTab == 0' />
+                            <select-journal-target v-show='currentTab == 1' />
+                            <select-journal-name v-show='currentTab == 2' />
                 </v-card>
                 <v-container>
                     <!-- create button -->
@@ -65,7 +53,6 @@
                             class='nav-btn'
                             :color='colors.neutral'
                             text
-                            
                             @click='decrementTab'
                         >
                             Back
@@ -117,10 +104,14 @@
                 return show ? 'CREATE' : '';
             }
         },
+        watch: {
+            model(value) {
+                if (value) this.$store.dispatch('initNewJournalValues');
+            }
+        },
         methods: {
-            close: function() {
+            close: async function() {
                 this.$emit('close');
-                this.$store.dispatch('initNewJournalValues');
                 
                 //let the dialog close completely before tabs reorganization
                 let vm = this;
@@ -134,8 +125,8 @@
                 if (this.currentTab > 0)
                     this.currentTab--;
             },
-            createJournal: function() {
-                this.$store.dispatch('createJournal');
+            createJournal: async function() {
+                await this.$store.dispatch('createJournal');
                 this.close();
             }
         }

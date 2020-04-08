@@ -56,8 +56,8 @@
         </v-row>
         <v-container class='label-container'>
             <v-text-field
-                v-show='disciplines[selectedDiscip].rename'
-                v-model='disciplines[selectedDiscip].newName'
+                v-show='disciplines[selectedDiscip].custom'
+                v-model='newDiscipName'
                 class='label-discip uncolored'
                 min-width=100
                 max-width=180
@@ -66,12 +66,12 @@
                 rounded
                 outlined
                 counter=10
-                :disabled='!disciplines[selectedDiscip].rename'
+                :disabled='!disciplines[selectedDiscip].custom'
                 :placeholder='disciplines[selectedDiscip].name'
                 :color='colors.neutral'
             />
             <v-text-field
-                v-show='!disciplines[selectedDiscip].rename'
+                v-show='!disciplines[selectedDiscip].custom'
                 class='label-discip colored'
                 min-width=100
                 max-width=180
@@ -103,30 +103,22 @@
             }
         },
         created() {
-            //set selector's index
-            switch (this.storedDiscipline) {
-                case '': 
-                case 'Firearm': this.selectedDiscip = 0; break;
-                case 'Archery': this.selectedDiscip = 1; break;
-                default: this.selectedDiscip = 2;
-            }
-
             //init disciplines object
             this.disciplines = [
                 {
                     name: 'Firearm',
                     srcIcon: DISPLINE_ICONS('./firearm.png'),
-                    rename: false
+                    custom: false
                 },
                 {
                     name: 'Archery',
                     srcIcon: DISPLINE_ICONS('./archery.png'),
-                    rename: false
+                    custom: false
                 },
                 {
-                    name: 'Other:',
+                    name: 'Other',
                     srcIcon: DISPLINE_ICONS('./other.png'),
-                    rename: true
+                    custom: true
                 }
             ];
 
@@ -134,7 +126,7 @@
             this.$store.commit('setNewJournalDiscipline', this.disciplines[this.selectedDiscip].name);
 
             //set the other discipiline's name
-            if (this.disciplines[this.selectedDiscip].rename) {
+            if (this.disciplines[this.selectedDiscip].custom) {
                 let stored = this.storedOtherDiscipline;
                 this.newDiscipName = stored ? stored : DEFAULT_OTHER_DISCIPLINE;
             }
@@ -148,18 +140,20 @@
         },
         watch: {
             selectedDiscip(value) {
-                let isOther = this.disciplines[value].rename;
+                //reset target selection back to 0 if discipline changes
+                if (this.storedDiscipline !== this.disciplines[value].name)
+                    this.$store.commit('setNewJournalTargetResetFlag', true);
+                
+                //store discipline name
+                let fixedName = this.disciplines[value].name;
+                this.$store.commit('setNewJournalDiscipline', fixedName);
 
-                //consider the renamed discipline's name
-                if (isOther) this.$store.commit('setNewJournalDiscipline', this.newDiscipName);
-                //consider the fixed discipline's name
-                else {
-                    let fixedName = this.disciplines[value].name;
-                    this.$store.commit('setNewJournalDiscipline', fixedName);
-                }
+                //determine the use of a custom discipline
+                let useCustom = this.disciplines[value].custom;
+                this.$store.commit('setUseCustomDisciplineFlag', useCustom);
             },
             newDiscipName(value) {
-                this.$store.commit('setNewJournalDiscipline', value);
+                this.$store.commit('setNewJournalCustomDiscipline', value);
             }
         },
         methods: {

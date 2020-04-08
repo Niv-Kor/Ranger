@@ -5,7 +5,7 @@
                 class='subtitle'
                 align=center
             >
-                Set a name for your journal
+                Give your journal a name
             </p>
         </v-container>
         <v-container>

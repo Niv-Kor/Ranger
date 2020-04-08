@@ -13,11 +13,6 @@
             >
                 (This can always be changed later)
             </p>
-            <input
-                type='file'
-                accept='image/png, image/jpeg'
-                @change='fileUploaded'
-            />
         </v-container>
         <v-row no-gutters>
             <v-icon
@@ -47,6 +42,7 @@
                     >
                         <v-col>
                             <v-img
+                                v-if='getDisciplineProperty()[selectedTarget] && getDisciplineProperty()[selectedTarget].src.icon'
                                 class='target-icon'
                                 :src='getDisciplineProperty()[selectedTarget].src.icon'
                                 max-width=90
@@ -70,8 +66,10 @@
             class='label-container'
             :style='getLabelWidthStyle()'
         >
+        <v-row>
             <v-text-field
-                class='label-target'
+                v-if='getDisciplineProperty()[selectedTarget] && !getDisciplineProperty()[selectedTarget].custom'
+                class='label-target colored'
                 min-width=100
                 height=10
                 dense
@@ -82,6 +80,15 @@
                 :background-color='colors.neutral'
                 :color='colors.neutral'
             />
+            <v-file-input
+                v-else
+                v-model='customTargetThumbnail'
+                class='label-target upload'
+                accept='image/png, image/jpeg'
+                :placeholder='getUploadPlaceholder()'
+                @change='onTargetUploaded'
+            />
+        </v-row>
         </v-container>
     </div>
 </template>
@@ -96,6 +103,7 @@
         data() {
             return {
                 selectedTarget: 0,
+                customTargetThumbnail: null,
                 targets: {}
             }
         },
@@ -106,60 +114,114 @@
                     {
                         name: 'FITA',
                         labelWidth: '200px',
-                        src: { name: 'fita.png', icon: ARCHERY_CONTEXT('./fita.png') }
+                        src: { name: 'fita.png', icon: ARCHERY_CONTEXT('./fita.png') },
+                        custom: false
                     },
                     {
                         name: 'FITA Field',
                         labelWidth: '200px',
-                        src: { name: 'fita_field.png', icon: ARCHERY_CONTEXT('./fita_field.png') }
+                        src: { name: 'fita_field.png', icon: ARCHERY_CONTEXT('./fita_field.png') },
+                        custom: false
+                    },
+                    {
+                        name: 'Other',
+                        labelWidth: '220px',
+                        src: { name: null, icon: null },
+                        custom: true
                     }
                 ],
                 'Firearm': [
                     {
                         name: 'ISSF Air Pistol',
                         labelWidth: '200px',
-                        src: { name: 'issf_air_pistol.png', icon: FIREARM_CONTEXT('./issf_air_pistol.png') }
+                        src: { name: 'issf_air_pistol.png', icon: FIREARM_CONTEXT('./issf_air_pistol.png') },
+                        custom: false
                     },
                     {
                         name: 'ISSF Rapid Fire Pistol',
                         labelWidth: '240px',
-                        src: { name: 'issf_rapid_fire_pistol.png', icon: FIREARM_CONTEXT('./issf_rapid_fire_pistol.png') }
+                        src: { name: 'issf_rapid_fire_pistol.png', icon: FIREARM_CONTEXT('./issf_rapid_fire_pistol.png') },
+                        custom: false
                     },
                     {
                         name: 'ISSF Air Rifle',
                         labelWidth: '200px',
-                        src: { name: 'issf_air_rifle.png', icon: FIREARM_CONTEXT('./issf_air_rifle.png') }
+                        src: { name: 'issf_air_rifle.png', icon: FIREARM_CONTEXT('./issf_air_rifle.png') },
+                        custom: false
                     },
                     {
                         name: 'Man Silhouette',
                         labelWidth: '200px',
-                        src: { name: 'man_silhouette.png', icon: FIREARM_CONTEXT('./man_silhouette.png') }
+                        src: { name: 'man_silhouette.png', icon: FIREARM_CONTEXT('./man_silhouette.png') },
+                        custom: false
+                    },
+                    {
+                        name: 'Other',
+                        labelWidth: '220px',
+                        src: { name: null, icon: null },
+                        custom: true
                     }
-                ]
+                ],
+                'Other': [
+                    {
+                        name: 'Other',
+                        labelWidth: '220px',
+                        src: { name: null, icon: null },
+                        custom: true
+                    }
+                ],
             };
 
-            //target is already stored
-            if (this.storedTarget) this.selectedTarget = this.getTargetIndex(this.storedTarget);
             //store first target
-            else {
-                let firstTarget = this.getDisciplineProperty()[0].src.name;
-                this.$store.commit('setNewJournalTarget', firstTarget)
+            if (!this.storedTarget) {
+                this.selectedTarget = 0;
+                let firstTarget = this.getDisciplineProperty()[this.selectedTarget].src.name;
+                this.$store.commit('setNewJournalTarget', firstTarget);
+                this.$store.commit('setNewJournalTargetResetFlag', false);
             }
+        },
+        updated() {
+            let discipProperty = this.getDisciplineProperty();
+
+            //reset target selection back to 0 if discipline changes
+            if (this.targetResetFlag) {
+                this.customTargetThumbnail = null;
+                this.selectedTarget = 0;
+                let firstTarget = discipProperty[this.selectedTarget].src.name;
+                this.$store.commit('setNewJournalTarget', firstTarget);
+                this.$store.commit('setNewJournalTargetResetFlag', false);
+                this.$store.commit('setNewJournalUploadedTargetURL', '');
+                this.$store.commit('setNewJournalUploadedTargetData', '');
+                this.$store.commit('setNewJournalUploadedTargetName', '');
+                
+                //remove irrelevant thumbnails
+                for (let [, discipVal] of Object.entries(this.targets))
+                    for (let [, targetVal] of Object.entries(discipVal))
+                        if (targetVal.custom) targetVal.src.icon = null;
+            }
+
+            //determine the use of a custom target
+            let useCustom = discipProperty[this.selectedTarget].custom;
+            this.$store.commit('setUseUploadedCustomTargetFlag', useCustom);
         },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
                 storedDiscipline: 'getNewJournalDiscipline',
                 storedTarget: 'getNewJournalTarget',
-                uploadedTarget: 'getNewJournalUploadedTarget'
+                uploadedTarget: 'getNewJournalUploadedTarget',
+                targetResetFlag: 'getNewJournalTargetResetFlag'
             }),
-
         },
         watch: {
             selectedTarget(value) {
-                let srcName = this.getDisciplineProperty()[value].src.name;
-                this.$store.commit('setNewJournalTarget', srcName);
-            },
+                let property = this.getDisciplineProperty();
+
+                if (property) {
+                    let srcName = property[value].src.name;
+                    this.$store.commit('setNewJournalTarget', srcName);
+                }
+            }
         },
         methods: {
             incrementTarget: function() {
@@ -173,38 +235,37 @@
             getDisciplineProperty: function() {
                 return this.targets['' + this.storedDiscipline];
             },
-            getTargetIndex: function(srcName) {
-                let arr = this.getDisciplineProperty();
-
-                for (let i in arr) {
-                    let property = arr[i];
-                    if (property.srcName === srcName) return i;
-                }
-            },
             getLabelWidthStyle: function() {
                 let property = this.getDisciplineProperty()[this.selectedTarget];
-                let width = property.labelWidth;
-                return { 'width': width }
+
+                if (property) {
+                    let width = property.labelWidth;
+                    return { 'width': width }
+                }
+                else return null;
             },
-            fileUploaded: async function() {
+            getUploadPlaceholder: function() {
+                let uploadedName = this.uploadedTarget.chosenName;
+                return uploadedName ? uploadedName : 'Upload a custom image';
+            },
+            onTargetUploaded: async function() {
 				let file = await event.target.files[0];
                 let reader = new FileReader();
-                let image = null;
+
+                //upload image preview thumbnail
+                let url = URL.createObjectURL(file);
+                this.getDisciplineProperty()[this.selectedTarget].src.icon = url;
+                this.getDisciplineProperty()[this.selectedTarget].src.name = file.name;
 
                 reader.onload = (ev) => {
-                    image = ev.target.result;
-
-                    //compose the image data
-                    let uploadedTargetObj = {
-                        base64Data: image,
-                        chosenName: file.name
-                    };
-
-                    this.$store.commit('setNewJournalUploadedTarget', uploadedTargetObj);
+                    let imageData = ev.target.result;
+                    this.$store.commit('setNewJournalUploadedTargetURL', url);
+                    this.$store.commit('setNewJournalUploadedTargetData', imageData);
+                    this.$store.commit('setNewJournalUploadedTargetName', file.name);
                 };
 
                 await reader.readAsDataURL(file);
-			},
+            }
         }
     }
 </script>
@@ -220,12 +281,16 @@
     .nav-arrow {
         margin: auto;
     }
-    .label-target input {
+    .label-target .colored input {
         text-align: center
     }
-    .label-target input::placeholder {
+    .label-target .colored input::placeholder {
         color: #ffffff !important;
         opacity: 1;
+    }
+    .upload {
+        margin-top: -10px;
+        font-size: 14px;
     }
     .target-icon {
         margin: auto;

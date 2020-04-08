@@ -116,7 +116,7 @@ async function createJournal(socket, data) {
         let imageType = base64.split('data:image/').pop().split(';')[0];
         let destName = data.user + '_' + chosenName;
         let dir = '/db/custom targets/';
-        uploadedTargetDestPath = dir + destName + imageType;
+        uploadedTargetDestPath = dir + destName + '.' + imageType;
 
         let tagetExistanceCheckParams = [
             { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
