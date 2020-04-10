@@ -4,13 +4,23 @@ import VueRouter from 'vue-router';
 import vuetify from './plugins/vuetify';
 import { STORE } from './store/Store';
 import { ROUTES } from './Routes';
+import Vue2TouchEvents from 'vue2-touch-events';
+import VueKonva from 'vue-konva';
+import { longClickDirective } from 'vue-long-click'
+import ImageMagnifier from 'vue-image-magnifier';
 
 const ROUTER = new VueRouter({
   routes: ROUTES
 });
 
+const longClickInstance = longClickDirective({delay: 800, interval: 0});
+Vue.directive('longclick', longClickInstance);
+
 Vue.config.productionTip = false;
+Vue.use(Vue2TouchEvents);
+Vue.use(ImageMagnifier);
 Vue.use(VueRouter);
+Vue.use(VueKonva);
 
 new Vue({
   vuetify,

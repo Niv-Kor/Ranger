@@ -60,7 +60,6 @@ const mutations = {
         state.newJournaluploadedTarget.base64Data = value;
     },
     setNewJournalUploadedTargetName: (state, value) => {
-        console.log('setting name: ', value);
         state.newJournaluploadedTarget.chosenName = value;
     },
     setNewJournalTargetResetFlag: (state, flag) => {

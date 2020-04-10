@@ -12,13 +12,25 @@
             Use the '+' button below<br>
             to get started.
         </p>
+
+        <target-canvas
+            :src='src'
+            :hits=50
+        />
     </v-container>
 </template>
 
 <script>
     import { mapGetters } from 'vuex';
+    import TargetCanvas from '../widgets/TargetCanvas';
+
+    const ARCHERY_CONTEXT = require.context('../../assets/targets/large/archery', false, /\.png$/);
+    const ZOOM_CONTEXT = require.context('../../assets/targets/zoom/archery', false, /\.png$/);
 
     export default {
+        components: {
+            TargetCanvas
+        },
         data() {
             return {
                 list: []
@@ -27,7 +39,13 @@
         computed: {
             ...mapGetters({
                 colors: 'getColors'
-            })
+            }),
+            src() {
+                return ARCHERY_CONTEXT('./fita.png');
+            },
+            zoomSrc() {
+                return ZOOM_CONTEXT('./fita.png');
+            }
         }
     }
 </script>

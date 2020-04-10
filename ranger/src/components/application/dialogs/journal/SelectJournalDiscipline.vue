@@ -54,18 +54,20 @@
                 mdi-menu-right
             </v-icon>
         </v-row>
-        <v-container class='label-container'>
+        <v-container
+            class='label-container'
+            :style='getLabelWidthStyle()'
+        >
             <v-text-field
                 v-show='disciplines[selectedDiscip].custom'
                 v-model='newDiscipName'
                 class='label-discip uncolored'
-                min-width=100
-                max-width=180
                 height=10
                 dense
                 rounded
                 outlined
-                counter=10
+                counter=30
+                clearable
                 :disabled='!disciplines[selectedDiscip].custom'
                 :placeholder='disciplines[selectedDiscip].name'
                 :color='colors.neutral'
@@ -107,16 +109,19 @@
             this.disciplines = [
                 {
                     name: 'Firearm',
+                    labelWidth: '180px',
                     srcIcon: DISPLINE_ICONS('./firearm.png'),
                     custom: false
                 },
                 {
                     name: 'Archery',
+                    labelWidth: '180px',
                     srcIcon: DISPLINE_ICONS('./archery.png'),
                     custom: false
                 },
                 {
                     name: 'Other',
+                    labelWidth: '300px',
                     srcIcon: DISPLINE_ICONS('./other.png'),
                     custom: true
                 }
@@ -164,6 +169,15 @@
             decrementDiscip: function() {
                 if (this.selectedDiscip > 0)
                     this.selectedDiscip--;
+            },
+            getLabelWidthStyle: function() {
+                let property = this.disciplines[this.selectedDiscip];
+
+                if (property) {
+                    let width = property.labelWidth;
+                    return { 'width': width }
+                }
+                else return null;
             },
         }
     }

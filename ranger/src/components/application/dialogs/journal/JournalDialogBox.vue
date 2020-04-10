@@ -30,9 +30,10 @@
                     height=260
                     flat
                 >
-                            <select-journal-discipline v-show='currentTab == 0' />
-                            <select-journal-target v-show='currentTab == 1' />
-                            <select-journal-name v-show='currentTab == 2' />
+                    <select-journal-discipline v-show='currentTab == 0' />
+                    <select-journal-target v-show='currentTab == 1' />
+                    <select-journal-target-config v-show='currentTab == 2' />
+                    <select-journal-name v-show='currentTab == 3' />
                 </v-card>
                 <v-container>
                     <!-- create button -->
@@ -92,12 +93,13 @@
         data() {
             return {
                 currentTab: 0,
-                totalTabs: 3
+                totalTabs: 4
             }
         },
         computed: {
             ...mapGetters({
-                colors: 'getColors'
+                colors: 'getColors',
+                useCustomTarget: 'useUploadedCustomTargetFlag'
             }),
             createButtonText() {
                 let show = this.currentTab === this.totalTabs - 1;
@@ -118,12 +120,16 @@
                 setTimeout(() => { vm.currentTab = 0 }, 500);
             },
             incrementTab: function() {
-                if (this.currentTab < this.totalTabs - 1)
-                    this.currentTab++;
+                if (this.currentTab < this.totalTabs - 1) {
+                    if (this.currentTab != 1 || this.useCustomTarget) this.currentTab++;
+                    else this.currentTab += 2; //skip custom target config
+                }
             },
             decrementTab: function() {
-                if (this.currentTab > 0)
-                    this.currentTab--;
+                if (this.currentTab > 0) {
+                    if (this.currentTab != 3 || this.useCustomTarget) this.currentTab--;
+                    else this.currentTab -= 2; //skip custom target config
+                }
             },
             createJournal: async function() {
                 await this.$store.dispatch('createJournal');

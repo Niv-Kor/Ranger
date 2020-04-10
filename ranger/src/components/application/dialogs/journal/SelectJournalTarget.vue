@@ -66,29 +66,29 @@
             class='label-container'
             :style='getLabelWidthStyle()'
         >
-        <v-row>
-            <v-text-field
-                v-if='getDisciplineProperty()[selectedTarget] && !getDisciplineProperty()[selectedTarget].custom'
-                class='label-target colored'
-                min-width=100
-                height=10
-                dense
-                rounded
-                outlined
-                disabled
-                :placeholder='getDisciplineProperty()[selectedTarget].name'
-                :background-color='colors.neutral'
-                :color='colors.neutral'
-            />
-            <v-file-input
-                v-else
-                v-model='customTargetThumbnail'
-                class='label-target upload'
-                accept='image/png, image/jpeg'
-                :placeholder='getUploadPlaceholder()'
-                @change='onTargetUploaded'
-            />
-        </v-row>
+            <v-row>
+                <v-text-field
+                    v-if='getDisciplineProperty()[selectedTarget] && !getDisciplineProperty()[selectedTarget].custom'
+                    class='label-target colored'
+                    min-width=100
+                    height=10
+                    dense
+                    rounded
+                    outlined
+                    disabled
+                    :placeholder='getDisciplineProperty()[selectedTarget].name'
+                    :background-color='colors.neutral'
+                    :color='colors.neutral'
+                />
+                <v-file-input
+                    v-else
+                    v-model='customTargetThumbnail'
+                    class='label-target upload'
+                    accept='image/png, image/jpeg'
+                    :placeholder='getUploadPlaceholder()'
+                    @change='onTargetUploaded'
+                />
+            </v-row>
         </v-container>
     </div>
 </template>
