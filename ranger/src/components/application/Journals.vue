@@ -16,6 +16,7 @@
         <target-canvas
             :src='src'
             :hits=50
+            @hit='hit'
         />
     </v-container>
 </template>
@@ -25,7 +26,6 @@
     import TargetCanvas from '../widgets/TargetCanvas';
 
     const ARCHERY_CONTEXT = require.context('../../assets/targets/large/archery', false, /\.png$/);
-    const ZOOM_CONTEXT = require.context('../../assets/targets/zoom/archery', false, /\.png$/);
 
     export default {
         components: {
@@ -43,8 +43,10 @@
             src() {
                 return ARCHERY_CONTEXT('./fita.png');
             },
-            zoomSrc() {
-                return ZOOM_CONTEXT('./fita.png');
+        },
+        methods: {
+            hit(data) {
+                console.log(data);
             }
         }
     }

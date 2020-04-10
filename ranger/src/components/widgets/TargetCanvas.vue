@@ -54,8 +54,8 @@
                 hitPos: { x: 0, y: 0 },
                 touchPos: { x: 0, y: 0 },
                 thumbPos: { x: 0, y: 0 },
-                zoomImageSize: { width: 0, height: 0 },
                 zoomImagePos: { x: 0, y: 0 },
+                zoomImageSize: { width: 0, height: 0 },
             }
         },
         created() {
@@ -202,8 +202,17 @@
              * Create a hit point on the image and emit an event to the parent.
              * 
              * @emits hit - {
-             *                 x: <Number>{point x coordinate},
-             *                 y: <Number>{point y coordinate}
+             *                 point: <Object>{
+             *                                   x: <Number>{point x coordinate},
+             *                                   y: <Number>{point y coordinate}
+             *                                },
+             *                 bullseyeData: <Object>{
+            *                                          distance: <Number>{distance from the point to the center},
+            *                                          xDistance: <Number>{x distance from the point to the center},
+            *                                          yDistance: <Number>{y distance from the point to the center},
+            *                                          quarter: <Number>{quarter relative to the center
+            *                                                            as in a coordinate system (1/2/3/4)}
+            *                                       }
              *              }
              */
             createHit: function() {
@@ -212,8 +221,14 @@
 
                 if (this.points.length < hits || !hits) {
                     let point = { x: this.hitPos.x, y: this.hitPos.y };
+                    let hit = this.distanceFromCenter(point);
                     this.points.push(point);
-                    this.$emit('hit', point);
+
+                    //emit an object to the parent
+                    this.$emit('hit', {
+                        point: point,
+                        bullseyeData: hit
+                    });
                 }
             },
             /**
@@ -287,9 +302,9 @@
                 let yPositive = point.y >= center.y;
                 let quarter;
 
-                if (xPositive && yPositive) quarter = 1;
-                else if (!xPositive && yPositive) quarter = 2;
-                else if (!xPositive && !yPositive) quarter = 3;
+                if (xPositive && !yPositive) quarter = 1;
+                else if (!xPositive && !yPositive) quarter = 2;
+                else if (!xPositive && yPositive) quarter = 3;
                 else quarter = 4;
 
                 return {
