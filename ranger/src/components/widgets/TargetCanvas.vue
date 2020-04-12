@@ -8,17 +8,23 @@
             v-touch:start='onTouch'
             v-touch:end='createHit'
         >
-            <v-img
-                v-show='magnify'
-                class='magnifying-glass'
-                :style="{
-                    backgroundImage: 'url(' + src + ')',
-                    backgroundPosition: zoomImagePos.x + '% ' + zoomImagePos.y + '% ',
-                    backgroundSize: zoomImageSize.width + 'px ' + zoomImageSize.height + 'px',
-                    left: touchPos.x + 'px',
-                    top: touchPos.y + 'px'
-                }"
-            />
+            <div v-show='magnify'>
+                <v-img
+                    class='magnifying-glass'
+                    :style='magnifyingGlassStyle'
+                />
+                <span class='coordinates x' :style='xCoordinatesStyle'>
+                    {{ distanceFromCenter(touchPos).xDistance }}
+                </span>
+                <span class='coordinates y' :style='yCoordinatesStyle'>
+                    {{ distanceFromCenter(touchPos).yDistance }}
+                </span>
+                <span class='back line' :style='backHorLineStyle'></span>
+                <span class='back line' :style='backVerLineStyle'></span>
+                <span class='front line' :style='frontHorLineStyle'></span>
+                <span class='front line' :style='frontVerLineStyle'></span>
+                <span class='crosshair' :style='crosshairStyle'></span>
+            </div>
         </v-img>
         <ul>
             <li v-for='i in points.length' :key='i'>
@@ -35,7 +41,10 @@
 
 <script>
     const HIT_ICON_SIZE = 24;
-    const MAGNIFIER_SPACE = 10;
+    const ZOOM_RATIO = 1.5;
+    const MAGNIFIER_BORDER_SIZE = 8;
+    const MAGNIFIER_SIZE_PERCENT = .4;
+    const COORDINATES_FONT_SIZE = 12;
 
     export default {
         props: [
@@ -47,68 +56,186 @@
             return {
                 targetImgId: 'targetImgId',
                 zoomImgId: 'zoomImgId',
+                srcImage: null,
                 zoomUrl: null,
-                hitIcon: null,
                 magnify: false,
+                imageLoaded: false,
                 points: [],
-                hitPos: { x: 0, y: 0 },
                 touchPos: { x: 0, y: 0 },
                 thumbPos: { x: 0, y: 0 },
                 zoomImagePos: { x: 0, y: 0 },
                 zoomImageSize: { width: 0, height: 0 },
+                imageData: { x: 0, y: 0 }
             }
         },
         created() {
-            let iconContext = require.context('../../assets', false, /\.png$/);
-            this.hitIcon = iconContext('./hit.png');
+            //load image
+            this.srcImage = new Image();
+            this.srcImage.src = this.$props.src;
+            this.srcImage.onload = () => { this.imageLoaded = true; };
         },
         mounted() {
-            this.zoomImageSize = this.calcZoomImageSize(1.5);
+            this.imageData = this.calcPreviewImageData();
+            this.zoomImageSize = this.calcZoomImageSize(ZOOM_RATIO);
+
+            //update preview image size every time the window is resizing
+            window.addEventListener('resize', () => {
+                this.imageData = this.calcPreviewImageData();
+            });
         },
         computed: {
-            imageData() {
+            hitIcon() {
+                let iconContext = require.context('../../assets', false, /\.png$/);
+                return iconContext('./hit.png');
+            },
+            imageElement() {
                 return document.getElementById(this.targetImgId);
             },
-            imageBoxSize() {
-                let width = this.imageData.clientWidth;
-                let height = this.imageData.clientHeight;
-                return Math.min(width, height);
+            magnifierSize() {
+                let averageImageSize = (this.imageData.width + this.imageData.height) / 2
+                return averageImageSize * MAGNIFIER_SIZE_PERCENT;
             },
-            imageOffset() {
-                let width = this.imageData.clientWidth;
-                let height = this.imageData.clientHeight;
-                let diff = Math.abs(width - height) / 2;
-                let top, left;
-
-                if (width > height) {
-                    left = diff;
-                    top = 0;
-                }
-                else {
-                    left = 0;
-                    top = diff;
-                }
+            magnifyingGlassStyle() {
+                let transformValue = this.magnifierSize / (-2);
+                let translate = 'translate(' + transformValue + 'px, ' + transformValue + 'px)';
+                
+                return {
+                    backgroundImage: 'url(' + this.src + ')',
+                    backgroundPosition: this.zoomImagePos.x + '% ' + this.zoomImagePos.y + '% ',
+                    backgroundSize: this.zoomImageSize.width + 'px ' + this.zoomImageSize.height + 'px',
+                    borderWidth: MAGNIFIER_BORDER_SIZE + 'px',
+                    left: this.touchPos.x + 'px',
+                    top: this.touchPos.y + 'px',
+                    width: this.magnifierSize + 'px',
+                    height: this.magnifierSize + 'px',
+                    transform: translate
+                };
+            },
+            backHorLineStyle() {
+                let width = this.magnifierSize - MAGNIFIER_BORDER_SIZE * 2;
+                let left = MAGNIFIER_BORDER_SIZE + this.touchPos.x - this.magnifierSize / 2;
 
                 return {
-                    left: left,
-                    top: top
-                }
+                    width: width + 'px',
+                    left: left + 'px',
+                    top: this.touchPos.y + 'px'
+                };
+            },
+            backVerLineStyle() {
+                let height = this.magnifierSize - MAGNIFIER_BORDER_SIZE * 2;
+                let top = MAGNIFIER_BORDER_SIZE + this.touchPos.y - this.magnifierSize / 2;
+                
+                return {
+                    height: height + 'px',
+                    left: this.touchPos.x + 'px',
+                    top: top + 'px'
+                };
+            },
+            frontHorLineStyle() {
+                let frontLine = { width: 0, left: 0, top: 0 };
+                Object.assign(frontLine, this.backHorLineStyle);
+                frontLine.top = (this.touchPos.y - 2) + 'px';
+                return frontLine;
+            },
+            frontVerLineStyle() {
+                let frontLine = { height: 0, left: 0, top: 0 };
+                Object.assign(frontLine, this.backVerLineStyle);
+                frontLine.left = (this.touchPos.x - 2) + 'px';
+                return frontLine;
+            },
+            crosshairStyle() {
+                let left = this.touchPos.x - 3;
+                let top = this.touchPos.y - 3;
+
+                return {
+                    left: left + 'px',
+                    top: top + 'px'
+                };
+            },
+            xCoordinatesStyle() {
+                let offsetLeft = MAGNIFIER_BORDER_SIZE * 1.8;
+                let left = offsetLeft + this.touchPos.x - this.magnifierSize / 2;
+                let top = this.touchPos.y - COORDINATES_FONT_SIZE * 1.8;
+
+                return {
+                    left: left + 'px',
+                    top: top + 'px'
+                };
+            },
+            yCoordinatesStyle() {
+                let offsetTop = COORDINATES_FONT_SIZE * 2.3;
+                let left = this.touchPos.x;
+                let top = this.touchPos.y + this.magnifierSize / 2 - COORDINATES_FONT_SIZE - offsetTop;
+
+                return {
+                    left: left + 'px',
+                    top: top + 'px'
+                };
             }
         },
         methods: {
             /**
+             * Calculate the actual DOM size in pixels of the preview image.
+             * 
+             * @returns {Object} {
+             *                      width: <Number>{preview image width in px},
+             *                      height: <Number>{preview image height in px},
+             *                      top: <Number>{preview image top offset in px},
+             *                      top: <Number>{preview image left offset in px}
+             *                   }
+             */
+            calcPreviewImageData: function() {
+                let srcWidth = this.srcImage.width;
+                let srcHeight = this.srcImage.height;
+                let ratio = srcWidth / srcHeight;
+                let dom = document.getElementById(this.targetImgId);
+                let wider = ratio > 1;
+                let unstableAxis = wider ? dom.clientHeight : dom.clientWidth;
+                let currentStable = wider ? dom.clientWidth : dom.clientHeight;
+                let currentUnstable = currentStable * ratio;
+                let squeeze = unstableAxis < currentUnstable;
+
+                //dom ratio is no longer a box
+                if (squeeze) {
+                    currentUnstable = unstableAxis;
+                    currentStable = currentUnstable / ratio;
+                }
+
+                let width = wider ? currentStable : currentUnstable;
+                let height = wider ? currentUnstable : currentStable;
+
+                //find image position
+                let rect = dom.getBoundingClientRect();
+                let position = { x: rect.left, y: rect.top };
+                let offsetLeft = dom.offsetLeft;
+                let offsetTop = dom.offsetTop;
+                position.x += offsetLeft;
+                position.y += offsetTop;
+
+                return {
+                    width,
+                    height,
+                    pageTop: position.y,
+                    pageLeft: position.x,
+                    offsetTop,
+                    offsetLeft
+                };
+            },
+            /**
              * Activate when a touch on the image occurs.
              */
             onTouch: function() {
-                let cursor = this.getSourceCursorPosition(event);
+                this.thumbPos = this.getThumbPosition();
+                this.touchPos = this.getZoomCursorPosition(event);
+                this.magnify = true;
+
+                console.log('touch pos', this.touchPos);
+                console.log(this.distanceFromCenter(this.touchPos).center);
 
                 //calculate hit position
-                if (this.inTargetBoundaries(cursor)) {
-                    this.hitPos = this.calcHitCoordinates()
-                    this.zoomImagePos = this.getZoomImagePosition(event, MAGNIFIER_SPACE * 2);
+                if (this.inTargetBoundaries(this.touchPos)) {
+                    this.zoomImagePos = this.getZoomImagePosition();
                 }
-
-                this.magnify = true;
             },
             /**
              * @param {Object} point - {
@@ -118,32 +245,11 @@
              * @returns {Boolean} True if the point is within the target image.
              */
             inTargetBoundaries: function(point) {
-                let rect = this.imageData.getBoundingClientRect();
-                let minX = rect.left;
-                let minY = rect.top;
-                let maxX = minX + rect.width;
-                let maxY = minY + rect.height;
-                return point && point.x >= minX && point.y >= minY && point.x <= maxX && point.y <= maxY;
-            },
-            /**
-             * @returns {Object} point - {
-             *                              x: <Number>{point x coordinate},
-             *                              y: <Number>{point y coordinate}
-             *                           }
-             */
-            findImagePosition: function() {
-                let elem = document.getElementById(this.targetImgId);
+                let maxX = this.imageData.offsetLeft * 2 + this.imageData.width;
+                let maxY = this.imageData.offsetTop * 2 + this.imageData.height;
 
-                if (typeof(this.imageData.offsetParent) !== undefined) {
-                    let posX, posY;
-                    for(posX = 0, posY = 0; elem; elem = elem.offsetParent) {
-                        posX += elem.offsetLeft;
-                        posY += elem.offsetTop;
-                    }
-
-                    return { x: posX, y: posY };
-                }
-                else return { x: elem.x, y: elem.y };
+                return this.imageLoaded && point.x >= 0 && point.y >= 0
+                    && point.x <= maxX && point.y <= maxY;
             },
             /**
              * Get the position of the cursor on the source image.
@@ -160,7 +266,6 @@
 
                 let posX = 0;
                 let posY = 0;
-                let imgPos = this.findImagePosition();
                 let touchEv = event.touches[0];
 
                 if (touchEv.pageX || touchEv.pageY) {
@@ -174,29 +279,7 @@
                     posY = touchEv.clientY + docBody.scrollTop + docElem.scrollTop;
                 }
 
-                return { x: posX - imgPos.x, y: posY - imgPos.x };
-            },
-            /**
-             * Calculate the coordinates of the hit, based on the magnifier.
-             * 
-             * @param {Object} point - {
-             *                            x: <Number>{point x coordinate},
-             *                            y: <Number>{point y coordinate}
-             *                         }
-             */
-            calcHitCoordinates: function() {
-                let xPercent = (this.touchPos.x * 100) / this.imageBoxSize;
-                let yPercent = (this.touchPos.y * 100) / this.imageBoxSize;
-                let extendedImageSize = {
-                    min: -(this.imageBoxSize * MAGNIFIER_SPACE / 100),
-                    max: this.imageBoxSize + (this.imageBoxSize * MAGNIFIER_SPACE / 100),
-                };
-
-                let pxRange = extendedImageSize.max - extendedImageSize.min;
-                let x = (xPercent * pxRange / 100) + extendedImageSize.min;
-                let y = (yPercent * pxRange / 100) + extendedImageSize.min;
-
-                return { x: x, y: y };
+                return { x: posX - this.imageData.pageLeft, y: posY - this.imageData.pageTop };
             },
             /**
              * Create a hit point on the image and emit an event to the parent.
@@ -207,12 +290,12 @@
              *                                   y: <Number>{point y coordinate}
              *                                },
              *                 bullseyeData: <Object>{
-            *                                          distance: <Number>{distance from the point to the center},
-            *                                          xDistance: <Number>{x distance from the point to the center},
-            *                                          yDistance: <Number>{y distance from the point to the center},
-            *                                          quarter: <Number>{quarter relative to the center
-            *                                                            as in a coordinate system (1/2/3/4)}
-            *                                       }
+             *                                          distance: <Number>{distance from the point to the center},
+             *                                          xDistance: <Number>{x distance from the point to the center},
+             *                                          yDistance: <Number>{y distance from the point to the center},
+             *                                          quarter: <Number>{quarter relative to the center
+             *                                                            as in a coordinate system (1/2/3/4)}
+             *                                       }
              *              }
              */
             createHit: function() {
@@ -220,7 +303,7 @@
                 this.magnify = false;
 
                 if (this.points.length < hits || !hits) {
-                    let point = { x: this.hitPos.x, y: this.hitPos.y };
+                    let point = { x: this.touchPos.x, y: this.touchPos.y };
                     let hit = this.distanceFromCenter(point);
                     this.points.push(point);
 
@@ -243,10 +326,8 @@
                 for (let i in this.points) {
                     let p = this.points[i];
 
-                    if (p.x === point.x && p.y === point.y) {
+                    if (p.x === point.x && p.y === point.y)
                         this.points.splice(i, 1);
-                        return
-                    }
                 }
             },
             /**
@@ -256,12 +337,15 @@
              *                            x: <Number>{point x coordinate},
              *                            y: <Number>{point y coordinate}
              *                         }
+             * @returns {Object} {
+             *                      position: <String>{css position},
+             *                      left: <String>{css left attribute in px},
+             *                      top: <String>{css top attribute in px}
+             *                   }
              */
             createHitStyle: function(point) {
-                let offsetX = this.imageOffset.left;
-                let offsetY = this.imageOffset.top;
-                let x = point.x + offsetX - HIT_ICON_SIZE / 2;
-                let y = point.y + offsetY - HIT_ICON_SIZE / 2;
+                let x = this.imageData.offsetLeft + point.x - HIT_ICON_SIZE / 2;
+                let y = this.imageData.offsetTop + point.y - HIT_ICON_SIZE / 2;
 
                 return {
                     position: 'absolute',
@@ -279,21 +363,23 @@
              *                            y: <Number>{point y coordinate}
              *                         }
              * @returns {Object} {
+             *                      center: <ObjecT>{
+             *                                         x: <Number>{x coordinate}
+             *                                         y: <Number>{y coordinate}
+             *                                      }
              *                      distance: <Number>{distance from the point to the center},
              *                      xDistance: <Number>{x distance from the point to the center},
-             * *                    yDistance: <Number>{y distance from the point to the center},
-             * *                    quarter: <Number>{quarter relative to the center as in a coordinate system (1/2/3/4)}
+             *                      yDistance: <Number>{y distance from the point to the center},
+             *                      quarter: <Number>{quarter relative to the center as in a coordinate system (1/2/3/4)}
              *                   }
              */
             distanceFromCenter: function(point) {
                 let center = this.$props.center;
 
                 if (!center) {
-                    let offsetX = this.imageOffset.left;
-                    let offsetY = this.imageOffset.top;
-                    let x = offsetX + this.imageBoxSize / 2;
-                    let y = offsetY + this.imageBoxSize / 2;
-                    center = { x: x, y: y };
+                    let x = this.imageData.width / 2;
+                    let y = this.imageData.height / 2;
+                    center = { x, y };
                 }
 
                 let xPow = Math.pow(point.x - center.x, 2);
@@ -308,6 +394,7 @@
                 else quarter = 4;
 
                 return {
+                    center,
                     distance: Math.sqrt(xPow + yPow),
                     xDistance: Math.abs(point.x - center.x),
                     yDistance: Math.abs(point.y - center.y),
@@ -315,27 +402,17 @@
                 }
             },
             /**
-             * @param {Number} ratio - The ratio by which the zoom image should be sized, relative to the source
+             * @param {Number} ratio - The ratio by which the zoom image should be sized, relative to the source.
              * @returns {Object} {
              *                      width: <Number>{width of the zoom image},
              *                      height: <Number>{height of the zoom image}
              *                   }
              */
             calcZoomImageSize: function(ratio) {
-                let srcWidth = this.imageData.clientWidth;
-                let srcHeight = this.imageData.clientHeight;
-                let zoomWidth, zoomHeight;
-
-                if (srcWidth < srcHeight) {
-                    zoomWidth = srcWidth * ratio;
-                    zoomHeight = zoomWidth;
+                return {
+                    width: this.imageData.width * ratio,
+                    height: this.imageData.height * ratio
                 }
-                else {
-                    zoomHeight = srcHeight * ratio;
-                    zoomWidth = zoomHeight;
-                }
-                
-                return { width: zoomWidth, height: zoomHeight }
             },
             /**
              * Get the position of the cursor on the zoom image.
@@ -347,6 +424,8 @@
              *                           }
              */
             getZoomCursorPosition: function(event) {
+                if (!event.touches.length) return;
+
                 let touchEv = event.touches[0];
                 let docElem = document.documentElement;
                 let docBody = document.bounds;
@@ -369,7 +448,7 @@
                 let xPos = 0;
                 let yPos = 0;
 
-                for (let elem = this.imageData; elem; elem = elem.offsetParent) {
+                for (let elem = this.imageElement; elem; elem = elem.offsetParent) {
                     let transform = this.getMagnifierTransform(elem);
 
                     if (elem.tagName == 'BODY') {
@@ -392,26 +471,27 @@
             /**
              * Get the current position of the zoom image, according to the cursor.
              * 
-             * @param {Event} event - Touch event
-             * @param {Number} spacePercent - The percentage of space to leave around the zoom image,
-             *                                so the user can access its edges
              * @returns {Object} point - {
              *                              x: <Number>{point x coordinate},
              *                              y: <Number>{point y coordinate}
              *                           }
              */
-            getZoomImagePosition: function(event, spacePercent) {
-                this.thumbPos = this.getThumbPosition();
-                this.touchPos = this.getZoomCursorPosition(event);
+            getZoomImagePosition: function() {
+                let xPercent = this.touchPos.x / this.imageData.width * 100;
+                let yPercent = this.touchPos.y / this.imageData.height * 100;
+                let extendedMagnifier = this.magnifierSize * ZOOM_RATIO / 2;
+                let magnifyXOffsetPerc = extendedMagnifier / this.imageData.width * 100;
+                let magnifyYOffsetPerc = extendedMagnifier / this.imageData.height * 100;
+                let xRangeExtension = magnifyXOffsetPerc / 2;
+                let yRangeExtension = magnifyYOffsetPerc / 2;
+                let minX = -xRangeExtension;
+                let minY = -yRangeExtension;
+                let maxX = 100 + xRangeExtension;
+                let maxY = 100 + yRangeExtension;
+                let xRangePercent = (xPercent) * (maxX - minX) / 100 + minX
+                let yRangePercent = (yPercent) * (maxY - minY) / 100 + minY
 
-                let min = spacePercent;
-                let max = 100 - spacePercent;
-                let xPercent = (this.touchPos.x * 100) / this.imageBoxSize;
-                let yPercent = (this.touchPos.y * 100) / this.imageBoxSize;
-                let xPos = (xPercent - min) / (max - min) * 100;
-                let yPos = (yPercent - min) / (max - min) * 100;
-
-                return { x: xPos, y: yPos };
+                return { x: xRangePercent , y: yRangePercent };
             },
             /**
              * Get the transform of the magnifier element.
@@ -452,20 +532,16 @@
                 
                 return output;
             }
-        },
+        }
     }
 </script>
 
 <style scoped lang='scss'>
-    //magnifying glass size
-    $magnifier-width: 150px;
-    $magnifier-height: 150px;
-
     //responsive sizes
     $sizes: (
         '(max-width: 320px)' 250px 250px,
-        '(max-width: 480px)' 350px 350px,
-        '(min-width: 481px)' 450px 450px,
+        '(max-width: 480px)' 300px 300px,
+        '(min-width: 481px)' 400px 400px,
         '(min-width: 1024px)' 550px 550px,
         '(min-width: 1280px)' 600px 600px
     );
@@ -478,7 +554,6 @@
             background: {
                 repeat: no-repeat;
                 size: contain;
-                position: 50% 50%;
             }
             display: block;
             clear: both;
@@ -486,18 +561,12 @@
             cursor: none;
 
             .magnifying-glass {
+                opacity: 1;
                 position: absolute;
-                border: 8px;
                 border-color: #9c9c9c;
                 border-style: groove;
                 border-radius: 50%;
                 cursor: none;
-                width: $magnifier-width;
-                height: $magnifier-height;
-                transform: translate(
-                    (-1 * $magnifier-width / 2),
-                    (-1 * $magnifier-height / 2)
-                );
                 background: #ffffff no-repeat;
             }
 
@@ -519,11 +588,42 @@
         left: 0;
         right: 0;
     }
+    .coordinates {
+        position: absolute;
+        color: #ffffff;
+        -webkit-text-fill-color: white;
+        text-shadow:
+            -1px -1px 0 #000,  
+            1px -1px 0 #000,
+            -1px 1px 0 #000,
+            1px 1px 0 #000;
+    }
+    .coordinates.y {
+        transform: rotate(90deg);
+    }
+    .line {
+        position: absolute;
+    }
+    .line.back {
+        border-width: 1px;
+        border-color: #ffffff;
+        border-style: dashed;
+    }
+    .line.front {
+        border-width: 1px;
+        border-color: #000000;
+        border-style: dashed;
+    }
+    .crosshair {
+        position: absolute;
+        border-width: 3px;
+        border-color: #f70000c5;
+        border-style: groove;
+    }
     li {
         list-style-type: none;
     }
     .hit.opaque {
-        opacity: .9;
         transition: opacity .6s;
     }
     .hit.transparent {

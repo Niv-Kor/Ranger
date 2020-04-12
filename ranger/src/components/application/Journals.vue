@@ -33,7 +33,8 @@
         },
         data() {
             return {
-                list: []
+                list: [],
+                center: {x: 10, y: 10}
             }
         },
         computed: {

@@ -5,19 +5,14 @@
                 class='subtitle'
                 align=center
             >
-                Give your journal a name
+                Custom target configuration
             </p>
         </v-container>
         <v-container>
-            <v-text-field
-                v-model='name'
-                height=10
-                dense
-                rounded
-                outlined
-                clearable
-                counter=20
-                :color='colors.neutral'
+            <target-canvas
+                :src='customTarget.url'
+                :size=300
+                :hits=1
             />
         </v-container>
     </div>
@@ -25,28 +20,25 @@
 
 <script>
     import { mapGetters } from 'vuex';
+    import TargetCanvas from '../../../widgets/TargetCanvas';
 
-    const DEFAULT_NAME = 'My Journal';
-    
     export default {
+        components: {
+            TargetCanvas
+        },
         data() {
             return {
-                name: ''
+                center: { x: 0, y: 0 }
             }
         },
         created() {
-            this.name = this.storedName ? this.storedName : DEFAULT_NAME;
+            console.log('src: ', this.customTarget.url);
         },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
-                storedName: 'getNewJournalName'
+                customTarget: 'getNewJournalUploadedTarget'
             }),
-        },
-        watch: {
-            name(value) {
-                this.$store.commit('setNewJournalName', value)
-            }
         },
     }
 </script>

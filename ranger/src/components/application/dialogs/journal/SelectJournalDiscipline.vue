@@ -155,7 +155,7 @@
 
                 //determine the use of a custom discipline
                 let useCustom = this.disciplines[value].custom;
-                this.$store.commit('setUseCustomDisciplineFlag', useCustom);
+                this.$store.commit('setUseCustomDiscipline', useCustom);
             },
             newDiscipName(value) {
                 this.$store.commit('setNewJournalCustomDiscipline', value);

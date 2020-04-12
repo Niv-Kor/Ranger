@@ -5,7 +5,7 @@ const state = {
     newJournalDefaultTarget: '',
     newJournalTargetResetFlag: false,
     useUploadedCustomTarget: false,
-    useCustomDisciplineFlag: false,
+    useCustomDiscipline: false,
     newJournaluploadedTarget: {
         url: '',
         base64Data: '',
@@ -32,11 +32,11 @@ const getters = {
     getNewJournalTargetResetFlag: state => {
         return state.newJournalTargetResetFlag;
     },
-    useUploadedCustomTargetFlag: state => {
+    useUploadedCustomTarget: state => {
         return state.useUploadedCustomTarget;
     },
-    useCustomDisciplineFlag: state => {
-        return state.useCustomDisciplineFlag;
+    useCustomDiscipline: state => {
+        return state.useCustomDiscipline;
     }
 };
 
@@ -65,11 +65,11 @@ const mutations = {
     setNewJournalTargetResetFlag: (state, flag) => {
         state.newJournalTargetResetFlag = flag;
     },
-    setUseUploadedCustomTargetFlag: (state, flag) => {
+    setUseUploadedCustomTarget: (state, flag) => {
         state.useUploadedCustomTarget = flag;
     },
-    setUseCustomDisciplineFlag: (state, flag) => {
-        state.useCustomDisciplineFlag = flag;
+    setUseCustomDiscipline: (state, flag) => {
+        state.useCustomDiscipline = flag;
     }
 };
 
@@ -80,22 +80,18 @@ const actions = {
         commit('setNewJournalCustomDiscipline', '');
         commit('setNewJournalTarget', '');
         commit('setNewJournalTargetResetFlag', false);
-        commit('setUseUploadedCustomTargetFlag', false);
-        commit('setUseCustomDisciplineFlag', false);
+        commit('setUseUploadedCustomTarget', false);
+        commit('setUseCustomDiscipline', false);
         commit('setNewJournalUploadedTargetURL', '');
         commit('setNewJournalUploadedTargetData', '');
         commit('setNewJournalUploadedTargetName', '');
     },
     createJournal: async ({ state, rootState }) => {
         //check if the discipline's name is customized
-        let useCustomDiscip = state.useCustomDisciplineFlag;
+        let useCustomDiscip = state.useCustomDiscipline;
         let customDiscipName = state.newJournalCustomDiscipline;
         let defDiscipName = state.newJournalDiscipline;
         let discipName = useCustomDiscip ? customDiscipName : defDiscipName;
-        console.log('use custom discip: ', state.useCustomDisciplineFlag, useCustomDiscip);
-        console.log('custom discip: ', customDiscipName, state.newJournalCustomDiscipline);
-        console.log('last discip: ', discipName);
-        console.log('image name: ', state.newJournaluploadedTarget.chosenName);
 
         return new Promise((resolve, reject) => {
             rootState.socket.emit('create_journal', {

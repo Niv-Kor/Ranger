@@ -80,12 +80,14 @@
     import SelectJournalName from './SelectJournalName';
     import SelectJournalDiscipline from './SelectJournalDiscipline';
     import SelectJournalTarget from './SelectJournalTarget';
+    import SelectJournalTargetConfig from './SelectJournalTargetConfig';
     
     export default {
         components: {
             SelectJournalName,
             SelectJournalDiscipline,
-            SelectJournalTarget
+            SelectJournalTarget,
+            SelectJournalTargetConfig
         },
         props: [
             'model'
@@ -99,7 +101,11 @@
         computed: {
             ...mapGetters({
                 colors: 'getColors',
-                useCustomTarget: 'useUploadedCustomTargetFlag'
+                journalName: 'getNewJournalName',
+                useCustomDiscipline: 'useCustomDiscipline',
+                useCustomTarget: 'useUploadedCustomTarget',
+                customDiscipline: 'getNewJournalCustomDiscipline',
+                customTarget: 'getNewJournalUploadedTarget'
             }),
             createButtonText() {
                 let show = this.currentTab === this.totalTabs - 1;
@@ -120,6 +126,8 @@
                 setTimeout(() => { vm.currentTab = 0 }, 500);
             },
             incrementTab: function() {
+                if (!this.canContinueNextTab()) return;
+
                 if (this.currentTab < this.totalTabs - 1) {
                     if (this.currentTab != 1 || this.useCustomTarget) this.currentTab++;
                     else this.currentTab += 2; //skip custom target config
@@ -134,6 +142,30 @@
             createJournal: async function() {
                 await this.$store.dispatch('createJournal');
                 this.close();
+            },
+            canContinueNextTab: function() {
+                switch (this.currentTab) {
+                    //select discipline
+                    case 0:
+                        //need to enter a valid custom discipline name
+                        if (this.useCustomDiscipline) {
+                            return !!this.customDiscipline;
+                        }
+                        else return true;
+
+                    //select target
+                    case 1:
+                        //need to enter a valid custom target
+                        if (this.useCustomTarget)
+                            return !!this.customTarget.url;
+                        else return true;
+
+                    case 2:
+                        return true; //TODO
+
+                    case 3:
+                        return !!this.journalName;
+                }
             }
         }
     }

@@ -202,7 +202,7 @@
 
             //determine the use of a custom target
             let useCustom = discipProperty[this.selectedTarget].custom;
-            this.$store.commit('setUseUploadedCustomTargetFlag', useCustom);
+            this.$store.commit('setUseUploadedCustomTarget', useCustom);
         },
         computed: {
             ...mapGetters({
