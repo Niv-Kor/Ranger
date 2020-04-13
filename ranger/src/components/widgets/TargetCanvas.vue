@@ -1,9 +1,9 @@
 <template>
-    <div class='magnifier-container'> 
+    <div class='magnifier-container'>
         <v-img
             class='preview'
             :id='targetImgId'
-            :style="{ backgroundImage: 'url(' + src + ')' }"
+            :style='previewImageStyle'
             v-touch:moving='onTouch'
             v-touch:start='onTouch'
             v-touch:end='createHit'
@@ -42,16 +42,16 @@
 <script>
     const HIT_ICON_SIZE = 24;
     const ZOOM_RATIO = 1.5;
-    const MAGNIFIER_BORDER_SIZE = 8;
     const MAGNIFIER_SIZE_PERCENT = .4;
     const COORDINATES_FONT_SIZE = 12;
 
     export default {
-        props: [
-            'src',
-            'hits',
-            'center'
-        ],
+        props: {
+            src: String,
+            hits: Number,
+            size: Number,
+            center: Object
+        },
         data() {
             return {
                 targetImgId: 'targetImgId',
@@ -92,8 +92,40 @@
                 return document.getElementById(this.targetImgId);
             },
             magnifierSize() {
-                let averageImageSize = (this.imageData.width + this.imageData.height) / 2
+                let averageImageSize = (this.imageData.width + this.imageData.height) / 2;
                 return averageImageSize * MAGNIFIER_SIZE_PERCENT;
+            },
+            magnifierBorderSize() {
+                let minImageSize = 100, maxImageSize = 400;
+                let averageImageSize = (this.imageData.width + this.imageData.height) / 2;
+                let sizePercent = (averageImageSize - minImageSize) / (maxImageSize - minImageSize) * 100;
+                let minBorderSize = 1, maxBorderSize = 8;
+                let borderSize = sizePercent * (maxBorderSize - minBorderSize) / 100 + minBorderSize;
+                return borderSize;
+            },
+            previewImageStyle() {
+                let maxSize;
+                let breakpoint = this.$vuetify.breakpoint.name;
+
+                switch (breakpoint) {
+                    case 'xs': maxSize = 300; break;
+                    case 'sm': maxSize = 400; break;
+                    case 'md': maxSize = 550; break;
+                    case 'lg': maxSize = 650; break;
+                    case 'xl': maxSize = 800; break;
+                }
+
+                let srcUrl = 'url(' + this.$props.src + ')';
+                let chosenSize = this.$props.size;
+                let bgSize = chosenSize ? chosenSize + 'px' : 'contain';
+                let containerSize = (chosenSize && chosenSize < maxSize) ? chosenSize : maxSize;
+
+                return {
+                    backgroundImage: srcUrl,
+                    backgroundSize: bgSize,
+                    width: containerSize + 'px',
+                    height: containerSize + 'px'
+                };
             },
             magnifyingGlassStyle() {
                 let transformValue = this.magnifierSize / (-2);
@@ -103,7 +135,7 @@
                     backgroundImage: 'url(' + this.src + ')',
                     backgroundPosition: this.zoomImagePos.x + '% ' + this.zoomImagePos.y + '% ',
                     backgroundSize: this.zoomImageSize.width + 'px ' + this.zoomImageSize.height + 'px',
-                    borderWidth: MAGNIFIER_BORDER_SIZE + 'px',
+                    borderWidth: this.magnifierBorderSize + 'px',
                     left: this.touchPos.x + 'px',
                     top: this.touchPos.y + 'px',
                     width: this.magnifierSize + 'px',
@@ -112,8 +144,8 @@
                 };
             },
             backHorLineStyle() {
-                let width = this.magnifierSize - MAGNIFIER_BORDER_SIZE * 2;
-                let left = MAGNIFIER_BORDER_SIZE + this.touchPos.x - this.magnifierSize / 2;
+                let width = this.magnifierSize - this.magnifierBorderSize * 2;
+                let left = this.magnifierBorderSize + this.touchPos.x - this.magnifierSize / 2;
 
                 return {
                     width: width + 'px',
@@ -122,8 +154,8 @@
                 };
             },
             backVerLineStyle() {
-                let height = this.magnifierSize - MAGNIFIER_BORDER_SIZE * 2;
-                let top = MAGNIFIER_BORDER_SIZE + this.touchPos.y - this.magnifierSize / 2;
+                let height = this.magnifierSize - this.magnifierBorderSize * 2;
+                let top = this.magnifierBorderSize + this.touchPos.y - this.magnifierSize / 2;
                 
                 return {
                     height: height + 'px',
@@ -153,7 +185,7 @@
                 };
             },
             xCoordinatesStyle() {
-                let offsetLeft = MAGNIFIER_BORDER_SIZE * 1.8;
+                let offsetLeft = this.magnifierBorderSize * 1.8;
                 let left = offsetLeft + this.touchPos.x - this.magnifierSize / 2;
                 let top = this.touchPos.y - COORDINATES_FONT_SIZE * 1.8;
 
@@ -163,9 +195,8 @@
                 };
             },
             yCoordinatesStyle() {
-                let offsetTop = COORDINATES_FONT_SIZE * 2.3;
                 let left = this.touchPos.x;
-                let top = this.touchPos.y + this.magnifierSize / 2 - COORDINATES_FONT_SIZE - offsetTop;
+                let top = this.touchPos.y;
 
                 return {
                     left: left + 'px',
@@ -188,10 +219,14 @@
                 let srcWidth = this.srcImage.width;
                 let srcHeight = this.srcImage.height;
                 let ratio = srcWidth / srcHeight;
-                let dom = document.getElementById(this.targetImgId);
+                let dom = this.imageElement;
                 let wider = ratio > 1;
                 let unstableAxis = wider ? dom.clientHeight : dom.clientWidth;
-                let currentStable = wider ? dom.clientWidth : dom.clientHeight;
+                let currentStable;
+
+                if (this.$props.size) currentStable = this.$props.size;
+                else currentStable = wider ? dom.clientWidth : dom.clientHeight;
+
                 let currentUnstable = currentStable * ratio;
                 let squeeze = unstableAxis < currentUnstable;
 
@@ -227,15 +262,13 @@
             onTouch: function() {
                 this.thumbPos = this.getThumbPosition();
                 this.touchPos = this.getZoomCursorPosition(event);
-                this.magnify = true;
-
-                console.log('touch pos', this.touchPos);
-                console.log(this.distanceFromCenter(this.touchPos).center);
 
                 //calculate hit position
                 if (this.inTargetBoundaries(this.touchPos)) {
                     this.zoomImagePos = this.getZoomImagePosition();
+                    this.magnify = true;
                 }
+                else this.magnify = false;
             },
             /**
              * @param {Object} point - {
@@ -375,8 +408,8 @@
              */
             distanceFromCenter: function(point) {
                 let center = this.$props.center;
-
-                if (!center) {
+                if (!center) 
+                {
                     let x = this.imageData.width / 2;
                     let y = this.imageData.height / 2;
                     center = { x, y };
@@ -537,50 +570,25 @@
 </script>
 
 <style scoped lang='scss'>
-    //responsive sizes
-    $sizes: (
-        '(max-width: 320px)' 250px 250px,
-        '(max-width: 480px)' 300px 300px,
-        '(min-width: 481px)' 400px 400px,
-        '(min-width: 1024px)' 550px 550px,
-        '(min-width: 1280px)' 600px 600px
-    );
-
     .magnifier-container {
         position: relative;
-
-        .preview {
-            position: relative;
-            background: {
-                repeat: no-repeat;
-                size: contain;
-            }
-            display: block;
-            clear: both;
-            margin: 0 auto;
-            cursor: none;
-
-            .magnifying-glass {
-                opacity: 1;
-                position: absolute;
-                border-color: #9c9c9c;
-                border-style: groove;
-                border-radius: 50%;
-                cursor: none;
-                background: #ffffff no-repeat;
-            }
-
-            @each $breakpoint in $sizes {
-                $query: nth($breakpoint, 1);
-                $bpWidth: nth($breakpoint, 2);
-                $bpHeight: nth($breakpoint, 3);
-
-                @media only screen and #{$query} {
-                    width: $bpWidth;
-                    height: $bpHeight;
-                }
-            }
-        }
+    }
+    .preview {
+        position: relative;
+        background-repeat: no-repeat;
+        display: block;
+        clear: both;
+        margin: 0 auto;
+        cursor: none;
+    }
+    .magnifying-glass {
+        opacity: 1;
+        position: absolute;
+        border-color: #9c9c9c;
+        border-style: groove;
+        border-radius: 50%;
+        cursor: none;
+        background: #ffffff no-repeat;
     }
     .target {
         margin-left: auto;
