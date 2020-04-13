@@ -69,19 +69,15 @@
             }
         },
         created() {
-            //load image
-            this.srcImage = new Image();
-            this.srcImage.src = this.$props.src;
-            this.srcImage.onload = () => { this.imageLoaded = true; };
-        },
-        mounted() {
-            this.imageData = this.calcPreviewImageData();
-            this.zoomImageSize = this.calcZoomImageSize(ZOOM_RATIO);
+            if (this.$props.src) this.implementImages();
 
             //update preview image size every time the window is resizing
             window.addEventListener('resize', () => {
                 this.imageData = this.calcPreviewImageData();
             });
+        },
+        watch: {
+            src(url) { console.log('watch src'); if (url) { console.log('of url ', url); this.implementImages();} }
         },
         computed: {
             hitIcon() {
@@ -108,7 +104,7 @@
                 let breakpoint = this.$vuetify.breakpoint.name;
 
                 switch (breakpoint) {
-                    case 'xs': maxSize = 300; break;
+                    case 'xs': maxSize = 200; break;
                     case 'sm': maxSize = 400; break;
                     case 'md': maxSize = 550; break;
                     case 'lg': maxSize = 650; break;
@@ -206,6 +202,34 @@
         },
         methods: {
             /**
+             * Calculate the data needed to render the preview and zoom images.
+             */
+            implementImages: function() {
+                //load image
+                this.srcImage = new Image();
+                this.srcImage.src = this.$props.src;
+                this.srcImage.onload = () => {
+                    this.imageData = this.calcPreviewImageData();
+                    this.zoomImageSize = this.calcZoomImageSize(ZOOM_RATIO);
+                    this.imageLoaded = true;
+                    console.log('image loaded');
+                };
+            },
+            /**
+             * Activate when a touch on the image occurs.
+             */
+            onTouch: function() {
+                this.thumbPos = this.getThumbPosition();
+                this.touchPos = this.getZoomCursorPosition(event);
+
+                //calculate hit position
+                if (this.inTargetBoundaries(this.touchPos)) {
+                    this.zoomImagePos = this.getZoomImagePosition();
+                    this.magnify = true;
+                }
+                else this.magnify = false;
+            },
+            /**
              * Calculate the actual DOM size in pixels of the preview image.
              * 
              * @returns {Object} {
@@ -255,20 +279,6 @@
                     offsetTop,
                     offsetLeft
                 };
-            },
-            /**
-             * Activate when a touch on the image occurs.
-             */
-            onTouch: function() {
-                this.thumbPos = this.getThumbPosition();
-                this.touchPos = this.getZoomCursorPosition(event);
-
-                //calculate hit position
-                if (this.inTargetBoundaries(this.touchPos)) {
-                    this.zoomImagePos = this.getZoomImagePosition();
-                    this.magnify = true;
-                }
-                else this.magnify = false;
             },
             /**
              * @param {Object} point - {
@@ -571,6 +581,9 @@
 
 <style scoped lang='scss'>
     .magnifier-container {
+        border: 1px;
+        border-color: #9c9c9c;
+        border-style: groove;
         position: relative;
     }
     .preview {
