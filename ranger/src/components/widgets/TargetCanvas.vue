@@ -6,7 +6,7 @@
             :style='previewImageStyle'
             v-touch:moving='onTouch'
             v-touch:start='onTouch'
-            v-touch:end='createHit'
+            v-touch:end='() => { createHit(touchPos) }'
         >
             <div v-show='magnify'>
                 <v-img
@@ -14,10 +14,10 @@
                     :style='magnifyingGlassStyle'
                 />
                 <span class='coordinates x' :style='xCoordinatesStyle'>
-                    {{ distanceFromCenter(touchPos).xDistance }}
+                    {{ parseInt(distanceFromCenter(touchPos).xDistance) }}
                 </span>
                 <span class='coordinates y' :style='yCoordinatesStyle'>
-                    {{ distanceFromCenter(touchPos).yDistance }}
+                    {{ parseInt(distanceFromCenter(touchPos).yDistance) }}
                 </span>
                 <span class='back line' :style='backHorLineStyle'></span>
                 <span class='back line' :style='backVerLineStyle'></span>
@@ -26,13 +26,20 @@
                 <span class='crosshair' :style='crosshairStyle'></span>
             </div>
         </v-img>
+        <span
+            v-if='$props.markCenter'
+            class='center-mark'
+            :style='centerMarkStyle'
+        />
         <ul>
             <li v-for='i in points.length' :key='i'>
                 <v-img
-                    :class="magnify ? 'hit transparent' : 'hit opaque'"
+                    :class='findHitClass(points[i - 1])'
                     :src='hitIcon'
                     :style='createHitStyle(points[i - 1])'
-                    v-longclick='() => { deleteHit(points[i - 1]) }'
+                    v-longclick='() => { deleteHit(points[i - 1]); }'
+                    v-touch:start=' () => { touchedHit = points[i - 1]; }'
+                    v-touch:end=' () => { touchedHit = null; }'
                 />
             </li>
         </ul>
@@ -47,10 +54,37 @@
 
     export default {
         props: {
+            /**
+             * @summary The URL of the source image.
+             * @default undefined
+             */
             src: String,
+            /**
+             * @summary Maximum number of available hits.
+             * @default infinite
+             */
             hits: Number,
+            /**
+             * @summary Maximum size of the image.
+             * @default contained
+             */
             size: Number,
-            center: Object
+            /**
+             * @summary The most valuable point in the target.
+             * @default Object { x: <Number>{image's x center}, y: <Number>{image's y center} }
+             */
+            mostValuable: Object,
+            /**
+             * @summary Pre-defined points in the target.
+             * @example [ { x: <Number>{single hit x}, y: <Number>{single hit y} }, ... ]
+             * @default undefined
+             */
+            predefPoints: Array(Object),
+            /**
+             * @summary Mark the center of the target.
+             * @default false
+             */
+            markCenter: Boolean
         },
         data() {
             return {
@@ -58,6 +92,7 @@
                 zoomImgId: 'zoomImgId',
                 srcImage: null,
                 zoomUrl: null,
+                touchedHit: null,
                 magnify: false,
                 imageLoaded: false,
                 points: [],
@@ -69,7 +104,7 @@
             }
         },
         created() {
-            if (this.$props.src) this.implementImages();
+            this.onCreated()
 
             //update preview image size every time the window is resizing
             window.addEventListener('resize', () => {
@@ -77,7 +112,7 @@
             });
         },
         watch: {
-            src(url) { console.log('watch src'); if (url) { console.log('of url ', url); this.implementImages();} }
+            src() { this.onCreated(); }
         },
         computed: {
             hitIcon() {
@@ -172,8 +207,9 @@
                 return frontLine;
             },
             crosshairStyle() {
-                let left = this.touchPos.x - 3;
-                let top = this.touchPos.y - 3;
+                let pointWidth = 3;
+                let left = this.touchPos.x - pointWidth;
+                let top = this.touchPos.y - pointWidth;
 
                 return {
                     left: left + 'px',
@@ -183,7 +219,7 @@
             xCoordinatesStyle() {
                 let offsetLeft = this.magnifierBorderSize * 1.8;
                 let left = offsetLeft + this.touchPos.x - this.magnifierSize / 2;
-                let top = this.touchPos.y - COORDINATES_FONT_SIZE * 1.8;
+                let top = this.touchPos.y - COORDINATES_FONT_SIZE * 1.5;
 
                 return {
                     left: left + 'px',
@@ -191,16 +227,59 @@
                 };
             },
             yCoordinatesStyle() {
-                let left = this.touchPos.x;
-                let top = this.touchPos.y;
+                let left = this.touchPos.x + COORDINATES_FONT_SIZE * .3;
+                let top = this.touchPos.y - this.magnifierSize / 2 + this.magnifierBorderSize;
 
                 return {
                     left: left + 'px',
                     top: top + 'px'
                 };
+            },
+            centerMarkStyle() {
+                let pointWidth = 3;
+                let x = this.imageData.offsetLeft + this.center.x - pointWidth;
+                let y = this.imageData.offsetTop + this.center.y - pointWidth;
+
+                return {
+                    left: x + 'px',
+                    top: y + 'px'
+                };
+            },
+            hitsFull() {
+                let hits = this.$props.hits;
+                return hits && this.points.length >= hits;
+            },
+            center() {
+                let center = this.$props.mostValuable;
+
+                if (!center) {
+                    let x = this.imageData.width / 2;
+                    let y = this.imageData.height / 2;
+                    center = { x, y };
+                }
+
+                return center;
             }
         },
         methods: {
+            /**
+             * Activate when the component is created
+             */
+            onCreated: function() {
+                if (this.$props.src) this.implementImages();
+
+                //create predefined hits
+                let predefinedPoints = this.$props.predefPoints;
+
+                if (predefinedPoints) {
+                    for (let point of predefinedPoints) {
+                        let x = point.x;
+                        let y = point.y;
+
+                        if (x && y) this.createHit(point);
+                    }
+                }
+            },
             /**
              * Calculate the data needed to render the preview and zoom images.
              */
@@ -212,7 +291,6 @@
                     this.imageData = this.calcPreviewImageData();
                     this.zoomImageSize = this.calcZoomImageSize(ZOOM_RATIO);
                     this.imageLoaded = true;
-                    console.log('image loaded');
                 };
             },
             /**
@@ -288,8 +366,8 @@
              * @returns {Boolean} True if the point is within the target image.
              */
             inTargetBoundaries: function(point) {
-                let maxX = this.imageData.offsetLeft * 2 + this.imageData.width;
-                let maxY = this.imageData.offsetTop * 2 + this.imageData.height;
+                let maxX = this.imageData.width;
+                let maxY = this.imageData.height;
 
                 return this.imageLoaded && point.x >= 0 && point.y >= 0
                     && point.x <= maxX && point.y <= maxY;
@@ -327,6 +405,10 @@
             /**
              * Create a hit point on the image and emit an event to the parent.
              * 
+             * @param point - point: <Object>{
+             *                                   x: <Number>{point x coordinate},
+             *                                   y: <Number>{point y coordinate}
+             *                                },
              * @emits hit - {
              *                 point: <Object>{
              *                                   x: <Number>{point x coordinate},
@@ -341,12 +423,10 @@
              *                                       }
              *              }
              */
-            createHit: function() {
-                let hits = this.$props.hits;
+            createHit: function(point) {
                 this.magnify = false;
 
-                if (this.points.length < hits || !hits) {
-                    let point = { x: this.touchPos.x, y: this.touchPos.y };
+                if (!this.hitsFull) {
                     let hit = this.distanceFromCenter(point);
                     this.points.push(point);
 
@@ -397,6 +477,25 @@
                 };
             },
             /**
+             * Find the proper class for a hit.
+             * 
+             * @param {Object} point - {
+             *                            x: <Number>{point x coordinate},
+             *                            y: <Number>{point y coordinate}
+             *                         }
+             * @returns {String} The proper class name for the hit (for css purposes).
+             */
+            findHitClass: function(point) {
+                let cssClass = 'hit ';
+                let pointTouched = point == this.touchedHit;
+                let reachedMaxHits = this.hitsFull;
+
+                if (this.magnify) cssClass += reachedMaxHits ? 'highlight' : 'transparent'
+                else cssClass += pointTouched ? 'tint' : 'opaque';
+
+                return cssClass;
+            },
+            /**
              * Calculate the disntance of a point from the target's center.
              * If a center (most valuable point) is not provided via props,
              * the center is by default the actual image's center.
@@ -417,18 +516,10 @@
              *                   }
              */
             distanceFromCenter: function(point) {
-                let center = this.$props.center;
-                if (!center) 
-                {
-                    let x = this.imageData.width / 2;
-                    let y = this.imageData.height / 2;
-                    center = { x, y };
-                }
-
-                let xPow = Math.pow(point.x - center.x, 2);
-                let yPow = Math.pow(point.y - center.y, 2);
-                let xPositive = point.x >= center.x;
-                let yPositive = point.y >= center.y;
+                let xPow = Math.pow(point.x - this.center.x, 2);
+                let yPow = Math.pow(point.y - this.center.y, 2);
+                let xPositive = point.x >= this.center.x;
+                let yPositive = point.y >= this.center.y;
                 let quarter;
 
                 if (xPositive && !yPositive) quarter = 1;
@@ -437,10 +528,10 @@
                 else quarter = 4;
 
                 return {
-                    center,
+                    center: this.center,
                     distance: Math.sqrt(xPow + yPow),
-                    xDistance: Math.abs(point.x - center.x),
-                    yDistance: Math.abs(point.y - center.y),
+                    xDistance: Math.abs(point.x - this.center.x),
+                    yDistance: Math.abs(point.y - this.center.y),
                     quarter: quarter
                 }
             },
@@ -467,7 +558,7 @@
              *                           }
              */
             getZoomCursorPosition: function(event) {
-                if (!event.touches.length) return;
+                if (!event.touches || !event.touches.length) return this.touchPos;
 
                 let touchEv = event.touches[0];
                 let docElem = document.documentElement;
@@ -581,9 +672,6 @@
 
 <style scoped lang='scss'>
     .magnifier-container {
-        border: 1px;
-        border-color: #9c9c9c;
-        border-style: groove;
         position: relative;
     }
     .preview {
@@ -610,6 +698,7 @@
         right: 0;
     }
     .coordinates {
+        font-size: 12px;
         position: absolute;
         color: #ffffff;
         -webkit-text-fill-color: white;
@@ -640,14 +729,32 @@
         border-width: 3px;
         border-color: #f70000c5;
         border-style: groove;
+        border-radius: 50%;
     }
     li {
         list-style-type: none;
+    }
+    .center-mark {
+        position: absolute;
+        border-width: 3px;
+        border-color: #ff0000;
+        border-style: groove;
+        border-radius: 50%;
+        outline-width: 1px;
+        outline-style: dashed;
+        outline-color: #ffffff;
+        filter: drop-shadow(0px 0px 3px #ff0000);
     }
     .hit.opaque {
         transition: opacity .6s;
     }
     .hit.transparent {
         opacity: .1;
+    }
+    .hit.highlight {
+        filter: invert(100%) drop-shadow(0px 0px 3px #e90d0d);
+    }
+    .hit.tint {
+        filter: invert(100%) drop-shadow(0px 0px 3px #20d82f);
     }
 </style>
