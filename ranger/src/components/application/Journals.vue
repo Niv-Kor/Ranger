@@ -12,25 +12,13 @@
             Use the '+' button below<br>
             to get started.
         </p>
-
-        <target-canvas
-            :src='src'
-            :hits=50
-            @hit='hit'
-        />
     </v-container>
 </template>
 
 <script>
     import { mapGetters } from 'vuex';
-    import TargetCanvas from '../widgets/TargetCanvas';
-
-    const ARCHERY_CONTEXT = require.context('../../assets/targets/large/archery', false, /\.png$/);
 
     export default {
-        components: {
-            TargetCanvas
-        },
         data() {
             return {
                 list: [],
@@ -41,14 +29,6 @@
             ...mapGetters({
                 colors: 'getColors'
             }),
-            src() {
-                return ARCHERY_CONTEXT('./fita.png');
-            },
-        },
-        methods: {
-            hit(data) {
-                console.log(data);
-            }
         }
     }
 </script>

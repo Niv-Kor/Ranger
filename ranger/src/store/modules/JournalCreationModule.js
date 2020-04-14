@@ -7,7 +7,6 @@ const state = {
     useUploadedCustomTarget: false,
     useCustomDiscipline: false,
     newJournaluploadedTarget: {
-        url: '',
         base64Data: '',
         chosenName: ''
     }
@@ -37,6 +36,11 @@ const getters = {
     },
     useCustomDiscipline: state => {
         return state.useCustomDiscipline;
+    },
+    getCustomTargetFileType: (_, getters) => {
+        let name = getters.getNewJournalUploadedTarget.chosenName;
+        let nameSplit = name.split('.');
+        return nameSplit[nameSplit.length - 1];
     }
 };
 

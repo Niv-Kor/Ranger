@@ -81,7 +81,7 @@ async function validateUser(socket, user) {
  *                            customTarget: {
  *                                            base64Img: <String>{base64 represntation of the image},
  *                                            chosenName: <String>{name of the image}
- *                                            fileType: <String>{image file type}
+ *                                            url: <String>{image file url}
  *                                          }
  *                            isTargetCustom: <Boolean>{true if the target is customized},
  *                        }

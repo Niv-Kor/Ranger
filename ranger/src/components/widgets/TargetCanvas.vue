@@ -75,11 +75,16 @@
              */
             mostValuable: Object,
             /**
-             * @summary Pre-defined points in the target.
+             * @summary Pre-defined hits in the target.
              * @example [ { x: <Number>{single hit x}, y: <Number>{single hit y} }, ... ]
              * @default undefined
              */
-            predefPoints: Array(Object),
+            predefHits: Array(Object),
+            /**
+             * @summary Use the center point as a pre-defined hit.
+             * @default false
+             */
+            predefCenter: Boolean,
             /**
              * @summary Mark the center of the target.
              * @default false
@@ -258,6 +263,7 @@
                     center = { x, y };
                 }
 
+                console.log('center ', center);
                 return center;
             }
         },
@@ -265,11 +271,11 @@
             /**
              * Activate when the component is created
              */
-            onCreated: function() {
-                if (this.$props.src) this.implementImages();
+            onCreated: async function() {
+                if (this.$props.src) await this.implementImages();
 
-                //create predefined hits
-                let predefinedPoints = this.$props.predefPoints;
+                //create pre-defined hits
+                let predefinedPoints = this.$props.predefHits;
 
                 if (predefinedPoints) {
                     for (let point of predefinedPoints) {
@@ -279,19 +285,27 @@
                         if (x && y) this.createHit(point);
                     }
                 }
+
+                //add the center point as a pre-defined hit
+                if (this.$props.predefCenter)
+                    this.createHit(this.center);
             },
             /**
              * Calculate the data needed to render the preview and zoom images.
              */
-            implementImages: function() {
+            implementImages: async function() {
                 //load image
                 this.srcImage = new Image();
                 this.srcImage.src = this.$props.src;
-                this.srcImage.onload = () => {
-                    this.imageData = this.calcPreviewImageData();
-                    this.zoomImageSize = this.calcZoomImageSize(ZOOM_RATIO);
-                    this.imageLoaded = true;
-                };
+                
+                return new Promise((res) => {
+                    this.srcImage.onload = async () => {
+                        this.imageData = this.calcPreviewImageData();
+                        this.zoomImageSize = this.calcZoomImageSize(ZOOM_RATIO);
+                        this.imageLoaded = true;
+                        res();
+                    }
+                });
             },
             /**
              * Activate when a touch on the image occurs.

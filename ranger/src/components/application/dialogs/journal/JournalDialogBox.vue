@@ -32,7 +32,7 @@
                 >
                     <select-journal-discipline v-show='currentTab == 0' />
                     <select-journal-target v-show='currentTab == 1' />
-                    <select-journal-target-config v-show='currentTab == 2' />
+                    <div :key='currentTab'><select-journal-target-config v-show='currentTab == 2' /></div>
                     <select-journal-name v-show='currentTab == 3' />
                 </v-card>
                 <v-container>
@@ -157,7 +157,7 @@
                     case 1:
                         //need to enter a valid custom target
                         if (this.useCustomTarget)
-                            return !!this.customTarget.url;
+                            return !!this.customTarget.base64Data;
                         else return true;
 
                     case 2:

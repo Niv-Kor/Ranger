@@ -7,13 +7,43 @@
             >
                 Custom target configuration
             </p>
-        </v-container>
-        <v-container>
-            <target-canvas
-                :src='customTarget.url'
-                :size=300
-                :hits=1
-            />
+            <v-tabs
+                :background-color='colors.primary'
+                class='elevation-3'
+                grow
+                centered
+                :color='"white"'
+                show-arrows
+                :slider-color='colors.primaryDark'
+            >
+                <!-- center tab -->
+                <v-tab href='#center'>Center</v-tab>
+                <v-tab-item value='center'>
+                    <v-card
+                        flat
+                        tile
+                    >
+                        <v-container>
+                            <target-canvas
+                                :src='customTarget.base64Data'
+                                :hits=1
+                                mark-center
+                            />
+                        </v-container>
+                    </v-card>
+                </v-tab-item>
+
+                <!-- values tab -->
+                <v-tab href='#values'>Values</v-tab>
+                <v-tab-item value='values'>
+                    <v-card
+                        flat
+                        tile
+                    >
+                        
+                    </v-card>
+                </v-tab-item>
+            </v-tabs>
         </v-container>
     </div>
 </template>
@@ -31,9 +61,6 @@
                 center: { x: 0, y: 0 }
             }
         },
-        created() {
-            console.log('src: ', this.customTarget.url);
-        },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
@@ -46,5 +73,6 @@
 <style scoped>
     .subtitle {
         font-family: 'comfortaa';
+        margin-top: -10%;
     }
 </style>

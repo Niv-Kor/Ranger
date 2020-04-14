@@ -19,15 +19,16 @@
                 class='nav-arrow'
                 size=64
                 :color='colors.primary'
-                :disabled='selectedTarget == 0'
+                :disabled='selectedTargetIndex == 0'
                 @click='decrementTarget'
             >
                 mdi-menu-left
             </v-icon>
             <v-card
                 class='card'
-                width=130
-                height=130
+                id='card'
+                width=160
+                height=160
                 outlined
                 shaped
                 color='blue-grey lighten-5'
@@ -40,13 +41,22 @@
                         align='center'
                         justify='center'
                     >
-                        <v-col>
+                        <v-col v-if='!selectedTarget.custom'>
                             <v-img
-                                v-if='getDisciplineProperty()[selectedTarget] && getDisciplineProperty()[selectedTarget].src.icon'
-                                class='target-icon'
-                                :src='getDisciplineProperty()[selectedTarget].src.icon'
-                                max-width=90
-                                max-height=90
+                                v-if='selectedTarget && selectedTarget.src.icon'
+                                class='thumbnail'
+                                :src='selectedTarget.src.icon'
+                                max-width=120
+                                max-height=120
+                            />
+                        </v-col>
+                        <v-col v-else>
+                            <cropper
+                                v-if='selectedTarget.src.icon'
+                                class='thumbnail custom'
+                                :src='selectedTarget.src.icon'
+                                :stencilProps="{ aspectRatio: 1 }"
+                                @change='onCustomTargetChange'
                             />
                         </v-col>
                     </v-row>
@@ -56,7 +66,7 @@
                 class='nav-arrow'
                 size=64
                 :color='colors.primary'
-                :disabled='selectedTarget >= getDisciplineProperty().length - 1'
+                :disabled='selectedTargetIndex >= getDisciplineProperty().length - 1'
                 @click='incrementTarget'
             >
                 mdi-menu-right
@@ -68,7 +78,7 @@
         >
             <v-row>
                 <v-text-field
-                    v-if='getDisciplineProperty()[selectedTarget] && !getDisciplineProperty()[selectedTarget].custom'
+                    v-if='selectedTarget && !selectedTarget.custom'
                     class='label-target colored'
                     min-width=100
                     height=10
@@ -76,17 +86,18 @@
                     rounded
                     outlined
                     disabled
-                    :placeholder='getDisciplineProperty()[selectedTarget].name'
+                    :placeholder='selectedTarget.name'
                     :background-color='colors.neutral'
                     :color='colors.neutral'
                 />
                 <v-file-input
                     v-else
-                    v-model='customTargetThumbnail'
                     class='label-target upload'
                     accept='image/png, image/jpeg'
-                    :placeholder='getUploadPlaceholder()'
-                    @change='onTargetUploaded'
+                    max-width=120
+                    max-height=120
+                    :placeholder='fileUploadPlaceholder'
+                    @change='onCustomTargetUpload'
                 />
             </v-row>
         </v-container>
@@ -95,14 +106,18 @@
 
 <script>
     import { mapGetters } from 'vuex';
+    import { Cropper } from 'vue-advanced-cropper'
     
     const ARCHERY_CONTEXT = require.context('../../../../assets/targets/small/archery', false, /\.png$/);
     const FIREARM_CONTEXT = require.context('../../../../assets/targets/small/firearm', false, /\.png$/);
 
     export default {
+        components: {
+            Cropper,
+        },
         data() {
             return {
-                selectedTarget: 0,
+                selectedTargetIndex: 0,
                 customTargetThumbnail: null,
                 targets: {}
             }
@@ -174,8 +189,8 @@
 
             //store first target
             if (!this.storedTarget) {
-                this.selectedTarget = 0;
-                let firstTarget = this.getDisciplineProperty()[this.selectedTarget].src.name;
+                this.selectedTargetIndex = 0;
+                let firstTarget = this.selectedTarget.src.name;
                 this.$store.commit('setNewJournalTarget', firstTarget);
                 this.$store.commit('setNewJournalTargetResetFlag', false);
             }
@@ -186,8 +201,8 @@
             //reset target selection back to 0 if discipline changes
             if (this.targetResetFlag) {
                 this.customTargetThumbnail = null;
-                this.selectedTarget = 0;
-                let firstTarget = discipProperty[this.selectedTarget].src.name;
+                this.selectedTargetIndex = 0;
+                let firstTarget = discipProperty[this.selectedTargetIndex].src.name;
                 this.$store.commit('setNewJournalTarget', firstTarget);
                 this.$store.commit('setNewJournalTargetResetFlag', false);
                 this.$store.commit('setNewJournalUploadedTargetURL', '');
@@ -201,7 +216,7 @@
             }
 
             //determine the use of a custom target
-            let useCustom = discipProperty[this.selectedTarget].custom;
+            let useCustom = discipProperty[this.selectedTargetIndex].custom;
             this.$store.commit('setUseUploadedCustomTarget', useCustom);
         },
         computed: {
@@ -210,11 +225,22 @@
                 storedDiscipline: 'getNewJournalDiscipline',
                 storedTarget: 'getNewJournalTarget',
                 uploadedTarget: 'getNewJournalUploadedTarget',
+                uploadedTargetFileType: 'getCustomTargetFileType',
                 targetResetFlag: 'getNewJournalTargetResetFlag'
             }),
+            selectedTarget() {
+                return this.getDisciplineProperty()[this.selectedTargetIndex];
+            },
+            fileUploadPlaceholder() {
+                let defaultMsg = 'Upload a custom image';
+                let uploadedName = this.uploadedTarget.chosenName;
+                let fileType = uploadedName.split('.')[1];
+                uploadedName = uploadedName.substr(0, 15) + '...' + fileType;
+                return uploadedName ? uploadedName : defaultMsg;
+            },
         },
         watch: {
-            selectedTarget(value) {
+            selectedTargetIndex(value) {
                 let property = this.getDisciplineProperty();
 
                 if (property) {
@@ -225,18 +251,18 @@
         },
         methods: {
             incrementTarget: function() {
-                if (this.selectedTarget < this.getDisciplineProperty().length - 1)
-                    this.selectedTarget++;
+                if (this.selectedTargetIndex < this.getDisciplineProperty().length - 1)
+                    this.selectedTargetIndex++;
             },
             decrementTarget: function() {
-                if (this.selectedTarget > 0)
-                    this.selectedTarget--;
+                if (this.selectedTargetIndex > 0)
+                    this.selectedTargetIndex--;
             },
             getDisciplineProperty: function() {
                 return this.targets['' + this.storedDiscipline];
             },
             getLabelWidthStyle: function() {
-                let property = this.getDisciplineProperty()[this.selectedTarget];
+                let property = this.selectedTarget;
 
                 if (property) {
                     let width = property.labelWidth;
@@ -244,28 +270,29 @@
                 }
                 else return null;
             },
-            getUploadPlaceholder: function() {
-                let uploadedName = this.uploadedTarget.chosenName;
-                return uploadedName ? uploadedName : 'Upload a custom image';
-            },
-            onTargetUploaded: async function() {
-				let file = await event.target.files[0];
+            onCustomTargetUpload: async function() {
+                let file = await event.target.files[0];
                 let reader = new FileReader();
 
-                //upload image preview thumbnail
-                let url = URL.createObjectURL(file);
-                this.getDisciplineProperty()[this.selectedTarget].src.icon = url;
-                this.getDisciplineProperty()[this.selectedTarget].src.name = file.name;
-
+                //extract base64 data
                 reader.onload = (ev) => {
                     let imageData = ev.target.result;
-                    this.$store.commit('setNewJournalUploadedTargetURL', url);
-                    this.$store.commit('setNewJournalUploadedTargetData', imageData);
-                    this.$store.commit('setNewJournalUploadedTargetName', file.name);
+                    this.saveCustomImage(imageData, file.name);
                 };
 
                 await reader.readAsDataURL(file);
-            }
+            },
+            onCustomTargetChange: async function(event) {
+                let canvas = event.canvas;
+                let base64 = canvas.toDataURL('image/' + this.uploadedTargetFileType);
+                this.$store.commit('setNewJournalUploadedTargetData', base64);
+            },
+            saveCustomImage: function(base64, fileName) {
+                this.selectedTarget.src.icon = base64;
+                this.selectedTarget.src.name = fileName;
+                this.$store.commit('setNewJournalUploadedTargetData', base64);
+                this.$store.commit('setNewJournalUploadedTargetName', fileName);
+            },
         }
     }
 </script>
@@ -292,7 +319,13 @@
         margin-top: -10px;
         font-size: 14px;
     }
-    .target-icon {
+    .thumbnail {
+        margin: auto;
+    }
+    .thumbnail.custom {
+        max-width: 120px;
+        max-height: 120px;
+        background: #dddddd;
         margin: auto;
     }
 </style>
