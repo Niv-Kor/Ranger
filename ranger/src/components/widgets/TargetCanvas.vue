@@ -101,8 +101,8 @@
              * The most valuable point in the target.
              * 
              * @example Object {
-             *                    x: <Number>{hit's x coordinate},
-             *                    y: <Number>{hit's y coordinate}
+             *                    x: <Number>{hit's x coordinate (in percentage from 0)},
+             *                    y: <Number>{hit's y coordinate (in percentage from 0)}
              *                 },
              */
             bullseye: {
@@ -115,8 +115,8 @@
              * 
              * @example Array [
              *                   Object {
-             *                             x: <Number>{hit's x coordinate},
-             *                             y: <Number>{hit's y coordinate}
+             *                             x: <Number>{hit's x coordinate (in percentage from 0)},
+             *                             y: <Number>{hit's y coordinate (in percentage from 0)}
              *                          },
              *                   ...
              *                ]
@@ -322,15 +322,19 @@
                 return hits && this.points.length >= hits;
             },
             center() {
-                let center = this.$props.bullseye;
+                let x, y;
+                let predefinedBullseye = this.$props.bullseye;
 
-                if (!center) {
-                    let x = this.imageData.width / 2;
-                    let y = this.imageData.height / 2;
-                    center = { x, y };
+                if (predefinedBullseye) {
+                    x = predefinedBullseye.x * this.imageData.width / 100;
+                    y = predefinedBullseye.y * this.imageData.height / 100;
                 }
-                
-                return center;
+                else {
+                    x = this.imageData.width / 2;
+                    y = this.imageData.height / 2;
+                }
+
+                return { x, y };
             },
             displayCirclesAmount() {
                 if (!this.imageLoaded || !this.$props.displayValueCircles) return 0;
@@ -425,14 +429,12 @@
                 immediate: true,
                 deep: true,
                 handler(points) {
-                    console.log('defined');
-
                     if (points) {
                         for (let point of points) {
-                            let x = point.x;
-                            let y = point.y;
+                            let x = point.x * this.imageData.width / 100;
+                            let y = point.y * this.imageData.height / 100;
 
-                            if (x && y) this.createHit(point);
+                            if (x && y) this.createHit({x, y});
                         }
                     }
                 }
@@ -450,10 +452,10 @@
 
                 if (predefinedPoints) {
                     for (let point of predefinedPoints) {
-                        let x = point.x;
-                        let y = point.y;
+                        let x = point.x * this.imageData.width / 100;
+                        let y = point.y * this.imageData.height / 100;
 
-                        if (x && y) this.createHit(point);
+                        if (x && y) this.createHit({x, y});
                     }
                 }
 
@@ -617,11 +619,13 @@
 
                 if (!this.hitsFull) {
                     let hit = this.distanceFromCenter(point);
+                    let xPerc = point.x / this.imageData.width * 100;
+                    let yPerc = point.y / this.imageData.height * 100;
                     this.points.push(point);
 
                     //emit an object to the parent
                     this.$emit('hit', {
-                        point: point,
+                        point: { x: xPerc, y: yPerc },
                         bullseyeData: hit
                     });
                 }
