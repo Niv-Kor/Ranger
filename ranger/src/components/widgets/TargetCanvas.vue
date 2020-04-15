@@ -34,10 +34,12 @@
         <ul>
             <li v-for='i in displayCirclesAmount' :key='i'>
                 <span
+                    v-if='displayCirclesAmount > 0'
                     class='value-circle'
                     :style='createValueCircleStyle(displayCirclesAmount - (i - 1))'
                 />
                 <span
+                    v-if='displayCirclesAmount > 0'
                     class='value-label'
                     :style='createValueLabelStyle(displayCirclesAmount - (i - 1))'
                 >
@@ -331,7 +333,7 @@
                 return center;
             },
             displayCirclesAmount() {
-                if (!this.imageLoaded) return 0;
+                if (!this.imageLoaded || !this.$props.displayValueCircles) return 0;
 
                 let actualCenter = { x: this.imageData.width / 2, y: this.imageData.height / 2 };
                 let xDist = Math.abs(actualCenter.x - this.center.x);
@@ -341,7 +343,6 @@
                 let edgeDistance = Math.min(xDist, yDist);
                 let boxSize = (this.imageData.width + this.imageData.height) / 2;
                 let distancePerc = edgeDistance / boxSize * 100;
-                console.log('dist perc: ', distancePerc);
                 let dispObj = this.$props.displayValueCircles;
 
                 if (dispObj) {
