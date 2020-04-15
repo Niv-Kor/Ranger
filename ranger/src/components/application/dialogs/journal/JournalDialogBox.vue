@@ -3,7 +3,7 @@
         :value='model'
         persistent
     >
-        <v-card height=480>
+        <v-card class='main-card' height=580>
             <v-app-bar :color='colors.secondary'>
                 <v-btn
                     class='close-btn'
@@ -27,7 +27,7 @@
             <v-container>
                 <v-card
                     class='inner-card'
-                    height=260
+                    height=360
                     flat
                 >
                     <select-journal-discipline v-show='currentTab == 0' />
@@ -172,6 +172,9 @@
 </script>
 
 <style>
+    .main-card {
+        overflow-x: hidden;
+    }
     .head {
         font-size: 30px;
         font-family: 'comfortaa';

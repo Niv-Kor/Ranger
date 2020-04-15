@@ -57,9 +57,6 @@ const mutations = {
     setNewJournalTarget: (state, value) => {
         state.newJournalDefaultTarget = value;
     },
-    setNewJournalUploadedTargetURL: (state, value) => {
-        state.newJournaluploadedTarget.url = value;
-    },
     setNewJournalUploadedTargetData: (state, value) => {
         state.newJournaluploadedTarget.base64Data = value;
     },
@@ -86,7 +83,6 @@ const actions = {
         commit('setNewJournalTargetResetFlag', false);
         commit('setUseUploadedCustomTarget', false);
         commit('setUseCustomDiscipline', false);
-        commit('setNewJournalUploadedTargetURL', '');
         commit('setNewJournalUploadedTargetData', '');
         commit('setNewJournalUploadedTargetName', '');
     },

@@ -205,7 +205,6 @@
                 let firstTarget = discipProperty[this.selectedTargetIndex].src.name;
                 this.$store.commit('setNewJournalTarget', firstTarget);
                 this.$store.commit('setNewJournalTargetResetFlag', false);
-                this.$store.commit('setNewJournalUploadedTargetURL', '');
                 this.$store.commit('setNewJournalUploadedTargetData', '');
                 this.$store.commit('setNewJournalUploadedTargetName', '');
                 
@@ -234,9 +233,13 @@
             fileUploadPlaceholder() {
                 let defaultMsg = 'Upload a custom image';
                 let uploadedName = this.uploadedTarget.chosenName;
-                let fileType = uploadedName.split('.')[1];
-                uploadedName = uploadedName.substr(0, 15) + '...' + fileType;
-                return uploadedName ? uploadedName : defaultMsg;
+
+                if (uploadedName) {
+                    let fileType = uploadedName.split('.')[1];
+                    uploadedName = uploadedName.substr(0, 15) + '...' + fileType;
+                    return uploadedName;
+                }
+                else return defaultMsg;
             },
         },
         watch: {
