@@ -8,6 +8,7 @@ import Vue2TouchEvents from 'vue2-touch-events';
 import VueKonva from 'vue-konva';
 import { longClickDirective } from 'vue-long-click'
 import ImageMagnifier from 'vue-image-magnifier';
+import FileSelector from 'vue-file-selector';
 
 const ROUTER = new VueRouter({
   routes: ROUTES
@@ -19,6 +20,7 @@ Vue.directive('longclick', longClickInstance);
 Vue.config.productionTip = false;
 Vue.use(Vue2TouchEvents);
 Vue.use(ImageMagnifier);
+Vue.use(FileSelector);
 Vue.use(VueRouter);
 Vue.use(VueKonva);
 

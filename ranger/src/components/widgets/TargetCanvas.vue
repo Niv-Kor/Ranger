@@ -338,14 +338,10 @@
                 return hits && this.points.length >= hits;
             },
             center() {
-                console.log('w h', this.imageData.width, this.imageData.height)
-
                 let x, y;
                 let predefinedBullseye = this.$props.bullseye;
-                console.log('bulllssseyee 0:', this.$props.bullseye);
 
                 if (predefinedBullseye) {
-                    console.log('bulllssseyee', predefinedBullseye);
                     x = predefinedBullseye.x * this.imageData.width / 100;
                     y = predefinedBullseye.y * this.imageData.height / 100;
                 }
@@ -416,10 +412,8 @@
                 }
 
                 //add the center point as a pre-defined hit
-                if (this.$props.predefineCenter) {
-                    console.log('in mounted center: ', this.center)
+                if (this.$props.predefineCenter)
                     this.createHit(this.center);
-                }
             },
             /**
              * Calculate the data needed to render the preview and zoom images.

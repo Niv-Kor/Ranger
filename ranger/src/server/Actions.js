@@ -30,6 +30,21 @@ async function runProcedure(proc, params) {
     return execution.recordset;
 }
 
+async function targetExists(user, discipline, name) {
+    let params = [
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: discipline, options: {} },
+        { name: 'image_name', type: CONSTANTS.SQL.VarChar(64), value: name, options: {} }
+    ];
+
+    console.log('here check')
+    let query = await runProcedure('TargetExists', params);
+    let exists = query[0]['target_exists'];
+    console.log('targetExistanceCheck: ', query);
+    console.log('exists: ', exists);
+    return exists;
+}
+
 /**
  * Sign a user as a new entry in the data base.
  * Let the client know if the procedure succeeded.
@@ -124,7 +139,8 @@ async function createJournal(socket, data) {
         let destName = data.user + '_' + targetName;
         let dir = '/db/target/custom/';
         uploadedTargetDestPath = dir + destName + '.' + imageType;
-        let targetExists = await targetExists(data.user, data.discipline, targetName);
+        let targetExists = await this.targetExists(data.user, data.discipline, targetName);
+        console.log('after');
         
         //custom target exists - reject
         if (targetExists) {
@@ -169,6 +185,7 @@ async function createJournal(socket, data) {
     ];
 
     let targetIdQuery = await runProcedure('GetTargetId', targetIdExtractionParams);
+    console.log('targetIdQuery:' , targetIdQuery);
     let targetId = targetIdQuery[0]['id'];
 
     let journalParams = [
@@ -191,16 +208,4 @@ async function createJournal(socket, data) {
                 message: 'Unknown error: ' + err
             });
         })
-}
-
-async function targetExists(user, discipline, name) {
-    let tagetExistanceCheckParams = [
-        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: discipline, options: {} },
-        { name: 'image_name', type: CONSTANTS.SQL.VarChar(64), value: name, options: {} }
-    ];
-
-    let targetExistanceCheck = await runProcedure('TargetExists', tagetExistanceCheckParams);
-    let targetExists = targetExistanceCheck[0]['target_exists'];
-    return targetExists;
 }
