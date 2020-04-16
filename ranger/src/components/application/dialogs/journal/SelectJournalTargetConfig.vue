@@ -5,14 +5,14 @@
                 class='subtitle'
                 align=center
             >
-                Custom target configuration
+                Target customization
             </p>
             <v-tabs
+                class='tabs elevation-2'
                 :background-color='colors.primary'
-                class='elevation-1'
                 grow
                 centered
-                :color='"white"'
+                color='white'
                 height=30
                 show-arrows
                 :slider-color='colors.primaryDark'
@@ -31,13 +31,23 @@
                                 Tap and drag to mark the bullseye of the target
                             </div>
                             <div class='tab1-info sub' align='center'>
-                                Tap longer to cancel
+                                Touch longer to cancel
                             </div>
                             <target-canvas
+                                v-if='customTarget.base64Data'
+                                class='target-canvas'
                                 :src='customTarget.base64Data'
                                 :hits=1
                                 mark-center
+                                :bullseye='customTarget.center'
+                                :predefine-center='!!customTarget.center'
+                                :imageStyle="{
+                                    outlineWidth: 2 + 'px',
+                                    outlineStyle: 'dashed',
+                                    outlineColor: colors.neutral
+                                }"
                                 @hit='saveNewCenter'
+                                @delete='clearCenter'
                             />
                         </v-container>
                     </v-card>
@@ -53,16 +63,16 @@
                     >
                         <v-container>
                             <div class='tab1-info main' align='center'>
-                                Values distribution
+                                Select the distribution of values from the bullseye
                             </div>
                             <v-slider
-                                v-model='circlesAmount'
+                                v-model='customTarget.rings'
                                 :min=1
-                                :max=20
+                                :max=10
                                 dense
                                 ticks
                                 thumb-label
-                                label='Circles'
+                                label='Rings'
                                 :color='colors.primaryDark'
                                 :track-color='colors.primary'
                                 :thumb-color='colors.neutral'
@@ -70,8 +80,9 @@
                                 <template v-slot:thumb-label='{ value }'>{{ value }}</template>
                             </v-slider>
                             <v-slider
-                                v-model='circlesDiameter'
-                                :min=5
+                                class='diam-slider'
+                                v-model='customTarget.ringDiameter'
+                                :min=8
                                 :max=100
                                 dense
                                 thumb-label
@@ -83,14 +94,20 @@
                                 <template v-slot:thumb-label='{ value }'>{{ value }}%</template>
                             </v-slider>
                             <target-canvas
+                                v-if='customTarget.base64Data'
+                                class='target-canvas'
                                 :src='customTarget.base64Data'
                                 :hits=1
-                                mark-center
                                 read-only
-                                :bullseye='center'
-                                :display-value-circles="{
-                                    circles: circlesAmount,
-                                    diameter: circlesDiameter
+                                :bullseye='customTarget.center'
+                                :display-value-rings="{
+                                    rings: customTarget.rings,
+                                    diameter: customTarget.ringDiameter
+                                }"
+                                :imageStyle="{
+                                    borderWidth: 2 + 'px',
+                                    borderStyle: 'dashed',
+                                    borderColor: colors.neutral
                                 }"
                             />
                         </v-container>
@@ -109,23 +126,27 @@
         components: {
             TargetCanvas
         },
-        data() {
-            return {
-                center: null,
-                circlesAmount: 5,
-                circlesDiameter: 20
-            }
-        },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
                 customTarget: 'getNewJournalUploadedTarget'
-            }),
+            })
+        },
+        watch: {
+            ringsAmount(value) {
+                this.$store.commit('setNewJournalUploadedTargetRingsAmount', value);
+            },
+            ringsDiameter(value) {
+                this.$store.commit('setNewJournalUploadedTargetRingsDiameter', value);
+            }
         },
         methods: {
             saveNewCenter: function(value) {
-                this.center = value.point;
-                console.log('saved new center: ', this.center);
+                let center = value.point;
+                this.$store.commit('setNewJournalUploadedTargetCenter', center);
+            },
+            clearCenter: function() {
+                this.$store.commit('setNewJournalUploadedTargetCenter', null);
             }
         }
     }
@@ -146,5 +167,11 @@
     }
     .tab1-info.sub {
         font-size: 14px;
+    }
+    .tabs--active {
+        color:aqua
+    }
+    .diam-slider {
+        margin-top: -20px;
     }
 </style>

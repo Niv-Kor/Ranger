@@ -5,7 +5,8 @@ const FTP_SERVER = require('./FTPServer');
 module.exports = {
     validateUser,
     signUser,
-    createJournal
+    createJournal,
+    targetExists
 };
 
 /**
@@ -22,7 +23,7 @@ async function runProcedure(proc, params) {
     //set input
     for (let i in params) {
         let param = params[i]
-        req.input(param.name, param.type, param.value);
+        req.input(param.name, param.type, param.value, param.options);
     }
     
     let execution = await req.execute(proc);
@@ -38,8 +39,8 @@ async function runProcedure(proc, params) {
  */
 async function signUser(socket, user) {
     let params = [
-        { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: user.email },
-        { name: 'password', type: CONSTANTS.SQL.VarChar(40), value: user.password }
+        { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: user.email, options: {} },
+        { name: 'password', type: CONSTANTS.SQL.VarChar(40), value: user.password, options: {} }
     ];
 
     //check if the user already exists
@@ -60,8 +61,8 @@ async function signUser(socket, user) {
  */
 async function validateUser(socket, user) {
     let params = [
-        { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: user.email },
-        { name: 'password', type: CONSTANTS.SQL.VarChar(40), value: user.password }
+        { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: user.email, options: {} },
+        { name: 'password', type: CONSTANTS.SQL.VarChar(40), value: user.password, options: {} }
     ];
 
     let recSet = await runProcedure('validateUser', params);
@@ -80,8 +81,13 @@ async function validateUser(socket, user) {
  *                            storedTarget: <String>{stored target path},
  *                            customTarget: {
  *                                            base64Img: <String>{base64 represntation of the image},
- *                                            chosenName: <String>{name of the image}
- *                                            url: <String>{image file url}
+ *                                            chosenName: <String>{name of the image},
+ *                                            center: <Object> {
+ *                                                                x: <Number>{x coordinate (in percentages)}
+ *                                                                y: <Number>{y coordinate (in percentages)}
+ *                                                             },
+ *                                            rings: <Number>{amount of rings},
+ *                                            ringDiameter: <Number>{diameter of inner ring (in integer percentages)}
  *                                          }
  *                            isTargetCustom: <Boolean>{true if the target is customized},
  *                        }
@@ -89,9 +95,9 @@ async function validateUser(socket, user) {
 async function createJournal(socket, data) {
     //check if the journal already exists
     let existanceCheckParams = [
-        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline },
-        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name }
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name, options: {} }
     ];
 
     let existanceCheck = await runProcedure('JournalExists', existanceCheckParams);
@@ -108,59 +114,68 @@ async function createJournal(socket, data) {
     }
 
     let uploadedTargetDestPath = '';
-
+    let targetName;
+    
     //add custom target if needed
     if (data.isTargetCustom) {
-        let chosenName = data.customTarget.chosenName.split('.')[0];
+        targetName = data.customTarget.chosenName.split('.')[0];
         let base64 = data.customTarget.base64Data;
         let imageType = base64.split('data:image/').pop().split(';')[0];
-        let destName = data.user + '_' + chosenName;
-        let dir = '/db/custom targets/';
+        let destName = data.user + '_' + targetName;
+        let dir = '/db/target/custom/';
         uploadedTargetDestPath = dir + destName + '.' + imageType;
-
-        let tagetExistanceCheckParams = [
-            { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
-            { name: 'image_name', type: CONSTANTS.SQL.VarChar(128), value: chosenName },
-            { name: 'image_type', type: CONSTANTS.SQL.VarChar(16), value: imageType },
-        ];
-
-        let targetExistanceCheck = await runProcedure('CustomTargetExists', tagetExistanceCheckParams);
-        let targetExists = targetExistanceCheck[0]['target_exists'];
+        let targetExists = await targetExists(data.user, data.discipline, targetName);
         
         //custom target exists - reject
         if (targetExists) {
             socket.emit('create_journal', {
                 exitCode: 2,
-                message: 'A target with the name ' + chosenName + ' alredy exists.'
+                message: 'A target of \'' + data.discipline + '\' with the name \'' + targetName + '\' alredy exists.'
             });
 
             return;
         }
         else {
             let customTargetParams = [
-                { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
-                { name: 'image_name', type: CONSTANTS.SQL.VarChar(128), value: chosenName },
-                { name: 'image_type', type: CONSTANTS.SQL.VarChar(16), value: imageType },
-                { name: 'image_path', type: CONSTANTS.SQL.VarChar(512), value: uploadedTargetDestPath }
+                { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
+                { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
+                { name: 'image_name', type: CONSTANTS.SQL.VarChar(128), value: targetName, options: {} },
+                { name: 'image_path', type: CONSTANTS.SQL.VarChar(512), value: uploadedTargetDestPath, options: {} },
+                { name: 'cx', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.x.toFixed(3), options: {} },
+                { name: 'cy', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.y.toFixed(3), options: {} },
+                { name: 'rings', type: CONSTANTS.SQL.Int, value: data.customTarget.rings, options: {} },
+                { name: 'diam', type: CONSTANTS.SQL.Int, value: data.customTarget.ringDiameter, options: {} }
             ];
 
             //add to db
-            await runProcedure('AddCustomTarget', customTargetParams);
+            await runProcedure('AddTarget', customTargetParams);
 
             //store custom target photo in the server
             let compression = 400;
             FTP_SERVER.uploadImage(base64, destName, dir, compression);
         }
     }
+    else {
+        let targetPathSplit = data.storedTarget.split('/');
+        let targetNameSplit = targetPathSplit[targetPathSplit.length - 1].split('.')[0];
+        targetName = targetNameSplit[0];
+    }
 
     //create new journal
+    let targetIdExtractionParams = [
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
+        { name: 'image_name', type: CONSTANTS.SQL.VarChar(64), value: targetName, options: {} }
+    ];
+
+    let targetIdQuery = await runProcedure('GetTargetId', targetIdExtractionParams);
+    let targetId = targetIdQuery[0]['id'];
+
     let journalParams = [
-        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline },
-        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name },
-        { name: 'stored_default_target', type: CONSTANTS.SQL.VarChar(128), value: data.storedTarget },
-        { name: 'custom_default_target', type: CONSTANTS.SQL.VarChar(512), value: uploadedTargetDestPath },
-        { name: 'is_target_custom', type: CONSTANTS.SQL.TinyInt(1), value: data.isTargetCustom }
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name, options: {} },
+        { name: 'target', type: CONSTANTS.SQL.Int, value: targetId, options: {} },
     ];
 
     runProcedure('CreateJournal', journalParams)
@@ -176,4 +191,16 @@ async function createJournal(socket, data) {
                 message: 'Unknown error: ' + err
             });
         })
+}
+
+async function targetExists(user, discipline, name) {
+    let tagetExistanceCheckParams = [
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: discipline, options: {} },
+        { name: 'image_name', type: CONSTANTS.SQL.VarChar(64), value: name, options: {} }
+    ];
+
+    let targetExistanceCheck = await runProcedure('TargetExists', tagetExistanceCheckParams);
+    let targetExists = targetExistanceCheck[0]['target_exists'];
+    return targetExists;
 }

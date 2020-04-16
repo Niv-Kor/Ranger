@@ -1,6 +1,6 @@
-const CONSTANTS = require('./Constants')
-const LOGGER = require('./Logger')
-const ACTIONS = require('./Actions')
+const CONSTANTS = require('./Constants');
+const LOGGER = require('./Logger');
+const ACTIONS = require('./Actions');
 
 //configure client requests
 CONSTANTS.IO.on('connection', socket => {
@@ -15,6 +15,11 @@ CONSTANTS.IO.on('connection', socket => {
     socket.on('create_journal', data => {
         ACTIONS.createJournal(socket, data);
     });
+
+    socket.on('target_exists', async data => {
+        let exists = await ACTIONS.targetExists(data.user, data.discipline, data.targetName);
+        socket.emit('target_exists', exists);
+    })
 });
 
 //connect to data base

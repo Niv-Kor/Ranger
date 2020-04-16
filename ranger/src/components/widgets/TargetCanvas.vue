@@ -32,18 +32,18 @@
             :style='centerMarkStyle'
         />
         <ul>
-            <li v-for='i in displayCirclesAmount' :key='i'>
+            <li v-for='i in displayRingsAmount' :key='i'>
                 <span
-                    v-if='displayCirclesAmount > 0'
-                    class='value-circle'
-                    :style='createValueCircleStyle(displayCirclesAmount - (i - 1))'
+                    v-if='displayRingsAmount > 0'
+                    class='value-ring'
+                    :style='createValueRingStyle(displayRingsAmount - (i - 1))'
                 />
                 <span
-                    v-if='displayCirclesAmount > 0'
+                    v-if='displayRingsAmount > 0'
                     class='value-label'
-                    :style='createValueLabelStyle(displayCirclesAmount - (i - 1))'
+                    :style='createValueLabelStyle(displayRingsAmount - (i - 1))'
                 >
-                    {{ 10 - ((displayCirclesAmount - (i - 1)) - 1) }}
+                    {{ 10 - ((displayRingsAmount - (i - 1)) - 1) }}
                 </span>
             </li>
         </ul>
@@ -129,7 +129,7 @@
             /**
              * Use the center point as a pre-defined hit.
              */
-            prefefineCenter: {
+            predefineCenter: {
                 type: Boolean,
                 required: false,
                 default: false
@@ -143,30 +143,44 @@
                 default: false
             },
             /**
-             * Display circles starting from the target's bullseye point,
+             * Display rings starting from the target's bullseye point,
              * that represent its distribution of values over the whole target.
              * 
              * @example Object {
-             *                    circles: <Number>{amount of circles to show},
-             *                    diameter: <Number>{the diameter of the center circle as
+             *                    rings: <Number>{amount of rings to show},
+             *                    diameter: <Number>{the diameter of the center ring as
              *                                       percentage of width (min=1, max=100)}
              *                 },
              */
-            displayValueCircles: {
+            displayValueRings: {
                 type: Object,
                 required: false,
                 default: undefined
             },
+            /**
+             * Prevent placing hits, that are not pre-defined, on the target.
+             */
             readOnly: {
                 type: Boolean,
                 required: false,
                 default: false
+            },
+            /**
+             * An object containing CSS configurations for the preview image itself.
+             * Custom configurations might be overriden by the
+             * default mendatory ones of the component.
+             */
+            imageStyle: {
+                type: Object,
+                required: false,
+                default: null
             }
         },
         data() {
             return {
                 targetImgId: 'targetImgId',
                 zoomImgId: 'zoomImgId',
+                imageData: this.calcImageData(),
                 srcImage: null,
                 zoomUrl: null,
                 touchedHit: null,
@@ -222,13 +236,15 @@
                 let chosenSize = this.$props.size;
                 let bgSize = chosenSize ? chosenSize + 'px' : 'contain';
                 let containerSize = (chosenSize && chosenSize < maxSize) ? chosenSize : maxSize;
-
-                return {
+                let publicStyle = this.$props.imageStyle;
+                let privateStyle = {
                     backgroundImage: srcUrl,
                     backgroundSize: bgSize,
                     width: containerSize + 'px',
                     height: containerSize + 'px'
                 };
+                
+                return publicStyle ? { ...publicStyle, ...privateStyle } : privateStyle;
             },
             magnifyingGlassStyle() {
                 let transformValue = this.magnifierSize / (-2);
@@ -309,8 +325,8 @@
             },
             centerMarkStyle() {
                 let pointWidth = 3;
-                let x = this.imageData.offsetLeft + this.center.x - pointWidth;
-                let y = this.imageData.offsetTop + this.center.y - pointWidth;
+                let x = this.imageData.offsetLeft + this.imageCenter.x - pointWidth;
+                let y = this.imageData.offsetTop + this.imageCenter.y - pointWidth;
 
                 return {
                     left: x + 'px',
@@ -322,10 +338,14 @@
                 return hits && this.points.length >= hits;
             },
             center() {
+                console.log('w h', this.imageData.width, this.imageData.height)
+
                 let x, y;
                 let predefinedBullseye = this.$props.bullseye;
+                console.log('bulllssseyee 0:', this.$props.bullseye);
 
                 if (predefinedBullseye) {
+                    console.log('bulllssseyee', predefinedBullseye);
                     x = predefinedBullseye.x * this.imageData.width / 100;
                     y = predefinedBullseye.y * this.imageData.height / 100;
                 }
@@ -336,8 +356,13 @@
 
                 return { x, y };
             },
-            displayCirclesAmount() {
-                if (!this.imageLoaded || !this.$props.displayValueCircles) return 0;
+            imageCenter() {
+                let x = this.imageData.width / 2;
+                let y = this.imageData.height / 2;
+                return { x, y };
+            },
+            displayRingsAmount() {
+                if (!this.imageLoaded || !this.$props.displayValueRings) return 0;
 
                 let actualCenter = { x: this.imageData.width / 2, y: this.imageData.height / 2 };
                 let xDist = Math.abs(actualCenter.x - this.center.x);
@@ -347,18 +372,92 @@
                 let edgeDistance = Math.min(xDist, yDist);
                 let boxSize = (this.imageData.width + this.imageData.height) / 2;
                 let distancePerc = edgeDistance / boxSize * 100;
-                let dispObj = this.$props.displayValueCircles;
+                let dispObj = this.$props.displayValueRings;
 
                 if (dispObj) {
                     let diamPerc = dispObj.diameter;
-                    let maxCircles = parseInt(distancePerc * 2 / diamPerc);
+                    let maxRings = parseInt(distancePerc * 2 / diamPerc);
                     
-                    return Math.min(dispObj.circles, maxCircles);
+                    return Math.min(dispObj.rings, maxRings);
                 }
                 else return 1;
             },
-            imageData() {
-                if (!this.imageLoaded)
+            zoomImageSize() {
+                return {
+                    width: this.imageData.width * ZOOM_RATIO,
+                    height: this.imageData.height * ZOOM_RATIO
+                }
+            }
+        },
+        methods: {
+            /**
+             * Activate when the component is created
+             */
+            onCreated: async function() {
+                if (this.$props.src) {
+                    this.implementImages()
+                        .then(() => { this.createPredefinedHits() });
+                }
+            },
+            /**
+             * Create all the pre-defined hits from props.
+             */
+            createPredefinedHits: function() {
+                //create pre-defined hits
+                let predefinedPoints = this.$props.predefineHits;
+
+                if (predefinedPoints) {
+                    for (let point of predefinedPoints) {
+                        let x = point.x * this.imageData.width / 100;
+                        let y = point.y * this.imageData.height / 100;
+
+                        if (x && y) this.createHit({x, y});
+                    }
+                }
+
+                //add the center point as a pre-defined hit
+                if (this.$props.predefineCenter) {
+                    console.log('in mounted center: ', this.center)
+                    this.createHit(this.center);
+                }
+            },
+            /**
+             * Calculate the data needed to render the preview and zoom images.
+             */
+            implementImages: async function() {
+                //load image
+                this.srcImage = new Image();
+                this.srcImage.src = this.$props.src;
+                
+                return new Promise((res) => {
+                    this.srcImage.onload = async () => {
+                        this.imageLoaded = true;
+                        this.imageData = this.calcImageData();
+                        res();
+                    }
+                });
+            },
+            /**
+             * Activate when a touch on the image occurs.
+             */
+            onTouch: function() {
+                this.thumbPos = this.getThumbPosition();
+                this.touchPos = this.getZoomCursorPosition(event);
+
+                //calculate hit position
+                if (this.inTargetBoundaries(this.touchPos)) {
+                    this.zoomImagePos = this.getZoomImagePosition();
+                    this.magnify = true;
+                }
+                else this.magnify = false;
+            },
+            /**
+             * Calculate image data.
+             * 
+             * @returns
+             */
+            calcImageData() {
+                if (!this.imageLoaded) {
                     return {
                         width: 0,
                         height: 0,
@@ -367,6 +466,7 @@
                         offsetTop: 0,
                         offsetLeft: 0
                     }
+                }
 
                 let srcWidth = this.srcImage.width;
                 let srcHeight = this.srcImage.height;
@@ -407,90 +507,6 @@
                     offsetTop,
                     offsetLeft
                 };
-            },
-            zoomImageSize() {
-                return {
-                    width: this.imageData.width * ZOOM_RATIO,
-                    height: this.imageData.height * ZOOM_RATIO
-                }
-            }
-        },
-        watch: {
-            src: {
-                immediate: true,
-                deep: true,
-                handler() {
-                    this.imageLoaded = false;
-                    this.implementImages()
-                        .then(() => { this.$forceUpdate(); });
-                }
-            },
-            predefineHits: {
-                immediate: true,
-                deep: true,
-                handler(points) {
-                    if (points) {
-                        for (let point of points) {
-                            let x = point.x * this.imageData.width / 100;
-                            let y = point.y * this.imageData.height / 100;
-
-                            if (x && y) this.createHit({x, y});
-                        }
-                    }
-                }
-            }
-        },
-        methods: {
-            /**
-             * Activate when the component is created
-             */
-            onCreated: async function() {
-                if (this.$props.src) await this.implementImages();
-
-                //create pre-defined hits
-                let predefinedPoints = this.$props.predefineHits;
-
-                if (predefinedPoints) {
-                    for (let point of predefinedPoints) {
-                        let x = point.x * this.imageData.width / 100;
-                        let y = point.y * this.imageData.height / 100;
-
-                        if (x && y) this.createHit({x, y});
-                    }
-                }
-
-                //add the center point as a pre-defined hit
-                if (this.$props.predefCenter)
-                    this.createHit(this.center);
-            },
-            /**
-             * Calculate the data needed to render the preview and zoom images.
-             */
-            implementImages: async function() {
-                //load image
-                this.srcImage = new Image();
-                this.srcImage.src = this.$props.src;
-                
-                return new Promise((res) => {
-                    this.srcImage.onload = async () => {
-                        this.imageLoaded = true;
-                        res();
-                    }
-                });
-            },
-            /**
-             * Activate when a touch on the image occurs.
-             */
-            onTouch: function() {
-                this.thumbPos = this.getThumbPosition();
-                this.touchPos = this.getZoomCursorPosition(event);
-
-                //calculate hit position
-                if (this.inTargetBoundaries(this.touchPos)) {
-                    this.zoomImagePos = this.getZoomImagePosition();
-                    this.magnify = true;
-                }
-                else this.magnify = false;
             },
             /**
              * @param {Object} point - {
@@ -537,9 +553,9 @@
                 return { x: posX - this.imageData.pageLeft, y: posY - this.imageData.pageTop };
             },
             /**
-             * Generate an inline style object for a value circle.
+             * Generate an inline style object for a value ring.
              * 
-             * @param {Number} index - The index of the circle
+             * @param {Number} index - The index of the ring
              * @returns {Object} {
              *                      left: <String>{css left attribute in px},
              *                      top: <String>{css top attribute in px},
@@ -547,10 +563,10 @@
              *                      height: <String>{css height attribute in px}
              *                   }
              */
-            createValueCircleStyle: function(index) {
-                if (!this.$props.displayValueCircles) return;
+            createValueRingStyle: function(index) {
+                if (!this.$props.displayValueRings) return;
 
-                let diamPerc = this.$props.displayValueCircles.diameter;
+                let diamPerc = this.$props.displayValueRings.diameter;
                 let boxSize = (this.imageData.width + this.imageData.height) / 2;
                 let diam = diamPerc * boxSize / 100;
                 let left = this.imageData.offsetLeft + this.center.x - (diam * index / 2);
@@ -566,9 +582,9 @@
                 };
             },
             /**
-             * Generate an inline style object for a value circle.
+             * Generate an inline style object for a value ring.
              * 
-             * @param {Number} index - The index of the circle
+             * @param {Number} index - The index of the ring
              * @returns {Object} {
              *                      left: <String>{css left attribute in px},
              *                      top: <String>{css top attribute in px},
@@ -577,9 +593,9 @@
              *                   }
              */
             createValueLabelStyle: function(index) {
-                if (!this.$props.displayValueCircles) return;
+                if (!this.$props.displayValueRings) return;
 
-                let diamPerc = this.$props.displayValueCircles.diameter;
+                let diamPerc = this.$props.displayValueRings.diameter;
                 let boxSize = (this.imageData.width + this.imageData.height) / 2;
                 let diam = diamPerc * boxSize / 100;
                 let left = this.imageData.offsetLeft + this.center.x - VALUE_LABEL_FONT_SIZE / 2;
@@ -596,38 +612,41 @@
             /**
              * Create a hit point on the image and emit an event to the parent.
              * 
-             * @param point - point: <Object>{
-             *                                   x: <Number>{point x coordinate},
-             *                                   y: <Number>{point y coordinate}
-             *                                },
-             * @emits hit - {
-             *                 point: <Object>{
-             *                                   x: <Number>{point x coordinate},
-             *                                   y: <Number>{point y coordinate}
-             *                                },
-             *                 bullseyeData: <Object>{
-             *                                          distance: <Number>{distance from the point to the center},
-             *                                          xDistance: <Number>{x distance from the point to the center},
-             *                                          yDistance: <Number>{y distance from the point to the center},
-             *                                          quarter: <Number>{quarter relative to the center
-             *                                                            as in a coordinate system (1/2/3/4)}
-             *                                       }
-             *              }
+             * @param point - <Object>{
+             *                           x: <Number>{point x coordinate},
+             *                           y: <Number>{point y coordinate}
+             *                        },
+             * @emits hit - <Object>{
+             *                         point: <Object>{
+             *                                           x: <Number>{point x coordinate},
+             *                                           y: <Number>{point y coordinate}
+             *                                        },
+             *                         bullseyeData: <Object>{
+             *                                                  distance: <Number>{distance from the point to the center},
+             *                                                  xDistance: <Number>{x distance from the point to the center},
+             *                                                  yDistance: <Number>{y distance from the point to the center},
+             *                                                  quarter: <Number>{quarter relative to the center
+             *                                                                    as in a coordinate system (1/2/3/4)}
+             *                                               }
+             *                      }
              */
             createHit: function(point) {
                 this.magnify = false;
 
-                if (!this.hitsFull) {
+                if (!this.hitsFull || this.$props.readOnly) {
                     let hit = this.distanceFromCenter(point);
                     let xPerc = point.x / this.imageData.width * 100;
                     let yPerc = point.y / this.imageData.height * 100;
+                    
                     this.points.push(point);
 
                     //emit an object to the parent
-                    this.$emit('hit', {
-                        point: { x: xPerc, y: yPerc },
-                        bullseyeData: hit
-                    });
+                    if (xPerc && yPerc) {
+                        this.$emit('hit', {
+                            point: { x: xPerc, y: yPerc },
+                            bullseyeData: hit
+                        });
+                    }
                 }
             },
             /**
@@ -637,13 +656,21 @@
              *                            x: <Number>{point x coordinate},
              *                            y: <Number>{point y coordinate}
              *                         }
+             * @emits delete - <Object>{
+             *                            x: <Number>{point x coordinate},
+             *                            y: <Number>{point y coordinate}
+             *                         }
              */
             deleteHit: function(point) {
                 for (let i in this.points) {
                     let p = this.points[i];
 
-                    if (p.x === point.x && p.y === point.y)
+                    if (p.x === point.x && p.y === point.y) {
                         this.points.splice(i, 1);
+
+                        //emit the deleted point to the parent
+                        this.$emit('delete', point)
+                    }
                 }
             },
             /**
@@ -925,7 +952,7 @@
         outline-color: #ffffff;
         filter: drop-shadow(0px 0px 3px #ff0000);
     }
-    .value-circle {
+    .value-ring {
         position: absolute;
         border-width: 2px;
         border-color: #ffffff;

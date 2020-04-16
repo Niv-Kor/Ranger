@@ -8,7 +8,10 @@ const state = {
     useCustomDiscipline: false,
     newJournaluploadedTarget: {
         base64Data: '',
-        chosenName: ''
+        chosenName: '',
+        center: null,
+        rings: 1,
+        ringDiameter: 20
     }
 }
 
@@ -63,6 +66,15 @@ const mutations = {
     setNewJournalUploadedTargetName: (state, value) => {
         state.newJournaluploadedTarget.chosenName = value;
     },
+    setNewJournalUploadedTargetCenter: (state, value) => {
+        state.newJournaluploadedTarget.center = value;
+    },
+    setNewJournalUploadedTargetRingsAmount: (state, value) => {
+        state.newJournaluploadedTarget.rings = value;
+    },
+    setNewJournalUploadedTargetRingsDiameter: (state, value) => {
+        state.newJournaluploadedTarget.ringDiameter = value;
+    },
     setNewJournalTargetResetFlag: (state, flag) => {
         state.newJournalTargetResetFlag = flag;
     },
@@ -85,6 +97,27 @@ const actions = {
         commit('setUseCustomDiscipline', false);
         commit('setNewJournalUploadedTargetData', '');
         commit('setNewJournalUploadedTargetName', '');
+        commit('setNewJournalUploadedTargetCenter', null);
+        commit('setNewJournalUploadedTargetRingsAmount', 1);
+        commit('setNewJournalUploadedTargetRingsDiameter', 20);
+    },
+    checkTargetExists: async ({ rootState }, name) => {
+        if (!name) return false;
+
+        let useCustomDiscip = state.useCustomDiscipline;
+        let customDiscipName = state.newJournalCustomDiscipline;
+        let defDiscipName = state.newJournalDiscipline;
+        let discipName = useCustomDiscip ? customDiscipName : defDiscipName;
+        let data = {
+            user: rootState.Auth.authEmail,
+            discipline: discipName,
+            targetName: name
+        };
+
+        return new Promise((resolve) => {
+            rootState.socket.emit('target_exists', data);
+            rootState.socket.on('target_exists', res => resolve(res));
+        });
     },
     createJournal: async ({ state, rootState }) => {
         //check if the discipline's name is customized

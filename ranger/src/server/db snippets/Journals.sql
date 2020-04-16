@@ -3,13 +3,16 @@ CREATE TABLE Journals (
 	journal_owner VARCHAR(70) NOT NULL,
 	discipline VARCHAR(30) NOT NULL,
 	journal_name VARCHAR(20) NOT NULL,
-	stored_default_target VARCHAR(128) DEFAULT NULL,
-	custom_default_target VARCHAR(512) DEFAULT NULL,
-	is_target_custom TINYINT DEFAULT 0
+	target INT NOT NULL
 
 	PRIMARY KEY(journal_owner, discipline, journal_name)
+	FOREIGN KEY(target) REFERENCES Targets(id)
 );
 GO
+
+DROP TABLE Journals
+
+SELECT * FROM Journals
 
 -- Procedures
 ALTER PROCEDURE JournalExists

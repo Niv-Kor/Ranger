@@ -125,8 +125,9 @@
                 let vm = this;
                 setTimeout(() => { vm.currentTab = 0 }, 500);
             },
-            incrementTab: function() {
-                if (!this.canContinueNextTab()) return;
+            incrementTab: async function() {
+                let canContinue = await this.canContinueNextTab();
+                if (!canContinue) return;
 
                 if (this.currentTab < this.totalTabs - 1) {
                     if (this.currentTab != 1 || this.useCustomTarget) this.currentTab++;
@@ -143,29 +144,37 @@
                 await this.$store.dispatch('createJournal');
                 this.close();
             },
-            canContinueNextTab: function() {
-                switch (this.currentTab) {
-                    //select discipline
-                    case 0:
-                        //need to enter a valid custom discipline name
-                        if (this.useCustomDiscipline) {
-                            return !!this.customDiscipline;
-                        }
-                        else return true;
+            canContinueNextTab: async function() {
+                return new Promise((resolve, reject) => {
+                    switch (this.currentTab) {
+                        //select discipline
+                        case 0:
+                            //need to enter a valid custom discipline name
+                            if (this.useCustomDiscipline) resolve(!!this.customDiscipline);
+                            else resolve(true);
+                            break;
 
-                    //select target
-                    case 1:
-                        //need to enter a valid custom target
-                        if (this.useCustomTarget)
-                            return !!this.customTarget.base64Data;
-                        else return true;
+                        //select target
+                        case 1:
+                            //need to enter a valid custom target
+                            if (this.useCustomTarget) {
+                                this.$store.dispatch('checkTargetExists', this.customTarget.chosenName)
+                                    .then(res => resolve(!res))
+                            }
+                            else resolve(true);
+                            break;
 
-                    case 2:
-                        return true; //TODO
+                        case 2:
+                            resolve(true);
+                            break;
 
-                    case 3:
-                        return !!this.journalName;
-                }
+                        case 3:
+                            resolve(!!this.journalName);
+                            break;
+                        
+                        default: reject();
+                    }
+                });
             }
         }
     }

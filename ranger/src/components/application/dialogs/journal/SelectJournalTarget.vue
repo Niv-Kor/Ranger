@@ -90,15 +90,16 @@
                     :background-color='colors.neutral'
                     :color='colors.neutral'
                 />
-                <v-file-input
-                    v-else
-                    class='label-target upload'
-                    accept='image/png, image/jpeg'
-                    max-width=120
-                    max-height=120
-                    :placeholder='fileUploadPlaceholder'
-                    @change='onCustomTargetUpload'
-                />
+                <div v-else>
+                    <v-file-input
+                        class='label-target upload'
+                        accept='image/png, image/jpeg'
+                        max-width=120
+                        max-height=120
+                        :placeholder='fileUploadPlaceholder'
+                        @change='onCustomTargetUpload'
+                    />
+                </div>
             </v-row>
         </v-container>
     </div>
@@ -162,12 +163,6 @@
                         name: 'ISSF Air Rifle',
                         labelWidth: '200px',
                         src: { name: 'issf_air_rifle.png', icon: FIREARM_CONTEXT('./issf_air_rifle.png') },
-                        custom: false
-                    },
-                    {
-                        name: 'Man Silhouette',
-                        labelWidth: '200px',
-                        src: { name: 'man_silhouette.png', icon: FIREARM_CONTEXT('./man_silhouette.png') },
                         custom: false
                     },
                     {
