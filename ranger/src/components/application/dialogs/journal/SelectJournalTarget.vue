@@ -58,6 +58,13 @@
                                 :stencilProps="{ aspectRatio: 1 }"
                                 @change='onCustomTargetChange'
                             />
+                            <div
+                                v-else
+                                class='how-upload-info'
+                                align='center'
+                            >
+                                Tap the button below to upload an image
+                            </div>
                         </v-col>
                     </v-row>
                 </v-container>
@@ -72,10 +79,7 @@
                 mdi-menu-right
             </v-icon>
         </v-row>
-        <v-container
-            class='label-container'
-            :style='getLabelWidthStyle()'
-        >
+        <v-container :style='getLabelWidthStyle()'>
             <v-row>
                 <v-text-field
                     v-if='selectedTarget && !selectedTarget.custom'
@@ -90,15 +94,33 @@
                     :background-color='colors.neutral'
                     :color='colors.neutral'
                 />
-                <div v-else>
-                    <v-file-input
-                        class='label-target upload'
-                        accept='image/png, image/jpeg'
-                        max-width=120
-                        max-height=120
-                        :placeholder='fileUploadPlaceholder'
-                        @change='onCustomTargetUpload'
-                    />
+                <div v-else class='upload container'>
+                    <v-text-field
+                        v-model='customTargetName'
+                        height=10
+                        dense
+                        rounded
+                        outlined
+                        counter=64
+                        clearable
+                        :placeholder='selectedTarget.name'
+                        :color='colors.neutral'
+                     />
+                    <file-selector
+                        accept-extensions='.jpg,.jpeg,.png'
+                        :max-file-size='5 * 1024 * 1024'
+                        @validated='onCustomTargetUpload'
+                    >
+                        <v-btn
+                            class='upload btn'
+                            fab
+                            medium
+                            elevation=3
+                            :color='colors.primary'
+                        >
+                            <v-icon color='white'>mdi-paperclip</v-icon>
+                        </v-btn>
+                    </file-selector>
                 </div>
             </v-row>
         </v-container>
@@ -107,18 +129,19 @@
 
 <script>
     import { mapGetters } from 'vuex';
-    import { Cropper } from 'vue-advanced-cropper'
+    import { Cropper } from 'vue-advanced-cropper';
     
     const ARCHERY_CONTEXT = require.context('../../../../assets/targets/small/archery', false, /\.png$/);
     const FIREARM_CONTEXT = require.context('../../../../assets/targets/small/firearm', false, /\.png$/);
 
     export default {
         components: {
-            Cropper,
+            Cropper
         },
         data() {
             return {
                 selectedTargetIndex: 0,
+                customTargetName: '',
                 customTargetThumbnail: null,
                 targets: {}
             }
@@ -140,7 +163,7 @@
                         custom: false
                     },
                     {
-                        name: 'Other',
+                        name: 'My Target',
                         labelWidth: '220px',
                         src: { name: null, icon: null },
                         custom: true
@@ -166,7 +189,7 @@
                         custom: false
                     },
                     {
-                        name: 'Other',
+                        name: 'My Target',
                         labelWidth: '220px',
                         src: { name: null, icon: null },
                         custom: true
@@ -174,7 +197,7 @@
                 ],
                 'Other': [
                     {
-                        name: 'Other',
+                        name: 'My Target',
                         labelWidth: '220px',
                         src: { name: null, icon: null },
                         custom: true
@@ -245,6 +268,9 @@
                     let srcName = property[value].src.name;
                     this.$store.commit('setNewJournalTarget', srcName);
                 }
+            },
+            customTargetName(value) {
+                this.$store.commit('setNewJournalUploadedTargetName', value);
             }
         },
         methods: {
@@ -275,7 +301,8 @@
                 //extract base64 data
                 reader.onload = (ev) => {
                     let imageData = ev.target.result;
-                    this.saveCustomImage(imageData, file.name);
+                    this.selectedTarget.src.icon = imageData;
+                    this.$store.commit('setNewJournalUploadedTargetData', imageData);
                 };
 
                 await reader.readAsDataURL(file);
@@ -284,19 +311,13 @@
                 let canvas = event.canvas;
                 let base64 = canvas.toDataURL('image/' + this.uploadedTargetFileType);
                 this.$store.commit('setNewJournalUploadedTargetData', base64);
-            },
-            saveCustomImage: function(base64, fileName) {
-                this.selectedTarget.src.icon = base64;
-                this.selectedTarget.src.name = fileName;
-                this.$store.commit('setNewJournalUploadedTargetData', base64);
-                this.$store.commit('setNewJournalUploadedTargetName', fileName);
-            },
+            }
         }
     }
 </script>
 
 <style>
-    .subtitle {
+    * {
         font-family: 'comfortaa';
     }
     .small {
@@ -313,9 +334,12 @@
         color: #ffffff !important;
         opacity: 1;
     }
-    .upload {
-        margin-top: -10px;
-        font-size: 14px;
+    .upload.container {
+        position: absolute;
+        margin-left: auto;
+        margin-right: auto;
+        left: 0;
+        right: 0;
     }
     .thumbnail {
         margin: auto;
@@ -325,5 +349,8 @@
         max-height: 120px;
         background: #dddddd;
         margin: auto;
+    }
+    .how-upload-info {
+        font-size: 14px;
     }
 </style>
