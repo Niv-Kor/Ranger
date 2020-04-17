@@ -103,6 +103,7 @@
                         outlined
                         counter=64
                         clearable
+                        :disabled='!selectedTarget.src.icon'
                         :placeholder='selectedTarget.name'
                         :color='colors.neutral'
                      />
@@ -116,7 +117,7 @@
                             fab
                             medium
                             elevation=3
-                            :color='colors.primary'
+                            :color='selectedTarget.src.icon ? colors.primary : colors.neutral'
                         >
                             <v-icon color='white'>mdi-paperclip</v-icon>
                         </v-btn>
@@ -153,17 +154,17 @@
                     {
                         name: 'FITA',
                         labelWidth: '200px',
-                        src: { name: 'fita.png', icon: ARCHERY_CONTEXT('./fita.png') },
+                        src: { name: 'fita', icon: ARCHERY_CONTEXT('./fita.png') },
                         custom: false
                     },
                     {
                         name: 'FITA Field',
                         labelWidth: '200px',
-                        src: { name: 'fita_field.png', icon: ARCHERY_CONTEXT('./fita_field.png') },
+                        src: { name: 'fita_field', icon: ARCHERY_CONTEXT('./fita_field.png') },
                         custom: false
                     },
                     {
-                        name: 'My Target',
+                        name: 'Enter target name',
                         labelWidth: '220px',
                         src: { name: null, icon: null },
                         custom: true
@@ -173,23 +174,23 @@
                     {
                         name: 'ISSF Air Pistol',
                         labelWidth: '200px',
-                        src: { name: 'issf_air_pistol.png', icon: FIREARM_CONTEXT('./issf_air_pistol.png') },
+                        src: { name: 'issf_air_pistol', icon: FIREARM_CONTEXT('./issf_air_pistol.png') },
                         custom: false
                     },
                     {
                         name: 'ISSF Rapid Fire Pistol',
                         labelWidth: '240px',
-                        src: { name: 'issf_rapid_fire_pistol.png', icon: FIREARM_CONTEXT('./issf_rapid_fire_pistol.png') },
+                        src: { name: 'issf_rapid_fire_pistol', icon: FIREARM_CONTEXT('./issf_rapid_fire_pistol.png') },
                         custom: false
                     },
                     {
                         name: 'ISSF Air Rifle',
                         labelWidth: '200px',
-                        src: { name: 'issf_air_rifle.png', icon: FIREARM_CONTEXT('./issf_air_rifle.png') },
+                        src: { name: 'issf_air_rifle', icon: FIREARM_CONTEXT('./issf_air_rifle.png') },
                         custom: false
                     },
                     {
-                        name: 'My Target',
+                        name: 'Enter target name',
                         labelWidth: '220px',
                         src: { name: null, icon: null },
                         custom: true
@@ -197,7 +198,7 @@
                 ],
                 'Other': [
                     {
-                        name: 'My Target',
+                        name: 'Enter target name',
                         labelWidth: '220px',
                         src: { name: null, icon: null },
                         custom: true

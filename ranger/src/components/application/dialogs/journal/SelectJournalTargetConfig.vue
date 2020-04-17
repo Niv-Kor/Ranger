@@ -100,10 +100,10 @@
                                 :hits=1
                                 read-only
                                 :bullseye='customTarget.center'
-                                :display-value-rings="{
+                                :display-value-rings="customTarget.center ? {
                                     rings: customTarget.rings,
                                     diameter: customTarget.ringDiameter
-                                }"
+                                } : null"
                                 :imageStyle="{
                                     borderWidth: 2 + 'px',
                                     borderStyle: 'dashed',

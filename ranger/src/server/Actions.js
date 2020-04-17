@@ -1,5 +1,4 @@
 const CONSTANTS = require('./Constants');
-const LOGGER = require('./Logger');
 const FTP_SERVER = require('./FTPServer');
 
 module.exports = {
@@ -37,11 +36,8 @@ async function targetExists(user, discipline, name) {
         { name: 'image_name', type: CONSTANTS.SQL.VarChar(64), value: name, options: {} }
     ];
 
-    console.log('here check')
     let query = await runProcedure('TargetExists', params);
     let exists = query[0]['target_exists'];
-    console.log('targetExistanceCheck: ', query);
-    console.log('exists: ', exists);
     return exists;
 }
 
@@ -129,18 +125,18 @@ async function createJournal(socket, data) {
     }
 
     let uploadedTargetDestPath = '';
-    let targetName;
+    let targetName, targetUser;
     
     //add custom target if needed
     if (data.isTargetCustom) {
         targetName = data.customTarget.chosenName.split('.')[0];
+        targetUser = data.user;
         let base64 = data.customTarget.base64Data;
         let imageType = base64.split('data:image/').pop().split(';')[0];
         let destName = data.user + '_' + targetName;
         let dir = '/db/target/custom/';
         uploadedTargetDestPath = dir + destName + '.' + imageType;
-        let targetExists = await this.targetExists(data.user, data.discipline, targetName);
-        console.log('after');
+        let targetExists = await this.targetExists(targetUser, data.discipline, targetName);
         
         //custom target exists - reject
         if (targetExists) {
@@ -172,20 +168,18 @@ async function createJournal(socket, data) {
         }
     }
     else {
-        let targetPathSplit = data.storedTarget.split('/');
-        let targetNameSplit = targetPathSplit[targetPathSplit.length - 1].split('.')[0];
-        targetName = targetNameSplit[0];
+        targetName = data.storedTarget;
+        targetUser = 'default';
     }
 
     //create new journal
     let targetIdExtractionParams = [
-        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: targetUser, options: {} },
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
         { name: 'image_name', type: CONSTANTS.SQL.VarChar(64), value: targetName, options: {} }
     ];
 
     let targetIdQuery = await runProcedure('GetTargetId', targetIdExtractionParams);
-    console.log('targetIdQuery:' , targetIdQuery);
     let targetId = targetIdQuery[0]['id'];
 
     let journalParams = [
