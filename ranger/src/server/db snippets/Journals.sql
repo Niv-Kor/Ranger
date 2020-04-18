@@ -3,10 +3,10 @@ CREATE TABLE Journals (
 	journal_owner VARCHAR(70) NOT NULL,
 	discipline VARCHAR(30) NOT NULL,
 	journal_name VARCHAR(20) NOT NULL,
-	target INT NOT NULL
+	target_id INT NOT NULL
 
 	PRIMARY KEY(journal_owner, discipline, journal_name)
-	FOREIGN KEY(target) REFERENCES Targets(id)
+	FOREIGN KEY(target_id) REFERENCES Targets(id)
 );
 GO
 
@@ -33,28 +33,23 @@ ALTER PROCEDURE CreateJournal
 	@user VARCHAR(70),
 	@discipline VARCHAR(30),
 	@journal_name VARCHAR(20),
-	@stored_default_target VARCHAR(128),
-	@custom_default_target VARCHAR(512),
-	@is_target_custom TINYINT
+	@target INT
 AS
 BEGIN
 	INSERT INTO Journals(journal_owner,
 						 discipline,
 						 journal_name,
-						 stored_default_target,
-						 custom_default_target,
-						 is_target_custom)
+						 target_id)
 	VALUES (
 		@user,
 		@discipline,
 		@journal_name,
-		@stored_default_target,
-		@custom_default_target,
-		@is_target_custom
+		@target
 	)
 END
 GO
 
 -- Exec
 SELECT * FROM Journals;
+DELETE FROM Journals
 GO

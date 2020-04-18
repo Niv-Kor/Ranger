@@ -5,7 +5,8 @@ module.exports = {
     validateUser,
     signUser,
     createJournal,
-    targetExists
+    targetExists,
+    journalExists
 };
 
 /**
@@ -29,6 +30,14 @@ async function runProcedure(proc, params) {
     return execution.recordset;
 }
 
+/**
+ * Check if a target already exists in the database.
+ * 
+ * @param {String} user - The user's token (email address)
+ * @param {String} discipline - The name of the target's discipline
+ * @param {String} name - The chosen name of the target
+ * @returns {Boolean} True if the target already exists in the database.
+ */
 async function targetExists(user, discipline, name) {
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
@@ -38,6 +47,26 @@ async function targetExists(user, discipline, name) {
 
     let query = await runProcedure('TargetExists', params);
     let exists = query[0]['target_exists'];
+    return exists;
+}
+
+/**
+ * Check if a journal already exists in the database.
+ * 
+ * @param {String} user - The user's token (email address)
+ * @param {String} discipline - The name of the target's discipline
+ * @param {String} name - The chosen name of the journal
+ * @returns {Boolean} True if the journal already exists in the database.
+ */
+async function journalExists(user, discipline, name) {
+    let params = [
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: discipline, options: {} },
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
+    ];
+
+    let query = await runProcedure('JournalExists', params);
+    let exists = query[0]['journal_exists'];
     return exists;
 }
 
@@ -104,30 +133,10 @@ async function validateUser(socket, user) {
  *                        }
  */
 async function createJournal(socket, data) {
-    //check if the journal already exists
-    let existanceCheckParams = [
-        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
-        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name, options: {} }
-    ];
-
-    let existanceCheck = await runProcedure('JournalExists', existanceCheckParams);
-    let journalExists = existanceCheck[0]['journal_exists'];
-
-    //journal exists - reject
-    if (journalExists) {
-        socket.emit('create_journal', {
-            exitCode: 1,
-            message: 'A journal of ' + data.discipline + ' with that name alredy exists.'
-        });
-
-        return;
-    }
-
     let uploadedTargetDestPath = '';
     let targetName, targetUser;
     
-    //add custom target if needed
+    //store custom target if needed
     if (data.isTargetCustom) {
         targetName = data.customTarget.chosenName.split('.')[0];
         targetUser = data.user;
@@ -136,36 +145,24 @@ async function createJournal(socket, data) {
         let destName = data.user + '_' + targetName;
         let dir = '/db/target/custom/';
         uploadedTargetDestPath = dir + destName + '.' + imageType;
-        let targetExists = await this.targetExists(targetUser, data.discipline, targetName);
         
-        //custom target exists - reject
-        if (targetExists) {
-            socket.emit('create_journal', {
-                exitCode: 2,
-                message: 'A target of \'' + data.discipline + '\' with the name \'' + targetName + '\' alredy exists.'
-            });
+        let customTargetParams = [
+            { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
+            { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
+            { name: 'image_name', type: CONSTANTS.SQL.VarChar(128), value: targetName, options: {} },
+            { name: 'image_path', type: CONSTANTS.SQL.VarChar(512), value: uploadedTargetDestPath, options: {} },
+            { name: 'cx', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.x.toFixed(3), options: {} },
+            { name: 'cy', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.y.toFixed(3), options: {} },
+            { name: 'rings', type: CONSTANTS.SQL.Int, value: data.customTarget.rings, options: {} },
+            { name: 'diam', type: CONSTANTS.SQL.Int, value: data.customTarget.ringDiameter, options: {} }
+        ];
 
-            return;
-        }
-        else {
-            let customTargetParams = [
-                { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
-                { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
-                { name: 'image_name', type: CONSTANTS.SQL.VarChar(128), value: targetName, options: {} },
-                { name: 'image_path', type: CONSTANTS.SQL.VarChar(512), value: uploadedTargetDestPath, options: {} },
-                { name: 'cx', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.x.toFixed(3), options: {} },
-                { name: 'cy', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.y.toFixed(3), options: {} },
-                { name: 'rings', type: CONSTANTS.SQL.Int, value: data.customTarget.rings, options: {} },
-                { name: 'diam', type: CONSTANTS.SQL.Int, value: data.customTarget.ringDiameter, options: {} }
-            ];
+        //add to db
+        await runProcedure('AddTarget', customTargetParams);
 
-            //add to db
-            await runProcedure('AddTarget', customTargetParams);
-
-            //store custom target photo in the server
-            let compression = 400;
-            FTP_SERVER.uploadImage(base64, destName, dir, compression);
-        }
+        //store custom target photo in the server
+        let compression = 400;
+        FTP_SERVER.uploadImage(base64, destName, dir, compression);
     }
     else {
         targetName = data.storedTarget;
@@ -181,7 +178,6 @@ async function createJournal(socket, data) {
 
     let targetIdQuery = await runProcedure('GetTargetId', targetIdExtractionParams);
     let targetId = targetIdQuery[0]['id'];
-
     let journalParams = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
@@ -198,7 +194,7 @@ async function createJournal(socket, data) {
         })
         .catch(err => {
             socket.emit('create_journal', {
-                exitCode: 3,
+                exitCode: 1,
                 message: 'Unknown error: ' + err
             });
         })

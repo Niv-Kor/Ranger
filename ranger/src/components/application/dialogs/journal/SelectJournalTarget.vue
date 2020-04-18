@@ -57,6 +57,7 @@
                                 :src='selectedTarget.src.icon'
                                 :stencilProps="{ aspectRatio: 1 }"
                                 @change='onCustomTargetChange'
+                                @ready='$emit("loading", false)'
                             />
                             <div
                                 v-else
@@ -117,7 +118,7 @@
                             fab
                             medium
                             elevation=3
-                            :color='selectedTarget.src.icon ? colors.primary : colors.neutral'
+                            :color='selectedTarget.src.icon ? colors.neutral : colors.primary'
                         >
                             <v-icon color='white'>mdi-paperclip</v-icon>
                         </v-btn>
@@ -296,12 +297,20 @@
                 else return null;
             },
             onCustomTargetUpload: async function() {
+                this.$emit("loading", true) //start loading
                 let file = await event.target.files[0];
                 let reader = new FileReader();
 
                 //extract base64 data
                 reader.onload = (ev) => {
                     let imageData = ev.target.result;
+
+                    //check if this new image is the one that's already loaded
+                    if (imageData === this.selectedTarget.src.icon) {
+                        this.$emit("loading", false) //finish loading
+                        return;
+                    }
+
                     this.selectedTarget.src.icon = imageData;
                     this.$store.commit('setNewJournalUploadedTargetData', imageData);
                 };
@@ -312,6 +321,7 @@
                 let canvas = event.canvas;
                 let base64 = canvas.toDataURL('image/' + this.uploadedTargetFileType);
                 this.$store.commit('setNewJournalUploadedTargetData', base64);
+                this.$emit("loading", false) //start loading
             }
         }
     }

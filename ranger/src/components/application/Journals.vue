@@ -5,10 +5,10 @@
     >
         <h1>Shooting Journals</h1>
         <p
-        class='no-surveys-message'
-        v-if='!list.length'
+            v-if='!list.length'
+            class='no-surveys-message'
         >
-            You don't own any journals.<br>
+            You don't own any journals yet.<br>
             Use the '+' button below<br>
             to get started.
         </p>
@@ -21,14 +21,13 @@
     export default {
         data() {
             return {
-                list: [],
-                center: {x: 10, y: 10}
+                list: []
             }
         },
         computed: {
             ...mapGetters({
                 colors: 'getColors'
-            }),
+            })
         }
     }
 </script>

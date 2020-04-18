@@ -119,6 +119,19 @@ const actions = {
             rootState.socket.on('target_exists', res => resolve(res));
         });
     },
+    checkJournalExists: async ({ rootState }, name) => {
+        if (!name) return false;
+
+        let data = {
+            user: rootState.Auth.authEmail,
+            journalName: name
+        };
+
+        return new Promise((resolve) => {
+            rootState.socket.emit('journal_exists', data);
+            rootState.socket.on('journal_exists', res => resolve(res));
+        });
+    },
     createJournal: async ({ state, rootState }) => {
         //check if the discipline's name is customized
         let useCustomDiscip = state.useCustomDiscipline;

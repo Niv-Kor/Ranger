@@ -28,8 +28,8 @@ VALUES
 ('default', 'Archery', 'fita', '/db/targets/default/fita.png', 50, 50, 10, 10),
 ('default', 'Archery', 'fita_field', '/db/targets/default/fita_field.png', 50, 50, 11, 10),
 ('default', 'Firearm', 'issf_air_pistol', '/db/targets/default/issf_air_pistol.png', 50, 50, 10, 10),
-('default', 'Archery', 'issf_air_rifle', '/db/targets/default/issf_air_rifle.png', 50, 50, 10, 10),
-('default', 'Archery', 'issf_rapid_fire_pistol', '/db/targets/default/issf_rapid_fire_pistol.png', 50, 50, 10, 10)
+('default', 'Firearm', 'issf_air_rifle', '/db/targets/default/issf_air_rifle.png', 50, 50, 10, 10),
+('default', 'Firearm', 'issf_rapid_fire_pistol', '/db/targets/default/issf_rapid_fire_pistol.png', 50, 50, 10, 10)
 
 SELECT * FROM Targets
 
@@ -99,5 +99,8 @@ END
 GO
 
 -- Exec
-SELECT * FROM CustomTargets;
+SELECT * FROM Targets
+
+DELETE FROM Targets
+
 GO

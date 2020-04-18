@@ -11,10 +11,10 @@ Vue.use(Vuex);
 export const STORE = new Vuex.Store({
     state: {
         colors: {
-            primary: '#4FBE18',
+            primary: '#4fbe18',
             primaryDark: '#337115',
-            secondary: '#DE0D4D',
-            neutral: '#78909C'
+            secondary: '#de0d4d',
+            neutral: '#78909c'
         },
         regex: {
             email: /^[0-9A-Za-z_-]{1,}@[0-9A-Za-z_-]{1,}\.[0-9A-Za-z.]{1,}$/,
