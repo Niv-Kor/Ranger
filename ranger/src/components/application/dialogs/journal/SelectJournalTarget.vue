@@ -43,18 +43,18 @@
                     >
                         <v-col v-if='!selectedTarget.custom'>
                             <v-img
-                                v-if='selectedTarget && selectedTarget.src.icon'
+                                v-if='selectedTarget && selectedTarget.src'
                                 class='thumbnail'
-                                :src='selectedTarget.src.icon'
+                                :src='selectedTarget.src'
                                 max-width=120
                                 max-height=120
                             />
                         </v-col>
                         <v-col v-else>
                             <cropper
-                                v-if='selectedTarget.src.icon'
+                                v-if='selectedTarget.src'
                                 class='thumbnail custom'
-                                :src='selectedTarget.src.icon'
+                                :src='selectedTarget.src'
                                 :stencilProps="{ aspectRatio: 1 }"
                                 @change='onCustomTargetChange'
                                 @ready='$emit("loading", false)'
@@ -104,7 +104,7 @@
                         outlined
                         counter=64
                         clearable
-                        :disabled='!selectedTarget.src.icon'
+                        :disabled='!selectedTarget.src'
                         :placeholder='selectedTarget.name'
                         :color='colors.neutral'
                      />
@@ -118,7 +118,7 @@
                             fab
                             medium
                             elevation=3
-                            :color='selectedTarget.src.icon ? colors.neutral : colors.primary'
+                            :color='selectedTarget.src ? colors.neutral : colors.primary'
                         >
                             <v-icon color='white'>mdi-paperclip</v-icon>
                         </v-btn>
@@ -150,19 +150,19 @@
                         {
                             name: 'FITA',
                             labelWidth: '200px',
-                            src: { name: 'fita', icon: ARCHERY_CONTEXT('./fita.png') },
+                            src: ARCHERY_CONTEXT('./FITA.png'),
                             custom: false
                         },
                         {
                             name: 'FITA Field',
                             labelWidth: '200px',
-                            src: { name: 'fita_field', icon: ARCHERY_CONTEXT('./fita_field.png') },
+                            src: ARCHERY_CONTEXT('./FITA Field.png'),
                             custom: false
                         },
                         {
                             name: 'Enter target name',
                             labelWidth: '220px',
-                            src: { name: null, icon: null },
+                            src: null,
                             custom: true
                         }
                     ],
@@ -170,25 +170,25 @@
                         {
                             name: 'ISSF Air Pistol',
                             labelWidth: '200px',
-                            src: { name: 'issf_air_pistol', icon: FIREARM_CONTEXT('./issf_air_pistol.png') },
+                            src: FIREARM_CONTEXT('./ISSF Air Pistol.png'),
                             custom: false
                         },
                         {
                             name: 'ISSF Rapid Fire Pistol',
                             labelWidth: '240px',
-                            src: { name: 'issf_rapid_fire_pistol', icon: FIREARM_CONTEXT('./issf_rapid_fire_pistol.png') },
+                            src: FIREARM_CONTEXT('./ISSF Rapid Fire Pistol.png'),
                             custom: false
                         },
                         {
                             name: 'ISSF Air Rifle',
                             labelWidth: '200px',
-                            src: { name: 'issf_air_rifle', icon: FIREARM_CONTEXT('./issf_air_rifle.png') },
+                            src: FIREARM_CONTEXT('./ISSF Air Rifle.png'),
                             custom: false
                         },
                         {
                             name: 'Enter target name',
                             labelWidth: '220px',
-                            src: { name: null, icon: null },
+                            src: null,
                             custom: true
                         }
                     ],
@@ -196,7 +196,7 @@
                         {
                             name: 'Enter target name',
                             labelWidth: '220px',
-                            src: { name: null, icon: null },
+                            src: null,
                             custom: true
                         }
                     ],
@@ -205,10 +205,10 @@
         },
         created() {
             //store first target
-            if (!this.storedTarget) {
+            if (!this.storedTarget.base64Data) {
                 this.selectedTargetIndex = 0;
-                let firstTarget = this.selectedTarget.src.name;
-                this.$store.commit('setNewJournalTarget', firstTarget);
+                this.$store.commit('setNewJournalTargetName', this.selectedTarget.name);
+                this.$store.commit('setNewJournalTargetData', this.selectedTarget.src);
                 this.$store.commit('setNewJournalTargetResetFlag', false);
             }
         },
@@ -219,8 +219,9 @@
             if (this.targetResetFlag) {
                 this.customTargetThumbnail = null;
                 this.selectedTargetIndex = 0;
-                let firstTarget = discipProperty[this.selectedTargetIndex].src.name;
-                this.$store.commit('setNewJournalTarget', firstTarget);
+                let firstTarget = discipProperty[this.selectedTargetIndex];
+                this.$store.commit('setNewJournalTargetName', firstTarget.name);
+                this.$store.commit('setNewJournalTargetData', firstTarget.src);
                 this.$store.commit('setNewJournalTargetResetFlag', false);
                 this.$store.commit('setNewJournalUploadedTargetData', '');
                 this.$store.commit('setNewJournalUploadedTargetName', '');
@@ -228,7 +229,7 @@
                 //remove irrelevant thumbnails
                 for (let [, discipVal] of Object.entries(this.targets))
                     for (let [, targetVal] of Object.entries(discipVal))
-                        if (targetVal.custom) targetVal.src.icon = null;
+                        if (targetVal.custom) targetVal.src = null;
             }
 
             //determine the use of a custom target
@@ -276,8 +277,9 @@
                 let property = this.disciplineProperty;
 
                 if (property) {
-                    let srcName = property[value].src.name;
-                    this.$store.commit('setNewJournalTarget', srcName);
+                    let target = property[value];
+                    this.$store.commit('setNewJournalTargetName', target.name);
+                    this.$store.commit('setNewJournalTargetData', target.src);
                 }
             },
             customTargetName(value) {
@@ -314,12 +316,12 @@
                     let imageData = ev.target.result;
 
                     //check if this new image is the one that's already loaded
-                    if (imageData === this.selectedTarget.src.icon) {
+                    if (imageData === this.selectedTarget.src) {
                         this.$emit('loading', false) //finish loading
                         return;
                     }
 
-                    this.selectedTarget.src.icon = imageData;
+                    this.selectedTarget.src = imageData;
                     this.$store.commit('setNewJournalUploadedTargetData', imageData);
                 };
 

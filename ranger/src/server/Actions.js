@@ -71,7 +71,7 @@ async function journalExists(user, discipline, name) {
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: discipline, options: {} },
         { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
     ];
-
+    
     let query = await runProcedure('JournalExists', params);
     let exists = query[0]['journal_exists'];
     return exists;

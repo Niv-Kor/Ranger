@@ -25,11 +25,11 @@ INSERT INTO Targets(target_owner,
 					rings,
 					rings_diameter)
 VALUES
-('default', 'Archery', 'fita', '/db/targets/default/fita.png', 50, 50, 10, 10),
-('default', 'Archery', 'fita_field', '/db/targets/default/fita_field.png', 50, 50, 11, 10),
-('default', 'Firearm', 'issf_air_pistol', '/db/targets/default/issf_air_pistol.png', 50, 50, 10, 10),
-('default', 'Firearm', 'issf_air_rifle', '/db/targets/default/issf_air_rifle.png', 50, 50, 10, 10),
-('default', 'Firearm', 'issf_rapid_fire_pistol', '/db/targets/default/issf_rapid_fire_pistol.png', 50, 50, 10, 10)
+('default', 'Archery', 'FITA', '/db/targets/default/FITA.png', 50, 50, 10, 10),
+('default', 'Archery', 'FITA Field', '/db/targets/default/FITA Field.png', 50, 50, 11, 10),
+('default', 'Firearm', 'ISSF Air Pistol', '/db/targets/default/ISSF Air Pistol.png', 50, 50, 10, 10),
+('default', 'Firearm', 'ISSF Air Rifle', '/db/targets/default/ISSF Air Rifle.png', 50, 50, 10, 10),
+('default', 'Firearm', 'ISSF Rapid Fire Pistol', '/db/targets/default/ISSF Rapid Fire Pistol.png', 50, 50, 10, 10)
 
 SELECT * FROM Targets
 

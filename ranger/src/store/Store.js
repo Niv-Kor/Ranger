@@ -11,9 +11,9 @@ Vue.use(Vuex);
 export const STORE = new Vuex.Store({
     state: {
         colors: {
-            primary: '#4fbe18',
-            primaryDark: '#337115',
-            secondary: '#de0d4d',
+            primary: '#de0d4d',
+            primaryDark: '#820028',
+            secondary: '#ffbd0c',
             neutral: '#78909c'
         },
         socket: io(SERVER_DOMAIN)

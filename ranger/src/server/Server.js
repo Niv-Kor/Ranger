@@ -20,6 +20,11 @@ CONSTANTS.IO.on('connection', socket => {
         let exists = await ACTIONS.targetExists(data.user, data.discipline, data.targetName);
         socket.emit('target_exists', exists);
     })
+
+    socket.on('journal_exists', async data => {
+        let exists = await ACTIONS.journalExists(data.user, data.discipline, data.journalName);
+        socket.emit('journal_exists', exists);
+    })
 });
 
 //connect to data base

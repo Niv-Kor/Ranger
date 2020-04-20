@@ -2,7 +2,10 @@ const state = {
     newJournalName: '',
     newJournalDiscipline: '',
     newJournalCustomDiscipline: '',
-    newJournalDefaultTarget: '',
+    newJournalDefaultTarget: {
+        base64Data: '',
+        name: ''
+    },
     newJournalTargetResetFlag: false,
     useUploadedCustomTarget: false,
     useCustomDiscipline: false,
@@ -77,8 +80,11 @@ const mutations = {
     setNewJournalCustomDiscipline: (state, value) => {
         state.newJournalCustomDiscipline = value;
     },
-    setNewJournalTarget: (state, value) => {
-        state.newJournalDefaultTarget = value;
+    setNewJournalTargetData: (state, value) => {
+        state.newJournalDefaultTarget.base64Data = value;
+    },
+    setNewJournalTargetName: (state, value) => {
+        state.newJournalDefaultTarget.name = value;
     },
     setNewJournalUploadedTargetData: (state, value) => {
         state.newJournaluploadedTarget.base64Data = value;
@@ -111,7 +117,8 @@ const actions = {
         commit('setNewJournalName', '');
         commit('setNewJournalDiscipline', '');
         commit('setNewJournalCustomDiscipline', '');
-        commit('setNewJournalTarget', '');
+        commit('setNewJournalTargetData', '');
+        commit('setNewJournalTargetName', '');
         commit('setNewJournalTargetResetFlag', false);
         commit('setUseUploadedCustomTarget', false);
         commit('setUseCustomDiscipline', false);
@@ -148,8 +155,13 @@ const actions = {
     checkJournalExists: async ({ rootState }, name) => {
         if (!name) return false;
 
+        let useCustomDiscip = state.useCustomDiscipline;
+        let customDiscipName = state.newJournalCustomDiscipline;
+        let defDiscipName = state.newJournalDiscipline;
+        let discipName = useCustomDiscip ? customDiscipName : defDiscipName;
         let data = {
             user: rootState.Auth.authEmail,
+            discipline: discipName,
             journalName: name
         };
 
@@ -175,7 +187,7 @@ const actions = {
                 user: rootState.Auth.authEmail,
                 discipline: discipName,
                 name: state.newJournalName,
-                storedTarget: state.newJournalDefaultTarget,
+                storedTarget: state.newJournalDefaultTarget.name,
                 customTarget: state.newJournaluploadedTarget,
                 isTargetCustom: state.useUploadedCustomTarget,
             });

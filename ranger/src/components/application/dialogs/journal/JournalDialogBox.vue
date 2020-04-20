@@ -5,13 +5,16 @@
             persistent
         >
             <v-card class='main-card' height=580>
-                <v-app-bar :color='colors.secondary'>
+                <v-app-bar
+                    :color='colors.secondary' 
+                    elevation=2
+                >
                     <v-btn
                         class='close-btn'
                         color='gray'
                         x-small
                         fab
-                        elevation=4
+                        elevation=2
                         @click='close'
                     >
                         <v-icon
@@ -22,7 +25,7 @@
                         </v-icon>
                     </v-btn>
                     <span class='head'>
-                        New journal
+                        new journal
                     </span>
                 </v-app-bar>
                 <v-container>
@@ -49,6 +52,11 @@
                             <select-journal-name
                                 v-show='currentTab == 3'
                                 @loading='activateLoading'
+                            />
+                            <new-journal-preview
+                                v-show='currentTab == 4'
+                                @loading='activateLoading'
+                                @change-tab='setTab'
                             />
                         </div>
                     </v-card>
@@ -139,7 +147,7 @@
                     <v-card-title
                         class='success-title'
                         :color='colors.primary'
-                        :style="{ backgroundColor: colors.primary }"
+                        :style="{ backgroundColor: colors.secondary }"
                     >
                         <p align=center class='success-title-flex'>
                             Journal created successfully!
@@ -150,21 +158,6 @@
                             class='success-details'
                             align='center'
                         >
-                            <p align=left>
-                                <span class='details-header'>
-                                    Name:<br>
-                                </span>
-                                <span :style="{ color: colors.primary }">
-                                    {{ lastCreatedName }}
-                                </span>
-                                <br><br>
-                                <span class='details-header'>
-                                    Discipline:<br>
-                                </span>
-                                <span :style="{ color: colors.primary }">
-                                    {{ lastCreatedDiscipline }}
-                                </span>
-                            </p>
                         </div>
                     </v-container>
                     <v-card-actions>
@@ -173,7 +166,7 @@
                             text
                             block
                             :color='colors.primaryDark'
-                            @click="errorDialog = false"
+                            @click='successDialog = false'
                         >
                             Ok
                         </v-btn>
@@ -189,6 +182,7 @@
     import SelectJournalDiscipline from './SelectJournalDiscipline';
     import SelectJournalTarget from './SelectJournalTarget';
     import SelectJournalTargetConfig from './SelectJournalTargetConfig';
+    import NewJournalPreview from './NewJournalPreview';
     import Loading from 'vue-loading-overlay';
     import 'vue-loading-overlay/dist/vue-loading.css';
     
@@ -198,6 +192,7 @@
             SelectJournalDiscipline,
             SelectJournalTarget,
             SelectJournalTargetConfig,
+            NewJournalPreview,
             Loading
         },
         props: [
@@ -210,9 +205,7 @@
                 successDialog: false,
                 errorMessage: '',
                 currentTab: 0,
-                totalTabs: 4,
-                lastCreatedName: '',
-                lastCreatedDiscipline: ''
+                totalTabs: 5,
             }
         },
         computed: {
@@ -237,6 +230,11 @@
             }
         },
         methods: {
+            /**
+             * Close the dialog box entirely.
+             * 
+             * @emits {Null} close
+             */
             close: async function() {
                 this.$emit('close');
                 
@@ -246,6 +244,9 @@
                     this.$store.dispatch('initNewJournalValues');
                 }, 100);
             },
+            /**
+             * Move to the next tab in line.
+             */
             incrementTab: async function() {
                 this.load = true;
                 let canContinue = await this.canContinueNextTab();
@@ -257,17 +258,31 @@
                     else this.currentTab += 2; //skip custom target config
                 }
             },
+            /**
+             * Return to the previous viewed tab.
+             */
             decrementTab: function() {
                 if (this.currentTab > 0) {
                     if (this.currentTab != 3 || this.useCustomTarget) this.currentTab--;
                     else this.currentTab -= 2; //skip custom target config
                 }
             },
+            /**
+             * Set a tab to a specific index.
+             * 
+             * @param {Number} tabIndex - The index of the tab to set
+             */
+            setTab: function(tabIndex) { this.currentTab = tabIndex; },
+            /**
+             * Create a new journal based on the user's input.
+             * A new journal will be created only if the input is valid.
+             */
             createJournal: async function() {
-                if (!this.journalName) {
-                    this.popError('Enter the journal\'s name');
-                    return;
-                }
+                this.load = true;
+                let canContinue = await this.canContinueNextTab();
+                this.load = false;
+
+                if (!canContinue) return;
                 else {
                     this.load = true;
                     await this.$store.dispatch('createJournal');
@@ -275,14 +290,18 @@
 
                     //triggers a confirmation dialog
                     setTimeout(() => {
-                        this.lastCreatedName = this.journalName;
-                        this.lastCreatedDiscipline = this.discipline;
                         this.successDialog = true;
                     }, 1000);
 
                     this.close();
                 }
             },
+            /**
+             * Check if the user can continue to the next tab.
+             * Only available if the current tab consists of legal input data.
+             * 
+             * @returns {Boolean} True if the next tab is available.
+             */
             canContinueNextTab: async function() {
                 return new Promise((resolve, reject) => {
                     switch (this.currentTab) {
@@ -331,9 +350,9 @@
                                         resolve(false);
                                     }
                                     else {
-                                        this.$store.dispatch('checkTargetExists', this.customTarget.chosenName)
+                                        this.$store.dispatch('checkTargetExists', name)
                                             .then(res => {
-                                                if (res) this.popError('A target for \'' + this.discipline + '\'' +
+                                                if (res) this.popError('A target for \'' + this.discipline + '\' ' +
                                                                        'with that name already exists');
 
                                                 resolve(!res);
@@ -369,22 +388,37 @@
                                     resolve(false);
                                 }
 
-                                let exists = this.$store.dispatch('checkJournalExists', name);
-                                if (exists) this.popError('A journal with that name already exists');
-                                resolve(!exists);
+                                this.$store.dispatch('checkJournalExists', name)
+                                    .then(res => {
+                                        if (res) this.popError('A journal with that name already exists');
+                                        resolve(!res);
+                                    })
                             }
 
-                            resolve(true);
+                            break;
+
+                        case 4:
+                            resolve(true)
                             break;
                         
                         default: reject();
                     }
                 });
             },
+            /**
+             * Pop an error message in a new dialog.
+             * 
+             * @param {String} message - The message to display
+             */
             popError: function(message) {
                 this.errorDialog = true;
                 this.errorMessage = message;
             },
+            /**
+             * Activate a loading component over the screen
+             * 
+             * @param {Boolean} flag - True to show or false to dismiss
+             */
             activateLoading: function(flag) { this.load = flag; }
         }
     }
@@ -401,6 +435,7 @@
         margin-left: auto;
         padding-right: 20px;
         color: #ffffff;
+        font-weight: bold;
     }
     .close-btn {
         margin-left: -5px;
@@ -438,6 +473,7 @@
     .success-title-flex {
         word-break: normal;
         color: #ffffff;
+        font-weight: bold;
         font-size: 24px;
     }
     .details-header {
