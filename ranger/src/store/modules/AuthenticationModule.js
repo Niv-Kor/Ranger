@@ -1,8 +1,12 @@
 const state = {
     authEmail: '',
     authPass: '',
-    wrongInput: false,
-    authenticated: false
+    authWrongInput: false,
+    authenticated: false,
+    authRegex: {
+        email: /^[0-9A-Za-z_-]{1,}@[0-9A-Za-z_-]{1,}\.[0-9A-Za-z.]{1,}$/,
+        password: /^[0-9A-Za-z]{8,25}$/
+    },
 };
 
 const getters = {
@@ -12,13 +16,16 @@ const getters = {
             password: state.authPass
         }
     },
-    getInputValidation: (state, getters, rootState) => {
-        let emailValid = rootState.regex.email.test(state.authEmail);
-        let passValid = rootState.regex.password.test(state.authPass);
+    getInputValidation: (state) => {
+        let emailValid = state.authRegex.email.test(state.authEmail);
+        let passValid = state.authRegex.password.test(state.authPass);
         return emailValid && passValid;
     },
-    isWrongInput: (state) => {
-        return state.wrongInput;
+    isWrongAuthInput: (state) => {
+        return state.authWrongInput;
+    },
+    getAuthRegex: state => {
+        return state.authRegex;
     },
     getAuthentication: (state) => {
         return state.authenticated;
@@ -32,8 +39,8 @@ const mutations = {
     setAuthPassword: (state, value) => {
         state.authPass = value;
     },
-    setWrongInput: (state, flag) => {
-        state.wrongInput = flag;
+    setWrongAuthInput: (state, flag) => {
+        state.authWrongInput = flag;
     },
     setAuthentication: (state, flag) => {
         state.authenticated = flag;
@@ -41,13 +48,12 @@ const mutations = {
 };
 
 const actions = {
-    setAuthEmail: ({ commit }, value) => {
-        commit('setAuthEmail', value);
-    },
-    setAuthPassword: ({ commit }, value) => {
-        commit('setAuthPassword', value);
-    },
-    async authenticateUser({ state, rootState }) {
+    /**
+     * Check if the data entered by the user is authenticated with the server.
+     * 
+     * @returns {Boolean} True if the user is authenticated.
+     */
+    authenticateUser: async ({ state, rootState }) => {
         return new Promise((resolve) => {
             rootState.socket.emit('validate_user', {
                 email: state.authEmail,
@@ -57,7 +63,12 @@ const actions = {
             rootState.socket.on('validate_user', isValid => { resolve(isValid); });
         });
     },
-    async signUser({ state, rootState }) {
+    /**
+     * Sign a user up with the entered data.
+     * 
+     * @returns {Boolean} True if the registration is successful.
+     */
+    signUser: async ({ state, rootState }) => {
         return new Promise((resolve) => {
             rootState.socket.emit('sign_user', {
                 email: state.authEmail,

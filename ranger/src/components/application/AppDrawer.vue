@@ -44,24 +44,29 @@
             persistent
         >
             <v-card class='confirmation-card'>
-                <v-card-title>Are you sure?</v-card-title>
-                <v-card-text>
+                <v-card-title
+                    class='logout-title'
+                    :color='colors.secondary'
+                    :style="{ backgroundColor: colors.secondary }"
+                >
+                    Are you sure?
+                </v-card-title>
+                <v-card-text class='logout-text'>
                     Logging out of the system might cancel any ongoing processes you are yet to finish.
                 </v-card-text>
                 <v-card-actions>
-                    <v-spacer></v-spacer>
                     <v-btn
                         class='confirmation-btn'
-                        :color='colors.secondary'
                         text
+                        :color='colors.secondary'
                         @click='confirmLogout = false'
                     >
                         Cancel
                     </v-btn>
                     <v-btn
                         class='confirmation-btn'
-                        :color='colors.secondary'
                         text
+                        :color='colors.primary'
                         @click='logout'
                     >
                         Log out
@@ -113,7 +118,7 @@
                             title: 'Log out',
                             icon: 'mdi-logout-variant',
                             path: '',
-                            func: this.logoutConfirmation
+                            func: () => { this.confirmLogout = true; }
                         }
                     ]
                 },
@@ -126,27 +131,38 @@
             })
         },
         methods: {
+            /**
+             * Activate when an item in the drawer is clicked.
+             * 
+             * @emits {Null} drawerClosed
+             */
             onItemClick: function(item) {
                 if (item.path) this.goto(item.path);
                 if (item.func) item.func();
                 this.$emit('drawerClosed');
             },
+            /**
+             * Push an address to the router.
+             * 
+             * @param {String} path - The address to push to the router
+             */
             goto: function(path) {
                 this.$router.push({ path: path }).catch(() => {});
             },
-            logoutConfirmation: function() {
-                this.confirmLogout = true;
-            },
+            /**
+             * Log out of the application and return to the authentication page.
+             */
             logout: function() {
                 this.confirmLogout = false;
                 window.localStorage.removeItem('user');
                 this.$store.commit('setAuthentication', false);
+                this.goto('/auth');
             }
         }
     }
 </script>
 
-<style>
+<style scoped>
     .drawer {
         position: absolute;
         top: 55px;
@@ -163,5 +179,11 @@
     .confirmation-btn {
         text-transform: none;
         font-weight: 700;
+    }
+    .logout-text {
+        margin: 20px 0 20px 0;
+    }
+    .logout-title {
+        color: #ffffff;
     }
 </style>

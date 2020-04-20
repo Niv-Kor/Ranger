@@ -83,8 +83,8 @@
         computed: {
             ...mapGetters({
                 colors: 'getColors',
-                regex: 'getRegex',
-                wrongInput: 'isWrongInput'
+                regex: 'getAuthRegex',
+                wrongInput: 'isWrongAuthInput'
                 
             }),
             valid() {
@@ -103,20 +103,40 @@
             }
         },
         methods: {
+            /**
+             * Check if the entered email address is regex valid.
+             * 
+             * @returns {Boolean} True if the email value is valid.
+             */
             isEmailValid: function() {
                 return this.regex.email.test(this.email);
             },
+            /**
+             * Check if the entered password is regex valid.
+             * 
+             * @returns {Boolean} True if the password value is valid.
+             */
             isPasswordValid: function() {
                 return this.regex.password.test(this.password);
             },
+            /**
+             * Check if the repeated password is the same as the first one.
+             * 
+             * @returns {Boolean} True if both values are the same.
+             */
             isRepeatPasswordValid: function() {
                 return this.repeatPassword === this.password;
             },
+            /**
+             * Cancel and remove all inputs.
+             * 
+             * @emits {Null} cancel
+             */
             cancel: function() {
                 this.email = '';
                 this.password = '';
                 this.repeatPassword = '';
-                this.$store.commit('setWrongInput', false);
+                this.$store.commit('setWrongAuthInput', false);
                 this.$emit('cancel');
             }
         }

@@ -22,7 +22,7 @@
             <div
                 v-for='period in info.length'
                 :class='getPeriodClass(period)'
-                :key="period"
+                :key='period'
                 @click='periodPtr = period - 1'
             >
                 <v-icon
@@ -57,11 +57,19 @@
             })
         },
         methods: {
+            /**
+             * @param {Number} period - The index of the period
+             * @returns {String} The appropriate css class for the specified period.
+             */
             getPeriodClass: function(period) {
                 let defClass = 'periods';
                 let focusClass = (this.periodPtr === period - 1) ? 'focus' : 'blur';
                 return defClass + ' ' + focusClass;
             },
+            /**
+             * @param {Boolean} selected - True if the period is the selected one
+             * @returns {String} The period's appropriate mdi icon.
+             */
             getPeriodIcon: function(selected) {
                 return selected ? 'mdi-circle-slice-8' : 'mdi-circle-outline';
             }

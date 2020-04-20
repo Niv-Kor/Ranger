@@ -56,10 +56,10 @@
         </v-row>
         <v-container
             class='label-container'
-            :style='getLabelWidthStyle()'
+            :style='labelStyle'
         >
             <v-text-field
-                v-show='disciplines[selectedDiscip].custom'
+                v-if='disciplines[selectedDiscip].custom'
                 v-model='newDiscipName'
                 class='label-discip uncolored'
                 height=10
@@ -73,7 +73,7 @@
                 :color='colors.neutral'
             />
             <v-text-field
-                v-show='!disciplines[selectedDiscip].custom'
+                v-else
                 class='label-discip colored'
                 min-width=100
                 max-width=180
@@ -101,32 +101,29 @@
             return {
                 selectedDiscip: 0,
                 newDiscipName: '',
-                disciplines: {}
+                disciplines: [
+                    {
+                        name: 'Firearm',
+                        labelWidth: '180px',
+                        srcIcon: DISPLINE_ICONS('./firearm.png'),
+                        custom: false
+                    },
+                    {
+                        name: 'Archery',
+                        labelWidth: '180px',
+                        srcIcon: DISPLINE_ICONS('./archery.png'),
+                        custom: false
+                    },
+                    {
+                        name: 'Other',
+                        labelWidth: '300px',
+                        srcIcon: DISPLINE_ICONS('./other.png'),
+                        custom: true
+                    }
+                ]
             }
         },
         created() {
-            //init disciplines object
-            this.disciplines = [
-                {
-                    name: 'Firearm',
-                    labelWidth: '180px',
-                    srcIcon: DISPLINE_ICONS('./firearm.png'),
-                    custom: false
-                },
-                {
-                    name: 'Archery',
-                    labelWidth: '180px',
-                    srcIcon: DISPLINE_ICONS('./archery.png'),
-                    custom: false
-                },
-                {
-                    name: 'Other',
-                    labelWidth: '300px',
-                    srcIcon: DISPLINE_ICONS('./other.png'),
-                    custom: true
-                }
-            ];
-
             //store initial value
             this.$store.commit('setNewJournalDiscipline', this.disciplines[this.selectedDiscip].name);
 
@@ -142,6 +139,15 @@
                 storedDiscipline: 'getNewJournalDiscipline',
                 storedOtherDiscipline: 'getNewJournalOtherDiscipline'
             }),
+            labelStyle: function() {
+                let property = this.disciplines[this.selectedDiscip];
+
+                if (property) {
+                    let width = property.labelWidth;
+                    return { width }
+                }
+                else return {};
+            }
         },
         watch: {
             selectedDiscip(value) {
@@ -162,29 +168,26 @@
             }
         },
         methods: {
+            /**
+             * Move to the next discipline in line.
+             */
             incrementDiscip: function() {
                 if (this.selectedDiscip < this.disciplines.length - 1)
                     this.selectedDiscip++;
             },
+            /**
+             * Return to the previous viewed discipline.
+             */
             decrementDiscip: function() {
                 if (this.selectedDiscip > 0)
                     this.selectedDiscip--;
-            },
-            getLabelWidthStyle: function() {
-                let property = this.disciplines[this.selectedDiscip];
-
-                if (property) {
-                    let width = property.labelWidth;
-                    return { 'width': width }
-                }
-                else return null;
-            },
+            }
         }
     }
 </script>
 
 <style>
-    .subtitle {
+    * {
         font-family: 'comfortaa';
     }
     .card {

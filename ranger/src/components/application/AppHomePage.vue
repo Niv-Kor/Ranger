@@ -73,6 +73,9 @@
             }
         },
         methods: {
+            /**
+             * Activate when the plus button is pressed.
+             */
             add: function() {
                 this.$store.commit('emitPopupEvent', this.currentPage, true)
             }

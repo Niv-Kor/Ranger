@@ -4,9 +4,7 @@
         v-if='!userAuthenticated'
         @userAuthenticated='onUserAuthenticated'
       />
-      <app-home-page
-        v-else
-      />
+      <app-home-page v-else />
   </v-app>
 </template>
 
@@ -48,10 +46,19 @@ export default {
     }
   },
   methods: {
+    /**
+     * Activate when the user is authenticated.
+     */
     onUserAuthenticated: function() {
       this.$store.commit('setAuthentication', true);
       this.$router.push({ path: '/home' }).catch(() => {});
     },
+    /**
+     * @returns {Object} {
+     *                      email: <String>{The user's authenticated email}
+     *                      password: <String>{The user's authenticated password}
+     *                   }
+     */
     fetchUserDataFromStorage: function() {
       let userDataJSON = window.localStorage.getItem('user');
       return userDataJSON ? JSON.parse(userDataJSON) : null;

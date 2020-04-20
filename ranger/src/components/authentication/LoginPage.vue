@@ -66,22 +66,27 @@
             ...mapGetters({
                 colors: 'getColors',
                 enableButton: 'getInputValidation',
-                wrongInput: 'isWrongInput'
+                wrongInput: 'isWrongAuthInput'
             })
         },
         watch: {
             email: function(value) {
-                this.$store.dispatch('setAuthEmail', value);
+                this.$store.commit('setAuthEmail', value);
             },
             password: function(value) {
-                this.$store.dispatch('setAuthPassword', value);
+                this.$store.commit('setAuthPassword', value);
             }
         },
         methods: {
+            /**
+             * Cancel and remove all inputs.
+             * 
+             * @emits {Null} cancel
+             */
             cancel: function() {
                 this.email = '';
                 this.password = '';
-                this.$store.commit('setWrongInput', false);
+                this.$store.commit('setWrongAuthInput', false);
                 this.$emit('cancel');
             }
         }

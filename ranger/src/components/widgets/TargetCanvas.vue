@@ -448,7 +448,14 @@
             /**
              * Calculate image data.
              * 
-             * @returns
+             * @returns {Object} - {
+             *                        {Number} width - The image's actual width,
+             *                        {Number} height - The image's actual height,
+             *                        {Number} pageTop - Pixels from the top of the page to the top of the image,
+             *                        {Number} pageLeft - Pixels from the page's left side to the image's left corner,
+             *                        {Number} offsetTop - Pixels from the top of the image component to the actual image's top corner,
+             *                        {Number} offsetLeft - Pixels from the left of the image component to the actual image's left corner
+             *                     }
              */
             calcImageData() {
                 if (!this.imageLoaded) {
@@ -504,8 +511,8 @@
             },
             /**
              * @param {Object} point - {
-             *                            x: <Number>{point x coordinate},
-             *                            y: <Number>{point y coordinate}
+             *                            {Number} x - x coordinate
+             *                            {Number} y - y coordinate
              *                         }
              * @returns {Boolean} True if the point is within the target image.
              */
@@ -521,8 +528,8 @@
              * 
              * @param {Event} event - Touch event
              * @returns {Object} point - {
-             *                              x: <Number>{point x coordinate},
-             *                              y: <Number>{point y coordinate}
+             *                              {Number} x - x coordinate
+             *                              {Number} y - y coordinate
              *                           }
              */
             getSourceCursorPosition: function(event) {
@@ -551,10 +558,10 @@
              * 
              * @param {Number} index - The index of the ring
              * @returns {Object} {
-             *                      left: <String>{css left attribute in px},
-             *                      top: <String>{css top attribute in px},
-             *                      width: <String>{css width attribute in px},
-             *                      height: <String>{css height attribute in px}
+             *                      {String} left - css left attribute in px,
+             *                      {String} top - css top attribute in px,
+             *                      {String} width - css width attribute in px,
+             *                      {String} height - css height attribute in px
              *                   }
              */
             createValueRingStyle: function(index) {
@@ -580,10 +587,10 @@
              * 
              * @param {Number} index - The index of the ring
              * @returns {Object} {
-             *                      left: <String>{css left attribute in px},
-             *                      top: <String>{css top attribute in px},
-             *                      width: <String>{css width attribute in px},
-             *                      height: <String>{css height attribute in px}
+             *                      {String} left - css left attribute in px,
+             *                      {String} top - css top attribute in px,
+             *                      {String} width - css width attribute in px,
+             *                      {String} height - css height attribute in px
              *                   }
              */
             createValueLabelStyle: function(index) {
@@ -606,23 +613,23 @@
             /**
              * Create a hit point on the image and emit an event to the parent.
              * 
-             * @param point - <Object>{
-             *                           x: <Number>{point x coordinate},
-             *                           y: <Number>{point y coordinate}
-             *                        },
-             * @emits hit - <Object>{
-             *                         point: <Object>{
-             *                                           x: <Number>{point x coordinate},
-             *                                           y: <Number>{point y coordinate}
-             *                                        },
-             *                         bullseyeData: <Object>{
-             *                                                  distance: <Number>{distance from the point to the center},
-             *                                                  xDistance: <Number>{x distance from the point to the center},
-             *                                                  yDistance: <Number>{y distance from the point to the center},
-             *                                                  quarter: <Number>{quarter relative to the center
-             *                                                                    as in a coordinate system (1/2/3/4)}
-             *                                               }
-             *                      }
+             * @param {Object} point - {
+             *                            {Number} x - x coordinate
+             *                            {Number} y - y coordinate
+             *                         }
+             * @emits {Object} hit - {
+             *                          {Object} point - {
+             *                                              {Number} x - x coordinate
+             *                                              {Number} y - y coordinate
+             *                                           }
+             *                          {Object} bullseyeData - {
+             *                                                     {Number} distance - distance from the point to the center,
+             *                                                     {Number} xDistance - x distance from the point to the center,
+             *                                                     {Number} yDistance - y distance from the point to the center,
+             *                                                     {Number} quarter - quarter relative to the center
+             *                                                                        as in a coordinate system (1/2/3/4)
+             *                                                  }
+             *                       }
              */
             createHit: function(point) {
                 this.magnify = false;
@@ -647,13 +654,13 @@
              * Delete a hit point from the image.
              * 
              * @param {Object} point - {
-             *                            x: <Number>{point x coordinate},
-             *                            y: <Number>{point y coordinate}
+             *                            {Number} x - x coordinate
+             *                            {Number} y - y coordinate
              *                         }
-             * @emits delete - <Object>{
-             *                            x: <Number>{point x coordinate},
-             *                            y: <Number>{point y coordinate}
-             *                         }
+             * @emits {Object} delete - {
+             *                             {Number} x - x coordinate
+             *                             {Number} y - y coordinate
+             *                          }
              */
             deleteHit: function(point) {
                 for (let i in this.points) {
@@ -671,13 +678,13 @@
              * Generate an inline style object for a hit point.
              * 
              * @param {Object} point - {
-             *                            x: <Number>{point x coordinate},
-             *                            y: <Number>{point y coordinate}
+             *                            {Number} x - x coordinate
+             *                            {Number} y - y coordinate
              *                         }
              * @returns {Object} {
-             *                      position: <String>{css position},
-             *                      left: <String>{css left attribute in px},
-             *                      top: <String>{css top attribute in px}
+             *                      {String} position - css position,
+             *                      {String} left - css left attribute in px,
+             *                      {String} top - css top attribute in px
              *                   }
              */
             createHitStyle: function(point) {
@@ -694,8 +701,8 @@
              * Find the proper class for a hit.
              * 
              * @param {Object} point - {
-             *                            x: <Number>{point x coordinate},
-             *                            y: <Number>{point y coordinate}
+             *                            {Number} x - x coordinate
+             *                            {Number} y - y coordinate
              *                         }
              * @returns {String} The proper class name for the hit (for css purposes).
              */
@@ -715,18 +722,18 @@
              * the center is by default the actual image's center.
              * 
              * @param {Object} point - {
-             *                            x: <Number>{point x coordinate},
-             *                            y: <Number>{point y coordinate}
+             *                            {Number} x - x coordinate
+             *                            {Number} y - y coordinate
              *                         }
              * @returns {Object} {
-             *                      center: <ObjecT>{
-             *                                         x: <Number>{x coordinate}
-             *                                         y: <Number>{y coordinate}
-             *                                      }
-             *                      distance: <Number>{distance from the point to the center},
-             *                      xDistance: <Number>{x distance from the point to the center},
-             *                      yDistance: <Number>{y distance from the point to the center},
-             *                      quarter: <Number>{quarter relative to the center as in a coordinate system (1/2/3/4)}
+             *                      {Object} center - {
+             *                                           {Number} x - x coordinate
+             *                                           {Number} y - y coordinate
+             *                                        }
+             *                      {Number} distance - distance from the point to the center,
+             *                      {Number} xDistance - x distance from the point to the center,
+             *                      {Number} yDistance - y distance from the point to the center,
+             *                      {Number} quarter - quarter relative to the center as in a coordinate system (1/2/3/4)
              *                   }
              */
             distanceFromCenter: function(point) {
@@ -754,8 +761,8 @@
              * 
              * @param {Event} event - Touch event
              * @returns {Object} point - {
-             *                              x: <Number>{point x coordinate},
-             *                              y: <Number>{point y coordinate}
+             *                              {Number} x - x coordinate
+             *                              {Number} y - y coordinate
              *                           }
              */
             getZoomCursorPosition: function(event) {
@@ -775,8 +782,8 @@
              * Get the offset position of the magnifier.
              * 
              * @returns {Object} point - {
-             *                              x: <Number>{point x coordinate},
-             *                              y: <Number>{point y coordinate}
+             *                              {Number} x - x coordinate
+             *                              {Number} y - y coordinate
              *                           }
              */
             getThumbPosition: function() {
@@ -807,8 +814,8 @@
              * Get the current position of the zoom image, according to the cursor.
              * 
              * @returns {Object} point - {
-             *                              x: <Number>{point x coordinate},
-             *                              y: <Number>{point y coordinate}
+             *                              {Number} x - x coordinate
+             *                              {Number} y - y coordinate
              *                           }
              */
             getZoomImagePosition: function() {
@@ -871,7 +878,7 @@
     }
 </script>
 
-<style scoped lang='scss'>
+<style scoped>
     .magnifier-container {
         position: relative;
     }

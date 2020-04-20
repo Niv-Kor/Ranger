@@ -141,10 +141,27 @@
             }
         },
         methods: {
+            /**
+             * Save the configured center of the target as the new center.
+             * 
+             * @param {Object} value - {
+             *                            {Object} center - {
+             *                                                 {Number} x - x coordinate
+             *                                                 {Number} y - y coordinate
+             *                                              }
+             *                            {Number} distance - distance from the point to the center,
+             *                            {Number} xDistance - x distance from the point to the center,
+             *                            {Number} yDistance - y distance from the point to the center,
+             *                            {Number} quarter - quarter relative to the center as in a coordinate system (1/2/3/4)
+             *                         }
+             */
             saveNewCenter: function(value) {
                 let center = value.point;
                 this.$store.commit('setNewJournalUploadedTargetCenter', center);
             },
+            /**
+             * Clear the previously saved center.
+             */
             clearCenter: function() {
                 this.$store.commit('setNewJournalUploadedTargetCenter', null);
             }

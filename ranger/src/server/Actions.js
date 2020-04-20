@@ -13,7 +13,14 @@ module.exports = {
  * Run an sql procedure.
  * 
  * @param {String} proc - Procedure's name
- * @param {Array} params - [{ name: '{param_name}', type: SQL.{type}, value: {input_value} }]
+ * @param {Array} params - [
+ *                            {
+ *                               {String} name - sql parameter name,
+ *                               {mssql.} type - mssql data type constant,
+ *                               {var} value - input value
+ *                            },
+ *                            ...
+ *                         ]
  * @returns {Object} The output recordset.
  */
 async function runProcedure(proc, params) {
@@ -75,7 +82,10 @@ async function journalExists(user, discipline, name) {
  * Let the client know if the procedure succeeded.
  * 
  * @param {SocketIO.Socket} socket - The socket used by the server.
- * @param {Object} user - { email: '{user email}', password: '{user password}' }
+ * @param {Object} user - {
+ *                           {String} email - user's email,
+ *                           {String} password - user's password
+ *                        }
  */
 async function signUser(socket, user) {
     let params = [
@@ -97,7 +107,10 @@ async function signUser(socket, user) {
  * Let the client know the answer.
  * 
  * @param {SocketIO.Socket} socket - The socket used by the server.
- * @param {Object} user - { email: '{user email}', password: '{user password}' }
+ * @param {Object} user - {
+ *                           {String} email - user's email,
+ *                           {String} password - user's password
+ *                        }
  */
 async function validateUser(socket, user) {
     let params = [
@@ -115,21 +128,21 @@ async function validateUser(socket, user) {
  * 
  * @param {SocketIO.Socket} socket - The socket used by the server.
  * @param {Object} data - {
- *                            user: <String>{user email},
- *                            discipline: <String>{journal discipline},
- *                            name: <String>{journal name},
- *                            storedTarget: <String>{stored target path},
- *                            customTarget: {
- *                                            base64Img: <String>{base64 represntation of the image},
- *                                            chosenName: <String>{name of the image},
- *                                            center: <Object> {
- *                                                                x: <Number>{x coordinate (in percentages)}
- *                                                                y: <Number>{y coordinate (in percentages)}
- *                                                             },
- *                                            rings: <Number>{amount of rings},
- *                                            ringDiameter: <Number>{diameter of inner ring (in integer percentages)}
- *                                          }
- *                            isTargetCustom: <Boolean>{true if the target is customized},
+ *                           {String} user - user's email address,
+ *                           {String} discipline - journal discipline,
+ *                           {String} name - journal name,
+ *                           {String} storedTarget - stored target path,
+ *                           {Object} customTarget - {
+ *                                                      {String} base64Img - base64 represntation of the image,
+ *                                                      {String} chosenName - name of the image,
+ *                                                      {Object} center - {
+ *                                                                           {Number} x - x coordinate (in percentages),
+ *                                                                           {Number} y - y coordinate (in percentages)
+ *                                                                        },
+ *                                                      {Number} rings - amount of rings,
+ *                                                      {Number} ringDiameter - diameter of inner ring (in integer percentages)
+ *                                                   }
+ *                           {Boolean} isTargetCustom - true if the target is customized,
  *                        }
  */
 async function createJournal(socket, data) {
@@ -195,7 +208,7 @@ async function createJournal(socket, data) {
         .catch(err => {
             socket.emit('create_journal', {
                 exitCode: 1,
-                message: 'Unknown error: ' + err
+                message: err
             });
         })
 }

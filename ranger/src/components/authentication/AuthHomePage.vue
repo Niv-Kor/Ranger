@@ -12,7 +12,7 @@
         <transition name='fade' mode='out-in'>
             <router-view
                 @cancel="goto('/auth')"
-                @authenticate="authenticateUser"
+                @authenticate='authenticateUser'
             />
         </transition>
         <transition name='fade' mode='out-in'>
@@ -27,7 +27,7 @@
                         rounded
                         color='white'
                         width=150
-                        @click="goto(signupPage)"
+                        @click='goto(signupPage)'
                     >
                         Sign Up
                     </v-btn>
@@ -62,7 +62,7 @@
         computed: {
             ...mapGetters({
                 colors: 'getColors',
-                wrongInput: 'isWrongInput',
+                wrongInput: 'isWrongAuthInput',
                 userData: 'getUserData'
             }),
             currentPage() {
@@ -70,12 +70,21 @@
             }
         },
         methods: {
+            /**
+             * Push an address to the router.
+             * 
+             * @param {String} path - The address to push to the router
+             */
             goto: function(path) {
                 this.$router.push({ path: path }).catch(() => {});
             },
-            setValidation: function(flag) {
-                this.inputValid = flag;
-            },
+            /**
+             * Based on the current page, authenticate the user via the server.
+             * If the current page is the login page, check if the user exists in the database;
+             * If the current page is the registration page, check if the user is able to be registered.
+             * 
+             * @emits {Null} userAuthenticated - When authentication is successful
+             */
             authenticateUser: function() {
                 switch (this.currentPage) {
                     case this.signupPage:
@@ -86,7 +95,7 @@
                                     this.storeSuccessfulLogin();
                                     this.$emit('userAuthenticated');
                                 }
-                                else this.$store.commit('setWrongInput', !authentication);
+                                else this.$store.commit('setWrongAuthInput', !authentication);
                             });
                         break;
                     case this.loginPage:
@@ -97,11 +106,15 @@
                                     this.storeSuccessfulLogin();
                                     this.$emit('userAuthenticated');
                                 }
-                                else this.$store.commit('setWrongInput', !authentication);
+                                else this.$store.commit('setWrongAuthInput', !authentication);
                             });
                         break;
                 }
             },
+            /**
+             * Store login tokens (email and password) in the web's local storage
+             * under the object named 'user'.
+             */
             storeSuccessfulLogin: function() {
                 window.localStorage.setItem('user', JSON.stringify(this.userData));
             }
@@ -109,7 +122,7 @@
     }
 </script>
 
-<style>
+<style scoped>
     .login-btn .v-btn__content {
             color: #000000;
     }
@@ -134,7 +147,11 @@
         right: 0;
     }
     .signup-btn {
-        bottom: 10px;
+        position: absolute;
+        bottom: 40px;
+        margin: auto;
+        left: 0;
+        right: 0;
     }
     .unlock-btn {
         position: absolute;

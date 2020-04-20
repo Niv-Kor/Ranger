@@ -12,6 +12,23 @@ const state = {
         center: null,
         rings: 1,
         ringDiameter: 20
+    },
+    newJournalRegex: {
+        journalName: {
+            expression: /^[a-zA-Z](([ _-])?[0-9A-Za-z])*$/,
+            message: 'A journal\'s name must start with a letter and contain no special characters. ' +
+                     'Only one separator is allowed between two words.'
+        },
+        disciplineName: {
+            expression: /^[a-zA-Z](([ _-])?[0-9A-Za-z])*$/,
+            message: 'A discipline\'s name must start with a letter and contain no special characters. ' +
+                     'Only one separator is allowed between two words.'
+        },
+        targetName: {
+            expression: /^[a-zA-Z](([ _-])?[0-9A-Za-z])*$/,
+            message: 'A target\'s name must start with a letter and contain no special characters. ' +
+                     'Only one separator is allowed between two words.'
+        }
     }
 }
 
@@ -40,10 +57,13 @@ const getters = {
     useCustomDiscipline: state => {
         return state.useCustomDiscipline;
     },
-    getCustomTargetFileType: (_, getters) => {
-        let name = getters.getNewJournalUploadedTarget.chosenName;
+    getCustomTargetFileType: state => {
+        let name = state.newJournaluploadedTarget.chosenName;
         let nameSplit = name.split('.');
         return nameSplit[nameSplit.length - 1];
+    },
+    getNewJournalRegex: state => {
+        return state.newJournalRegex;
     }
 };
 
@@ -119,6 +139,12 @@ const actions = {
             rootState.socket.on('target_exists', res => resolve(res));
         });
     },
+    /**
+     * Check if a journal alredy exists in the database.
+     * 
+     * @param {String} name - The journal's name
+     * @returns {Boolean} True if the already journal exists.
+     */
     checkJournalExists: async ({ rootState }, name) => {
         if (!name) return false;
 
@@ -132,6 +158,11 @@ const actions = {
             rootState.socket.on('journal_exists', res => resolve(res));
         });
     },
+    /**
+     * Create a new journal and insert it to the database.
+     * 
+     * @returns {Boolean} True if the journal is successfully created.
+     */
     createJournal: async ({ state, rootState }) => {
         //check if the discipline's name is customized
         let useCustomDiscip = state.useCustomDiscipline;
@@ -139,7 +170,7 @@ const actions = {
         let defDiscipName = state.newJournalDiscipline;
         let discipName = useCustomDiscip ? customDiscipName : defDiscipName;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             rootState.socket.emit('create_journal', {
                 user: rootState.Auth.authEmail,
                 discipline: discipName,
@@ -150,10 +181,8 @@ const actions = {
             });
 
             rootState.socket.on('create_journal', res => {
-                console.log('res: ', res);
-
-                if (res) resolve(res);
-                else reject(res);
+                if (res.exitCode) console.error(res.message);
+                resolve(res.exitCode === 0);
             });
         });
     }

@@ -74,13 +74,13 @@
                 class='nav-arrow'
                 size=64
                 :color='colors.primary'
-                :disabled='selectedTargetIndex >= getDisciplineProperty().length - 1'
+                :disabled='selectedTargetIndex >= disciplineProperty.length - 1'
                 @click='incrementTarget'
             >
                 mdi-menu-right
             </v-icon>
         </v-row>
-        <v-container :style='getLabelWidthStyle()'>
+        <v-container :style='labelStyle'>
             <v-row>
                 <v-text-field
                     v-if='selectedTarget && !selectedTarget.custom'
@@ -145,68 +145,65 @@
                 selectedTargetIndex: 0,
                 customTargetName: '',
                 customTargetThumbnail: null,
-                targets: {}
+                targets: {
+                    'Archery': [
+                        {
+                            name: 'FITA',
+                            labelWidth: '200px',
+                            src: { name: 'fita', icon: ARCHERY_CONTEXT('./fita.png') },
+                            custom: false
+                        },
+                        {
+                            name: 'FITA Field',
+                            labelWidth: '200px',
+                            src: { name: 'fita_field', icon: ARCHERY_CONTEXT('./fita_field.png') },
+                            custom: false
+                        },
+                        {
+                            name: 'Enter target name',
+                            labelWidth: '220px',
+                            src: { name: null, icon: null },
+                            custom: true
+                        }
+                    ],
+                    'Firearm': [
+                        {
+                            name: 'ISSF Air Pistol',
+                            labelWidth: '200px',
+                            src: { name: 'issf_air_pistol', icon: FIREARM_CONTEXT('./issf_air_pistol.png') },
+                            custom: false
+                        },
+                        {
+                            name: 'ISSF Rapid Fire Pistol',
+                            labelWidth: '240px',
+                            src: { name: 'issf_rapid_fire_pistol', icon: FIREARM_CONTEXT('./issf_rapid_fire_pistol.png') },
+                            custom: false
+                        },
+                        {
+                            name: 'ISSF Air Rifle',
+                            labelWidth: '200px',
+                            src: { name: 'issf_air_rifle', icon: FIREARM_CONTEXT('./issf_air_rifle.png') },
+                            custom: false
+                        },
+                        {
+                            name: 'Enter target name',
+                            labelWidth: '220px',
+                            src: { name: null, icon: null },
+                            custom: true
+                        }
+                    ],
+                    'Other': [
+                        {
+                            name: 'Enter target name',
+                            labelWidth: '220px',
+                            src: { name: null, icon: null },
+                            custom: true
+                        }
+                    ],
+                }
             }
         },
         created() {
-            //init targets
-            this.targets = {
-                'Archery': [
-                    {
-                        name: 'FITA',
-                        labelWidth: '200px',
-                        src: { name: 'fita', icon: ARCHERY_CONTEXT('./fita.png') },
-                        custom: false
-                    },
-                    {
-                        name: 'FITA Field',
-                        labelWidth: '200px',
-                        src: { name: 'fita_field', icon: ARCHERY_CONTEXT('./fita_field.png') },
-                        custom: false
-                    },
-                    {
-                        name: 'Enter target name',
-                        labelWidth: '220px',
-                        src: { name: null, icon: null },
-                        custom: true
-                    }
-                ],
-                'Firearm': [
-                    {
-                        name: 'ISSF Air Pistol',
-                        labelWidth: '200px',
-                        src: { name: 'issf_air_pistol', icon: FIREARM_CONTEXT('./issf_air_pistol.png') },
-                        custom: false
-                    },
-                    {
-                        name: 'ISSF Rapid Fire Pistol',
-                        labelWidth: '240px',
-                        src: { name: 'issf_rapid_fire_pistol', icon: FIREARM_CONTEXT('./issf_rapid_fire_pistol.png') },
-                        custom: false
-                    },
-                    {
-                        name: 'ISSF Air Rifle',
-                        labelWidth: '200px',
-                        src: { name: 'issf_air_rifle', icon: FIREARM_CONTEXT('./issf_air_rifle.png') },
-                        custom: false
-                    },
-                    {
-                        name: 'Enter target name',
-                        labelWidth: '220px',
-                        src: { name: null, icon: null },
-                        custom: true
-                    }
-                ],
-                'Other': [
-                    {
-                        name: 'Enter target name',
-                        labelWidth: '220px',
-                        src: { name: null, icon: null },
-                        custom: true
-                    }
-                ],
-            };
-
             //store first target
             if (!this.storedTarget) {
                 this.selectedTargetIndex = 0;
@@ -216,7 +213,7 @@
             }
         },
         updated() {
-            let discipProperty = this.getDisciplineProperty();
+            let discipProperty = this.disciplineProperty;
 
             //reset target selection back to 0 if discipline changes
             if (this.targetResetFlag) {
@@ -248,7 +245,7 @@
                 targetResetFlag: 'getNewJournalTargetResetFlag'
             }),
             selectedTarget() {
-                return this.getDisciplineProperty()[this.selectedTargetIndex];
+                return this.disciplineProperty[this.selectedTargetIndex];
             },
             fileUploadPlaceholder() {
                 let defaultMsg = 'Upload a custom image';
@@ -261,10 +258,22 @@
                 }
                 else return defaultMsg;
             },
+            disciplineProperty() {
+                return this.targets['' + this.storedDiscipline];
+            },
+            labelStyle: function() {
+                let property = this.selectedTarget;
+
+                if (property) {
+                    let width = property.labelWidth;
+                    return { width }
+                }
+                else return {};
+            },
         },
         watch: {
             selectedTargetIndex(value) {
-                let property = this.getDisciplineProperty();
+                let property = this.disciplineProperty;
 
                 if (property) {
                     let srcName = property[value].src.name;
@@ -276,28 +285,27 @@
             }
         },
         methods: {
+            /**
+             * Move to the next target in line.
+             */
             incrementTarget: function() {
-                if (this.selectedTargetIndex < this.getDisciplineProperty().length - 1)
+                if (this.selectedTargetIndex < this.disciplineProperty.length - 1)
                     this.selectedTargetIndex++;
             },
+            /**
+             * Return to the previous viewed target.
+             */
             decrementTarget: function() {
                 if (this.selectedTargetIndex > 0)
                     this.selectedTargetIndex--;
             },
-            getDisciplineProperty: function() {
-                return this.targets['' + this.storedDiscipline];
-            },
-            getLabelWidthStyle: function() {
-                let property = this.selectedTarget;
-
-                if (property) {
-                    let width = property.labelWidth;
-                    return { 'width': width }
-                }
-                else return null;
-            },
+            /**
+             * Activate when a target image is uploaded.
+             * 
+             * @emits {Boolean] loading
+             */
             onCustomTargetUpload: async function() {
-                this.$emit("loading", true) //start loading
+                this.$emit('loading', true) //start loading
                 let file = await event.target.files[0];
                 let reader = new FileReader();
 
@@ -307,7 +315,7 @@
 
                     //check if this new image is the one that's already loaded
                     if (imageData === this.selectedTarget.src.icon) {
-                        this.$emit("loading", false) //finish loading
+                        this.$emit('loading', false) //finish loading
                         return;
                     }
 
@@ -317,21 +325,26 @@
 
                 await reader.readAsDataURL(file);
             },
+            /**
+             * Activate when the target image is changed.
+             * 
+             * @emits {Boolean] loading
+             */
             onCustomTargetChange: async function(event) {
                 let canvas = event.canvas;
                 let base64 = canvas.toDataURL('image/' + this.uploadedTargetFileType);
                 this.$store.commit('setNewJournalUploadedTargetData', base64);
-                this.$emit("loading", false) //start loading
+                this.$emit('loading', false) //start loading
             }
         }
     }
 </script>
 
-<style>
+<style scoped>
     * {
-        font-family: 'comfortaa';
+        font-family: 'Comfortaa';
     }
-    .small {
+    .subtitle.small {
         margin-top: -10px;
         font-size: 13px;
     }

@@ -223,7 +223,8 @@
                 useCustomDiscipline: 'useCustomDiscipline',
                 useCustomTarget: 'useUploadedCustomTarget',
                 customDiscipline: 'getNewJournalCustomDiscipline',
-                customTarget: 'getNewJournalUploadedTarget'
+                customTarget: 'getNewJournalUploadedTarget',
+                regex: 'getNewJournalRegex'
             }),
             createButtonText() {
                 let show = this.currentTab === this.totalTabs - 1;
@@ -289,12 +290,24 @@
                         case 0:
                             //need to enter a valid custom discipline name
                             if (this.useCustomDiscipline) {
-                                if (!this.customDiscipline)
-                                    this.popError('Enter the name of your range\'s discipline');
+                                let name = this.customDiscipline;
 
-                                resolve(!!this.customDiscipline);
+                                //name is empty
+                                if (!name) {
+                                    this.popError('Enter the name of your range\'s discipline');
+                                    resolve(false);
+                                }
+                                else {
+                                    let regex = this.regex.disciplineName;
+
+                                    if (!regex.expression.test(name)) {
+                                        this.popError(regex.message);
+                                        resolve(false);
+                                    }
+                                }
                             }
-                            else resolve(true);
+                            
+                            resolve(true);
                             break;
 
                         //select target
@@ -310,17 +323,28 @@
                                     resolve(false);
                                 }
                                 else {
-                                    this.$store.dispatch('checkTargetExists', this.customTarget.chosenName)
-                                        .then(res => {
-                                            if (res) this.popError('A target for \'' + this.discipline + '\'' +
-                                                                   'with that name already exists');
-                                            resolve(!res);
-                                        });
+                                    let regex = this.regex.targetName;
+                                    let name = this.customTarget.chosenName;
+
+                                    if (!regex.expression.test(name)) {
+                                        this.popError(regex.message);
+                                        resolve(false);
+                                    }
+                                    else {
+                                        this.$store.dispatch('checkTargetExists', this.customTarget.chosenName)
+                                            .then(res => {
+                                                if (res) this.popError('A target for \'' + this.discipline + '\'' +
+                                                                       'with that name already exists');
+
+                                                resolve(!res);
+                                            });
+                                    }
                                 }
                             }
                             else resolve(true);
                             break;
-
+                        
+                        //configure custom target
                         case 2:
                             if (!this.customTarget.center) {
                                 this.popError('You must mark the target\'s bullseye point');
@@ -330,13 +354,21 @@
                             resolve(true);
                             break;
 
+                        //select journal name
                         case 3:
                             if (!this.journalName) {
                                 this.popError('Enter the journal\'s name');
                                 resolve(false);
                             }
                             else {
+                                let regex = this.regex.journalName;
                                 let name = this.journalName;
+
+                                if (!regex.expression.test(name)) {
+                                    this.popError(regex.message);
+                                    resolve(false);
+                                }
+
                                 let exists = this.$store.dispatch('checkJournalExists', name);
                                 if (exists) this.popError('A journal with that name already exists');
                                 resolve(!exists);

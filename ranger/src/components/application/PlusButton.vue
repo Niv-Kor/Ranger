@@ -1,16 +1,18 @@
 <template>
-    <v-btn
-        class='plus'
-        fab
-        large
-        elevation=8
-        :color='colors.primary'
-        @click="$emit('click')"
-    >
-        <v-icon color='white'>
-            mdi-plus-thick
-        </v-icon>
-    </v-btn>
+    <div>
+        <v-btn
+            class='plus'
+            fab
+            large
+            elevation=8
+            :color='colors.primary'
+            @click="$emit('click')"
+        >
+            <v-icon color='white'>
+                mdi-plus-thick
+            </v-icon>
+        </v-btn>
+    </div>
 </template>
 
 <script>
@@ -25,13 +27,12 @@
     }
 </script>
 
-<style>
+<style scoped>
     .plus {
         position: absolute;
-        margin-left: auto;
-        margin-right: auto;
+        margin: auto;
         left: 0;
         right: 0;
-        bottom: 25px;
+        bottom: 40px;
     }
 </style>

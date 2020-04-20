@@ -11,8 +11,10 @@ CREATE TABLE Journals (
 GO
 
 DROP TABLE Journals
+GO
 
 SELECT * FROM Journals
+GO
 
 -- Procedures
 ALTER PROCEDURE JournalExists
