@@ -5,6 +5,10 @@ const FILE_SYSTEM = require('fs');
 const IO = SOCKET.listen(SERVER);
 const SERVER_PORT = 19200;
 const TEMP = require('tempfile');
+const FORMAL_DISCIPLINES = [
+    'Archery',
+    'Firearm'
+]
 
 //Microsoft SQL Server
 const SQL = require('mssql');
@@ -41,5 +45,6 @@ module.exports = {
     SERVER_PORT,
     DB_CONFIG,
     FTP_CONFIG,
-    FILE_SYSTEM
+    FILE_SYSTEM,
+    FORMAL_DISCIPLINES
 }

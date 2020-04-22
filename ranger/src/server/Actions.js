@@ -6,7 +6,8 @@ module.exports = {
     signUser,
     createJournal,
     targetExists,
-    journalExists
+    journalExists,
+    loadJournals
 };
 
 /**
@@ -17,7 +18,7 @@ module.exports = {
  *                            {
  *                               {String} name - sql parameter name,
  *                               {mssql.} type - mssql data type constant,
- *                               {var} value - input value
+ *                               {*} value - input value
  *                            },
  *                            ...
  *                         ]
@@ -48,8 +49,8 @@ async function runProcedure(proc, params) {
 async function targetExists(user, discipline, name) {
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: discipline, options: {} },
-        { name: 'image_name', type: CONSTANTS.SQL.VarChar(64), value: name, options: {} }
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: discipline, options: {} },
+        { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
     ];
 
     let query = await runProcedure('TargetExists', params);
@@ -68,7 +69,7 @@ async function targetExists(user, discipline, name) {
 async function journalExists(user, discipline, name) {
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: discipline, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: discipline, options: {} },
         { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
     ];
     
@@ -128,21 +129,22 @@ async function validateUser(socket, user) {
  * 
  * @param {SocketIO.Socket} socket - The socket used by the server.
  * @param {Object} data - {
- *                           {String} user - user's email address,
- *                           {String} discipline - journal discipline,
- *                           {String} name - journal name,
- *                           {String} storedTarget - stored target path,
+ *                           {String} user - User's email address,
+ *                           {String} discipline - Journal discipline,
+ *                           {String} name - Journal name,
+ *                           {String} storedTarget - Stored target path,
  *                           {Object} customTarget - {
- *                                                      {String} base64Img - base64 represntation of the image,
- *                                                      {String} chosenName - name of the image,
+ *                                                      {String} base64Img - Base64 represntation of the image,
+ *                                                      {String} chosenName - Name of the image,
  *                                                      {Object} center - {
  *                                                                           {Number} x - x coordinate (in percentages),
  *                                                                           {Number} y - y coordinate (in percentages)
  *                                                                        },
- *                                                      {Number} rings - amount of rings,
- *                                                      {Number} ringDiameter - diameter of inner ring (in integer percentages)
+ *                                                      {Number} rings - Amount of rings,
+ *                                                      {Number} ringDiameter - Diameter of inner ring (in integer percentages)
  *                                                   }
- *                           {Boolean} isTargetCustom - true if the target is customized,
+ *                           {Boolean} isTargetCustom - True if the target is customized,
+ *                           {String} colorTheme = A hexadecimal representation of the journal's color theme
  *                        }
  */
 async function createJournal(socket, data) {
@@ -161,9 +163,9 @@ async function createJournal(socket, data) {
         
         let customTargetParams = [
             { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
-            { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
-            { name: 'image_name', type: CONSTANTS.SQL.VarChar(128), value: targetName, options: {} },
-            { name: 'image_path', type: CONSTANTS.SQL.VarChar(512), value: uploadedTargetDestPath, options: {} },
+            { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
+            { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: targetName, options: {} },
+            { name: 'image_path', type: CONSTANTS.SQL.VarChar(256), value: uploadedTargetDestPath, options: {} },
             { name: 'cx', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.x.toFixed(3), options: {} },
             { name: 'cy', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.y.toFixed(3), options: {} },
             { name: 'rings', type: CONSTANTS.SQL.Int, value: data.customTarget.rings, options: {} },
@@ -185,17 +187,18 @@ async function createJournal(socket, data) {
     //create new journal
     let targetIdExtractionParams = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: targetUser, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
-        { name: 'image_name', type: CONSTANTS.SQL.VarChar(64), value: targetName, options: {} }
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
+        { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: targetName, options: {} }
     ];
 
     let targetIdQuery = await runProcedure('GetTargetId', targetIdExtractionParams);
     let targetId = targetIdQuery[0]['id'];
     let journalParams = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(30), value: data.discipline, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
         { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name, options: {} },
         { name: 'target', type: CONSTANTS.SQL.Int, value: targetId, options: {} },
+        { name: 'theme', type: CONSTANTS.SQL.VarChar(9), value: data.colorTheme, options: {} },
     ];
 
     runProcedure('CreateJournal', journalParams)
@@ -211,4 +214,39 @@ async function createJournal(socket, data) {
                 message: err
             });
         })
+}
+
+/**
+ * Load all journals of a single user.
+ * 
+ * @param {String} user - Username token
+ * @returns {Array} All journals of the user.
+ */
+async function loadJournals(user) {
+    let params = [
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
+    ];
+
+    return new Promise((resolve) => {
+        runProcedure('LoadJournals', params)
+            .then(res => {
+                let journals = [];
+
+                for (let obj of res) {
+                    let discipline = obj['discipline'];
+                    let isFormal = CONSTANTS.FORMAL_DISCIPLINES.includes(discipline);
+                    let formalDiscip = isFormal ? discipline : 'Other';
+
+                    journals.push({
+                        discipline: discipline,
+                        formalDiscipline: formalDiscip,
+                        name: obj['journal_name'],
+                        targetId: obj['target_id'],
+                        color: obj['theme_color'],
+                        order: obj['sort_order']
+                    });
+                }
+                resolve(journals);
+            });
+    });
 }

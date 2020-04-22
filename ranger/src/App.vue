@@ -19,18 +19,6 @@ export default {
     AuthHomePage,
     AppHomePage
   },
-  created() {
-    let userData = this.fetchUserDataFromStorage();
-    
-    //let the user in if his data is already stored
-    if (userData) {
-      this.$store.commit('setAuthEmail', userData.email);
-      this.$store.commit('setAuthPassword', userData.password);
-      this.onUserAuthenticated();
-    }
-    //send the user to authentication page
-    else this.$router.push({ path: '/auth' }).catch(() => {});
-  },
   computed: {
     ...mapGetters({
       userAuthenticated: 'getAuthentication'
@@ -45,6 +33,18 @@ export default {
       else return {};
     }
   },
+  created() {
+    let userData = this.fetchUserDataFromStorage();
+    
+    //let the user in if his data is already stored
+    if (userData) {
+      this.$store.commit('setAuthEmail', userData.email);
+      this.$store.commit('setAuthPassword', userData.password);
+      this.onUserAuthenticated();
+    }
+    //send the user to authentication page
+    else this.$router.push({ path: '/auth' }).catch(() => {});
+  },
   methods: {
     /**
      * Activate when the user is authenticated.
@@ -52,6 +52,7 @@ export default {
     onUserAuthenticated: function() {
       this.$store.commit('setAuthentication', true);
       this.$router.push({ path: '/home' }).catch(() => {});
+      this.$store.dispatch('loadAllJournals');
     },
     /**
      * @returns {Object} {

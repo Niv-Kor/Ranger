@@ -9,6 +9,7 @@ import VueKonva from 'vue-konva';
 import { longClickDirective } from 'vue-long-click'
 import ImageMagnifier from 'vue-image-magnifier';
 import FileSelector from 'vue-file-selector';
+import Sortable from 'vue-drag-sortable';
 
 const ROUTER = new VueRouter({
   routes: ROUTES
@@ -16,13 +17,13 @@ const ROUTER = new VueRouter({
 
 const longClickInstance = longClickDirective({delay: 800, interval: 0});
 Vue.directive('longclick', longClickInstance);
-
 Vue.config.productionTip = false;
 Vue.use(Vue2TouchEvents);
 Vue.use(ImageMagnifier);
 Vue.use(FileSelector);
 Vue.use(VueRouter);
 Vue.use(VueKonva);
+Vue.component('sortable', Sortable);
 
 new Vue({
   vuetify,

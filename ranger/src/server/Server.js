@@ -25,6 +25,11 @@ CONSTANTS.IO.on('connection', socket => {
         let exists = await ACTIONS.journalExists(data.user, data.discipline, data.journalName);
         socket.emit('journal_exists', exists);
     })
+
+    socket.on('load_journals', async user => {
+        let journals = await ACTIONS.loadJournals(user);
+        socket.emit('load_journals', journals);
+    })
 });
 
 //connect to data base
