@@ -5,17 +5,18 @@
                 class='subtitle'
                 align=center
             >
-                Target customization
+                Customize your target
             </p>
             <v-tabs
                 class='tabs elevation-2'
-                :background-color='colors.primary'
+                :background-color='colors.neutral'
                 grow
+                dark
                 centered
                 color='white'
                 height=30
                 show-arrows
-                :slider-color='colors.primaryDark'
+                :slider-color='colors.secondary'
                 @change='$forceUpdate()'
             >
                 <!-- center tab -->

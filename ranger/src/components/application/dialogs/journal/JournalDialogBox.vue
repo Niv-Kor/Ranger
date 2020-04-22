@@ -4,10 +4,10 @@
             :value='model'
             persistent
         >
-            <v-card class='main-card' height=580>
+            <v-card class='main-card' :height=580>
                 <v-app-bar
                     :color='colors.secondary' 
-                    elevation=2
+                    elevation=0
                 >
                     <v-btn
                         class='close-btn'
@@ -31,10 +31,10 @@
                 <v-container>
                     <v-card
                         class='inner-card'
-                        height=360
+                        :height=360
                         flat
                     >
-                        <div v-if='model'> <!-- refresh components after close -->
+                        <div v-if='model'>
                             <select-journal-discipline
                                 v-show='currentTab == 0'
                                 @loading='activateLoading'
@@ -43,31 +43,34 @@
                                 v-show='currentTab == 1'
                                 @loading='activateLoading'
                             />
-                            <div :key='currentTab'>
+                            <div :key='currentTab + ",2"'> <!-- refresh component after close -->
                                 <select-journal-target-config
                                     v-show='currentTab == 2'
                                     @loading='activateLoading'
                                 />
                             </div>
-                            <select-journal-name
+                            <select-journal-theme
                                 v-show='currentTab == 3'
                                 @loading='activateLoading'
                             />
-                            <new-journal-preview
-                                v-show='currentTab == 4'
-                                @loading='activateLoading'
-                                @change-tab='setTab'
-                            />
+                            <div :key='currentTab + ",4"'> <!-- refresh component after close -->
+                                <new-journal-preview
+                                    v-show='currentTab == 4'
+                                    @loading='activateLoading'
+                                    @change-tab='setTab'
+                                />
+                            </div>
                         </div>
                     </v-card>
                     <v-container>
                         <!-- create button -->
                         <v-btn
-                            class='create-btn'
-                            :color='colors.primary'
+                            :class='(currentTab === totalTabs - 1) ? "create-btn" : "create-btn transparent"'
                             block
-                            text
-                            :disabled='currentTab < totalTabs - 1'
+                            dark
+                            elevation=0
+                            :disabled='currentTab !== totalTabs - 1'
+                            :style="{ backgroundImage: 'url(' + colors.gradient + ')' }"
                             @click='createJournal'
                         >
                             {{ createButtonText }}
@@ -99,7 +102,7 @@
             </v-card>
             <v-dialog
                 v-model='errorDialog'
-                max-width=290
+                :max-width=290
             >
                 <v-card>
                     <v-card-title
@@ -134,14 +137,14 @@
                 :active.sync='load'
                 is-full-page
                 loader='dots'
-                width=100
-                height=100
+                :width=100
+                :height=100
                 :color='colors.secondary'
             />
         </v-dialog>
         <v-dialog
                 v-model='successDialog'
-                max-width=290
+                :max-width=290
             >
                 <v-card>
                     <v-card-title
@@ -153,13 +156,6 @@
                             Journal created successfully!
                         </p>
                     </v-card-title>
-                    <v-container>
-                        <div
-                            class='success-details'
-                            align='center'
-                        >
-                        </div>
-                    </v-container>
                     <v-card-actions>
                         <v-btn
                             class='success-ok-btn'
@@ -178,17 +174,17 @@
 
 <script>
     import { mapGetters } from 'vuex';
-    import SelectJournalName from './SelectJournalName';
+    import SelectJournalTheme from './SelectJournalTheme';
     import SelectJournalDiscipline from './SelectJournalDiscipline';
     import SelectJournalTarget from './SelectJournalTarget';
     import SelectJournalTargetConfig from './SelectJournalTargetConfig';
     import NewJournalPreview from './NewJournalPreview';
     import Loading from 'vue-loading-overlay';
     import 'vue-loading-overlay/dist/vue-loading.css';
-    
+
     export default {
         components: {
-            SelectJournalName,
+            SelectJournalTheme,
             SelectJournalDiscipline,
             SelectJournalTarget,
             SelectJournalTargetConfig,
@@ -222,7 +218,7 @@
             createButtonText() {
                 let show = this.currentTab === this.totalTabs - 1;
                 return show ? 'CREATE' : '';
-            }
+            },
         },
         watch: {
             model(value) {
@@ -373,7 +369,7 @@
                             resolve(true);
                             break;
 
-                        //select journal name
+                        //select journal theme
                         case 3:
                             if (!this.journalName) {
                                 this.popError('Enter the journal\'s name');
@@ -452,6 +448,12 @@
     .create-btn {
         margin-top: 20px;
         margin-bottom: -20px;
+        text-transform: none;
+        background-size: auto;
+        font-weight: bold;
+    }
+    .transparent {
+        opacity: 0;
     }
     .fade-enter {
         opacity: 0;
@@ -475,6 +477,7 @@
         color: #ffffff;
         font-weight: bold;
         font-size: 24px;
+        margin-top: 10px;
     }
     .details-header {
         font-weight: bold;

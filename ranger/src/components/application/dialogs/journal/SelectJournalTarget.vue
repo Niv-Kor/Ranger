@@ -80,7 +80,7 @@
                 mdi-menu-right
             </v-icon>
         </v-row>
-        <v-container :style='labelStyle'>
+        <v-container :style="{ width: 200 + 'px' }">
             <v-row>
                 <v-text-field
                     v-if='selectedTarget && !selectedTarget.custom'
@@ -102,7 +102,7 @@
                         dense
                         rounded
                         outlined
-                        counter=64
+                        counter=20
                         clearable
                         :disabled='!selectedTarget.src'
                         :placeholder='selectedTarget.name'
@@ -149,19 +149,16 @@
                     'Archery': [
                         {
                             name: 'FITA',
-                            labelWidth: '200px',
                             src: ARCHERY_CONTEXT('./FITA.png'),
                             custom: false
                         },
                         {
                             name: 'FITA Field',
-                            labelWidth: '200px',
                             src: ARCHERY_CONTEXT('./FITA Field.png'),
                             custom: false
                         },
                         {
                             name: 'Enter target name',
-                            labelWidth: '220px',
                             src: null,
                             custom: true
                         }
@@ -169,25 +166,21 @@
                     'Firearm': [
                         {
                             name: 'ISSF Air Pistol',
-                            labelWidth: '200px',
                             src: FIREARM_CONTEXT('./ISSF Air Pistol.png'),
                             custom: false
                         },
                         {
-                            name: 'ISSF Rapid Fire Pistol',
-                            labelWidth: '240px',
+                            name: 'ISSF Rapid Fire',
                             src: FIREARM_CONTEXT('./ISSF Rapid Fire Pistol.png'),
                             custom: false
                         },
                         {
                             name: 'ISSF Air Rifle',
-                            labelWidth: '200px',
                             src: FIREARM_CONTEXT('./ISSF Air Rifle.png'),
                             custom: false
                         },
                         {
                             name: 'Enter target name',
-                            labelWidth: '220px',
                             src: null,
                             custom: true
                         }
@@ -195,7 +188,6 @@
                     'Other': [
                         {
                             name: 'Enter target name',
-                            labelWidth: '220px',
                             src: null,
                             custom: true
                         }
@@ -261,16 +253,7 @@
             },
             disciplineProperty() {
                 return this.targets['' + this.storedDiscipline];
-            },
-            labelStyle: function() {
-                let property = this.selectedTarget;
-
-                if (property) {
-                    let width = property.labelWidth;
-                    return { width }
-                }
-                else return {};
-            },
+            }
         },
         watch: {
             selectedTargetIndex(value) {

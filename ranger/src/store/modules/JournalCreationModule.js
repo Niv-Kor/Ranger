@@ -18,26 +18,51 @@ const state = {
     },
     newJournalRegex: {
         journalName: {
-            expression: /^[a-zA-Z](([ _-])?[0-9A-Za-z])*$/,
+            expression: /^[a-zA-Z](([ _-])?[0-9A-Za-z'])*$/,
             message: 'A journal\'s name must start with a letter and contain no special characters. ' +
                      'Only one separator is allowed between two words.'
         },
         disciplineName: {
-            expression: /^[a-zA-Z](([ _-])?[0-9A-Za-z])*$/,
+            expression: /^[a-zA-Z](([ _-])?[0-9A-Za-z'])*$/,
             message: 'A discipline\'s name must start with a letter and contain no special characters. ' +
                      'Only one separator is allowed between two words.'
         },
         targetName: {
-            expression: /^[a-zA-Z](([ _-])?[0-9A-Za-z])*$/,
+            expression: /^[a-zA-Z](([ _-])?[0-9A-Za-z'])*$/,
             message: 'A target\'s name must start with a letter and contain no special characters. ' +
                      'Only one separator is allowed between two words.'
         }
-    }
+    },
+    newJournalColorTheme: '#ffffff',
+    newJournalColorPalette: [
+        '#fafafa',
+        '#ff00ea',
+        '#a800ff',
+        '#6000ff',
+        '#1800ff',
+        '#005aff',
+        '#009cff',
+        '#00eaff',
+        '#00ffa8',
+        '#00ff12',
+        '#18c900',
+        '#c2f00b',
+        '#ece907',
+        '#ffc000',
+        '#ff7e00',
+        '#ff0030',
+    ]
 }
 
 const getters = {
     getNewJournalName: state => {
         return state.newJournalName;
+    },
+    getNewJournalColorTheme: state => {
+        return state.newJournalColorTheme;
+    },
+    getNewJournalColorPalette: state => {
+        return state.newJournalColorPalette;
     },
     getNewJournalDiscipline: state => {
         return state.newJournalDiscipline;
@@ -73,6 +98,9 @@ const getters = {
 const mutations = {
     setNewJournalName: (state, value) => {
         state.newJournalName = value;
+    },
+    setNewJournalColorTheme: (state, value) => {
+        state.newJournalColorTheme = value;
     },
     setNewJournalDiscipline: (state, value) => {
         state.newJournalDiscipline = value;
@@ -115,6 +143,7 @@ const mutations = {
 const actions = {
     initNewJournalValues: ({ commit }) => {
         commit('setNewJournalName', '');
+        commit('setNewJournalColorTheme', '#ffffff');
         commit('setNewJournalDiscipline', '');
         commit('setNewJournalCustomDiscipline', '');
         commit('setNewJournalTargetData', '');
@@ -175,7 +204,7 @@ const actions = {
      * 
      * @returns {Boolean} True if the journal is successfully created.
      */
-    createJournal: async ({ state, rootState }) => {
+    createJournal: async ({ dispatch, state, rootState }) => {
         //check if the discipline's name is customized
         let useCustomDiscip = state.useCustomDiscipline;
         let customDiscipName = state.newJournalCustomDiscipline;
@@ -190,9 +219,13 @@ const actions = {
                 storedTarget: state.newJournalDefaultTarget.name,
                 customTarget: state.newJournaluploadedTarget,
                 isTargetCustom: state.useUploadedCustomTarget,
+                colorTheme: state.newJournalColorTheme
             });
 
             rootState.socket.on('create_journal', res => {
+                //load journals anew
+                dispatch('loadAllJournals');
+                
                 if (res.exitCode) console.error(res.message);
                 resolve(res.exitCode === 0);
             });

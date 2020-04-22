@@ -66,7 +66,7 @@
                 dense
                 rounded
                 outlined
-                counter=30
+                counter=20
                 clearable
                 :disabled='!disciplines[selectedDiscip].custom'
                 :placeholder='disciplines[selectedDiscip].name'
@@ -87,13 +87,24 @@
                 :color='colors.neutral'
             />
         </v-container>
+        <v-container>
+            <ul class='sub-discip-list'>
+                <li
+                    class='sub-discipline'
+                    v-for='sub in disciplines[selectedDiscip].subDisciplines'
+                    :key='sub'
+                >
+                    {{ sub }}
+                </li>
+            </ul>
+        </v-container>
     </div>
 </template>
 
 <script>
     import { mapGetters } from 'vuex';
     
-    const DISPLINE_ICONS = require.context('../../../../assets/disciplines/', false, /\.png$/);
+    const DISCIPLINE_ICONS = require.context('../../../../assets/disciplines/', false, /\.png$/);
     const DEFAULT_OTHER_DISCIPLINE = 'Other';
 
     export default {
@@ -105,20 +116,36 @@
                     {
                         name: 'Firearm',
                         labelWidth: '180px',
-                        srcIcon: DISPLINE_ICONS('./firearm.png'),
-                        custom: false
+                        srcIcon: DISCIPLINE_ICONS('./firearm.png'),
+                        custom: false,
+                        subDisciplines: [
+                            'Pistol',
+                            'Air pistol',
+                            'Assault rifle',
+                            'Air Rifle',
+                            'Rapid Fire'
+                        ]
                     },
                     {
                         name: 'Archery',
                         labelWidth: '180px',
-                        srcIcon: DISPLINE_ICONS('./archery.png'),
-                        custom: false
+                        srcIcon: DISCIPLINE_ICONS('./archery.png'),
+                        custom: false,
+                        subDisciplines: [
+                            'Barebow',
+                            'Olympic Recurve',
+                            'Compound Bow',
+                            '3D Archery',
+                            'Kyudo (Yumi)',
+                            'Crossbow'
+                        ]
                     },
                     {
                         name: 'Other',
                         labelWidth: '300px',
-                        srcIcon: DISPLINE_ICONS('./other.png'),
-                        custom: true
+                        srcIcon: DISCIPLINE_ICONS('./other.png'),
+                        custom: true,
+                        subDisciplines: []
                     }
                 ]
             }
@@ -211,5 +238,13 @@
     }
     .discip-icon {
         margin: auto;
+    }
+    .sub-discipline {
+        font-size: 14px;
+        color: #00000080;
+    }
+    .sub-discip-list {
+        margin-top: -15px;
+        list-style-type: circle;
     }
 </style>

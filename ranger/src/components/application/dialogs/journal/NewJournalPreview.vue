@@ -15,6 +15,13 @@
             </span>
             <span :style="{ color: colors.primary }">
                 {{ journalName }}
+                <v-icon
+                    class='theme-color-preview'
+                    small
+                    :color='colorTheme'
+                >
+                    mdi-checkbox-blank
+                </v-icon>
                 <span
                     class='change-btn'
                     :style="{ color: colors.neutral + '!important' }"
@@ -52,9 +59,10 @@
                 </span>
             </span>
             <v-img
+                v-if='targetThumbnail'
                 class='target-thumbnail'
                 :src='targetThumbnail'
-                max-width=80
+                :max-width=80
             />
         </v-container>
     </div>
@@ -64,10 +72,6 @@
     import { mapGetters } from 'vuex';
     
     export default {
-        data() {
-            return {
-            }
-        },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
@@ -77,7 +81,8 @@
                 predefTarget: 'getNewJournalTarget',
                 customTarget: 'getNewJournalUploadedTarget',
                 usingCustomDiscipline: 'useCustomDiscipline',
-                usingCustomTarget: 'useUploadedCustomTarget'
+                usingCustomTarget: 'useUploadedCustomTarget',
+                colorTheme: 'getNewJournalColorTheme'
             }),
             discipline() {
                 let custom = this.usingCustomDiscipline;
@@ -118,5 +123,16 @@
     }
     .target-thumbnail {
         margin: 5px;
+        outline-width: 1px;
+        outline-style: dashed;
+        outline-color: #5e7075;
+    }
+    .theme-color-preview {
+        border-width: 1px;
+        border-color: #00000055;
+        border-style: solid;
+        border-radius: 15%;
+        margin-top: -3px;
+        margin-left: 5px;
     }
 </style>
