@@ -1,21 +1,45 @@
 const state = {
-    journals: []
+    journals: [],
+    journalsListLoading: false
 }
 
 const getters = {
     getAllJournals: (state) => {
         return state.journals;
+    },
+    isJournalsListLoading: (state) => {
+        return state.journalsListLoading;
     }
 };
 
 const mutations = {
+    setJournalsListLoading: (state, value) => {
+        state.journalsListLoading = value;
+    }
 };
 
 const actions = {
-    loadAllJournals: ({ state, rootState }) => {
+    /**
+     * Load all of the user's journals.
+     */
+    loadAllJournals: ({ commit, state, rootState }) => {
+        commit('setJournalsListLoading', true);
         rootState.socket.emit('load_journals', rootState.Auth.authEmail);
-        rootState.socket.on('load_journals', res => state.journals = res );
+        rootState.socket.on('load_journals', res => {
+            state.journals = res;
+            commit('setJournalsListLoading', false);
+        });
     },
+    /**
+     * Update the order of a single journal card.
+     * 
+     * @param {Object} data - {
+     *                           {String} user - User data token,
+     *                           {String discipline - The name of the journal's discipline,
+     *                           {String} name - The journal's name,
+     *                           {Number} newOrder - The journal's new order to update
+     *                        }
+     */
     updateJournalOrder: ({ state, rootState }, data) => {
         rootState.socket.emit('update_journal_order', data);
 

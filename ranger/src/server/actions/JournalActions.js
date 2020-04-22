@@ -1,128 +1,13 @@
-const CONSTANTS = require('./Constants');
-const FTP_SERVER = require('./FTPServer');
+const CONSTANTS = require('../Constants');
+const FTP_SERVER = require('../FTPServer');
+const GENERAL_ACTIONS = require('./GeneralActions');
 
 module.exports = {
-    validateUser,
-    signUser,
     createJournal,
-    targetExists,
     journalExists,
-    loadJournals
+    loadJournals,
+    updateJournalOrder
 };
-
-/**
- * Run an sql procedure.
- * 
- * @param {String} proc - Procedure's name
- * @param {Array} params - [
- *                            {
- *                               {String} name - sql parameter name,
- *                               {mssql.} type - mssql data type constant,
- *                               {*} value - input value
- *                            },
- *                            ...
- *                         ]
- * @returns {Object} The output recordset.
- */
-async function runProcedure(proc, params) {
-    let connection = await CONSTANTS.SQL.connect(CONSTANTS.DB_CONFIG);
-    let req = connection.request();
-
-    //set input
-    for (let i in params) {
-        let param = params[i]
-        req.input(param.name, param.type, param.value, param.options);
-    }
-    
-    let execution = await req.execute(proc);
-    return execution.recordset;
-}
-
-/**
- * Check if a target already exists in the database.
- * 
- * @param {String} user - The user's token (email address)
- * @param {String} discipline - The name of the target's discipline
- * @param {String} name - The chosen name of the target
- * @returns {Boolean} True if the target already exists in the database.
- */
-async function targetExists(user, discipline, name) {
-    let params = [
-        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: discipline, options: {} },
-        { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
-    ];
-
-    let query = await runProcedure('TargetExists', params);
-    let exists = query[0]['target_exists'];
-    return exists;
-}
-
-/**
- * Check if a journal already exists in the database.
- * 
- * @param {String} user - The user's token (email address)
- * @param {String} discipline - The name of the target's discipline
- * @param {String} name - The chosen name of the journal
- * @returns {Boolean} True if the journal already exists in the database.
- */
-async function journalExists(user, discipline, name) {
-    let params = [
-        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: discipline, options: {} },
-        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
-    ];
-    
-    let query = await runProcedure('JournalExists', params);
-    let exists = query[0]['journal_exists'];
-    return exists;
-}
-
-/**
- * Sign a user as a new entry in the data base.
- * Let the client know if the procedure succeeded.
- * 
- * @param {SocketIO.Socket} socket - The socket used by the server.
- * @param {Object} user - {
- *                           {String} email - user's email,
- *                           {String} password - user's password
- *                        }
- */
-async function signUser(socket, user) {
-    let params = [
-        { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: user.email, options: {} },
-        { name: 'password', type: CONSTANTS.SQL.VarChar(40), value: user.password, options: {} }
-    ];
-
-    //check if the user already exists
-    let validationProc = await runProcedure('validateUser', params);
-    let exists = validationProc[0]['is_valid'];
-
-    //sign and let the client know if the procedure succeeded
-    if (!exists) await runProcedure('signUp', params);
-    socket.emit('sign_user', !exists);
-}
-
-/**
- * Check if a user already exists in the data base.
- * Let the client know the answer.
- * 
- * @param {SocketIO.Socket} socket - The socket used by the server.
- * @param {Object} user - {
- *                           {String} email - user's email,
- *                           {String} password - user's password
- *                        }
- */
-async function validateUser(socket, user) {
-    let params = [
-        { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: user.email, options: {} },
-        { name: 'password', type: CONSTANTS.SQL.VarChar(40), value: user.password, options: {} }
-    ];
-
-    let recSet = await runProcedure('validateUser', params);
-    let isValid = recSet[0]['is_valid'];
-    socket.emit('validate_user', isValid);
-}
 
 /**
  * Create a new shooting journal for a user.
@@ -142,7 +27,7 @@ async function validateUser(socket, user) {
  *                                                                        },
  *                                                      {Number} rings - Amount of rings,
  *                                                      {Number} ringDiameter - Diameter of inner ring (in integer percentages)
- *                                                   }
+ *                                                   },
  *                           {Boolean} isTargetCustom - True if the target is customized,
  *                           {String} colorTheme = A hexadecimal representation of the journal's color theme
  *                        }
@@ -173,7 +58,7 @@ async function createJournal(socket, data) {
         ];
 
         //add to db
-        await runProcedure('AddTarget', customTargetParams);
+        await GENERAL_ACTIONS.runProcedure('AddTarget', customTargetParams);
 
         //store custom target photo in the server
         let compression = 400;
@@ -191,7 +76,7 @@ async function createJournal(socket, data) {
         { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: targetName, options: {} }
     ];
 
-    let targetIdQuery = await runProcedure('GetTargetId', targetIdExtractionParams);
+    let targetIdQuery = await GENERAL_ACTIONS.runProcedure('GetTargetId', targetIdExtractionParams);
     let targetId = targetIdQuery[0]['id'];
     let journalParams = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
@@ -201,7 +86,7 @@ async function createJournal(socket, data) {
         { name: 'theme', type: CONSTANTS.SQL.VarChar(9), value: data.colorTheme, options: {} },
     ];
 
-    runProcedure('CreateJournal', journalParams)
+    GENERAL_ACTIONS.runProcedure('CreateJournal', journalParams)
         .then(() => {
             socket.emit('create_journal', {
                 exitCode: 0,
@@ -217,10 +102,40 @@ async function createJournal(socket, data) {
 }
 
 /**
+ * Check if a journal already exists in the database.
+ * 
+ * @param {String} user - The user's token (email address)
+ * @param {String} discipline - The name of the target's discipline
+ * @param {String} name - The chosen name of the journal
+ * @returns {Boolean} True if the journal already exists in the database.
+ */
+async function journalExists(user, discipline, name) {
+    let params = [
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: discipline, options: {} },
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
+    ];
+    
+    let query = await GENERAL_ACTIONS.runProcedure('JournalExists', params);
+    let exists = query[0]['journal_exists'];
+    return exists;
+}
+
+/**
  * Load all journals of a single user.
  * 
  * @param {String} user - Username token
- * @returns {Array} All journals of the user.
+ * @returns {Array} [
+ *                     {
+ *                        {String} discipline - The name of the journal's discipline,
+ *                        {String} formalDiscipline - Same as discipline, but if it's customized then formal is 'Other',
+ *                        {String} name - The journal's name,
+ *                        {Number} targetId - Journal's default target's ID,
+ *                        {String} color - The journal's color theme,
+ *                        {Number} order - The journal's sorting order
+ *                     }
+ *                     ...
+ *                  ]
  */
 async function loadJournals(user) {
     let params = [
@@ -228,7 +143,7 @@ async function loadJournals(user) {
     ];
 
     return new Promise((resolve) => {
-        runProcedure('LoadJournals', params)
+        GENERAL_ACTIONS.runProcedure('LoadJournals', params)
             .then(res => {
                 let journals = [];
 
@@ -249,4 +164,25 @@ async function loadJournals(user) {
                 resolve(journals);
             });
     });
+}
+
+/**
+ * Update the order of a single journal.
+ * 
+ * @param {Object} data {
+ *                         {String} user - User data token,
+ *                         {String discipline - The name of the journal's discipline,
+ *                         {String} name - The journal's name,
+ *                         {Number} newOrder - The journal's new order to update
+ *                      }
+ */
+function updateJournalOrder(data) {
+    let params = [
+        { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
+        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name, options: {} },
+        { name: 'new_order', type: CONSTANTS.SQL.Int, value: data.newOrder, options: {} },
+    ];
+
+    GENERAL_ACTIONS.runProcedure('UpdateJournalOrder', params);
 }

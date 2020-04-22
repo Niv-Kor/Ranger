@@ -1,34 +1,46 @@
 const CONSTANTS = require('./Constants');
 const LOGGER = require('./Logger');
-const ACTIONS = require('./Actions');
+const ACTIONS = {
+    general: require('./actions/GeneralActions'),
+    auth: require('./actions/AuthActions'),
+    targets: require('./actions/TargetActions'),
+    journals: require('./actions/JournalActions')
+}
 
 //configure client requests
 CONSTANTS.IO.on('connection', socket => {
+    /* Authentication */
     socket.on('sign_user', user => {
-        ACTIONS.signUser(socket, user)
+        ACTIONS.auth.signUser(socket, user)
     });
 
     socket.on('validate_user', user => {
-        ACTIONS.validateUser(socket, user);
+        ACTIONS.auth.validateUser(socket, user);
     });
 
+    /* Journals */
     socket.on('create_journal', data => {
-        ACTIONS.createJournal(socket, data);
+        ACTIONS.journals.createJournal(socket, data);
     });
 
-    socket.on('target_exists', async data => {
-        let exists = await ACTIONS.targetExists(data.user, data.discipline, data.targetName);
-        socket.emit('target_exists', exists);
+    socket.on('load_journals', async user => {
+        let journals = await ACTIONS.journals.loadJournals(user);
+        socket.emit('load_journals', journals);
     })
 
     socket.on('journal_exists', async data => {
-        let exists = await ACTIONS.journalExists(data.user, data.discipline, data.journalName);
+        let exists = await ACTIONS.journals.journalExists(data.user, data.discipline, data.journalName);
         socket.emit('journal_exists', exists);
     })
 
-    socket.on('load_journals', async user => {
-        let journals = await ACTIONS.loadJournals(user);
-        socket.emit('load_journals', journals);
+    socket.on('update_journal_order', async data => {
+        ACTIONS.journals.updateJournalOrder(data);
+    })
+
+    /* Targets */
+    socket.on('target_exists', async data => {
+        let exists = await ACTIONS.targets.targetExists(data.user, data.discipline, data.targetName);
+        socket.emit('target_exists', exists);
     })
 });
 

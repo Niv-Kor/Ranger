@@ -104,7 +104,7 @@
 <script>
     import { mapGetters } from 'vuex';
     
-    const DISCIPLINE_ICONS = require.context('../../../../assets/disciplines/', false, /\.png$/);
+    const DISCIPLINE_ICONS = require.context('../../../../assets/disciplines/journal creation/', false, /\.png$/);
     const DEFAULT_OTHER_DISCIPLINE = 'Other';
 
     export default {

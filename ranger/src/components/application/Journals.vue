@@ -37,7 +37,7 @@
                             :index='index'
                             drag-direction='vertical'
                             replace-direction='vertical'
-                            @sortend='sortend($event, list)'
+                            @sortend='onSort($event, list)'
                         >
                             <v-list-item
                                 class='journal-item elevation-3'
@@ -48,7 +48,7 @@
                                 <v-list-item-avatar
                                     class='card-left'
                                     size=70
-                                    :style='createAvatarStyle(item)'
+                                    :style='createAvatarStyle(item.color)'
                                 >
                                     <v-img :src='getDisciplineObj(item.formalDiscipline).avatar' />
                                 </v-list-item-avatar>
@@ -84,7 +84,7 @@
                             <v-list-item-avatar
                                 class='card-left'
                                 size=70
-                                :style='createAvatarStyle(item)'
+                                :style='createAvatarStyle(item.color)'
                             >
                                 <v-img :src='getDisciplineObj(item.formalDiscipline).avatar' />
                             </v-list-item-avatar>
@@ -109,15 +109,27 @@
                 />
             </v-col>
         </v-row>
+        <loading
+            :active.sync='isListLoading'
+            is-full-page
+            loader='dots'
+            :width=100
+            :height=100
+            :color='colors.secondary'
+        />
     </v-container>
 </template>
 
 <script>
     import { mapGetters } from 'vuex';
+    import Loading from 'vue-loading-overlay';
 
-    const DISCIPLINE_ICONS = require.context('../../assets/disciplines/', false, /\.png|\.jpg$/);
+    const DISCIPLINE_ASSETS = require.context('../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
 
     export default {
+        components: {
+            Loading
+        },
         data() {
             return {
                 dragData: {},
@@ -130,58 +142,21 @@
                     width: 350,
                     height: 110
                 },
-                lista: [
-                    {
-                        name: 'Ficell\'s Journal',
-                        discipline: 'Archery',
-                        formalDiscipline: 'Archery',
-                        color: '#0000ff',
-                        order: 0
-                    },
-                    {
-                        name: 'Ficell\'s Journal2',
-                        discipline: 'Firearm',
-                        formalDiscipline: 'Firearm',
-                        color: '#005aff',
-                        order: 1
-                    },
-                    {
-                        name: 'Ficell\'s Journal4',
-                        discipline: 'Archery',
-                        formalDiscipline: 'Archery',
-                        color: '#18c900',
-                        order: 2
-                    },
-                    {
-                        name: 'Ficell\'s Journal7',
-                        discipline: 'Firearm',
-                        formalDiscipline: 'Firearm',
-                        color: '#fafafa',
-                        order: 3
-                    },
-                    {
-                        name: 'Ficell\'s Journal9',
-                        discipline: 'Other',
-                        formalDiscipline: 'Other',
-                        color: '#ff0030',
-                        order: 4
-                    },
-                ],
                 disciplines: [
                     {
                         name: 'Archery',
-                        avatar: DISCIPLINE_ICONS('./archery_avatar.png'),
-                        background: DISCIPLINE_ICONS('./archery_card.png')
+                        avatar: DISCIPLINE_ASSETS('./archery_avatar.png'),
+                        background: DISCIPLINE_ASSETS('./archery_card.png')
                     },
                     {
                         name: 'Firearm',
-                        avatar: DISCIPLINE_ICONS('./firearm_avatar.png'),
-                        background: DISCIPLINE_ICONS('./firearm_card.png')
+                        avatar: DISCIPLINE_ASSETS('./firearm_avatar.png'),
+                        background: DISCIPLINE_ASSETS('./firearm_card.png')
                     },
                     {
                         name: 'Other',
-                        avatar: DISCIPLINE_ICONS('./other_avatar.png'),
-                        background: DISCIPLINE_ICONS('./other_card.png')
+                        avatar: DISCIPLINE_ASSETS('./other_avatar.png'),
+                        background: DISCIPLINE_ASSETS('./other_card.png')
                     }
                 ],
                 currentOrder: []
@@ -192,49 +167,55 @@
                 userData: 'getUserData',
                 colors: 'getColors',
                 colorPalette: 'getNewJournalColorPalette',
-                list: 'getAllJournals'
+                list: 'getAllJournals',
+                isListLoading: 'isJournalsListLoading'
             })
         },
         created() {
             window.addEventListener('resize', this.handleResize);
             this.handleResize();
-            this.saveOrder();
+            this.updateOrder();
         },
         destroyed() {
             window.removeEventListener('resize', this.handleResize);
         },
-        watch: {
-            list() {
-                //update order in database
-                let changed = false;
-                for (let i in this.list) {
-                    let obj = this.list[i];
-
-                    //found a journal out of order
-                    if (obj.order !== this.currentOrder[i]) {
-                        this.$store.dispatch('updateJournalOrder', {
-                            user: this.userData.email,
-                            discipline: obj.discipline,
-                            name: obj.name,
-                            newOrder: obj.order
-                        });
-                        changed = true;
-                    }
-                }
-
-                if (changed) this.saveOrder();
-            }
-        },
         methods: {
+            /**
+             * Get the appropriate discipline object based on the discipline's name.
+             * 
+             * @param {String} discipline - The name of the discipline
+             * @returns {Object} {
+             *                      {String} name - Discipline's name,
+             *                      {URL} avatar - Discipline's avatar,
+             *                      {URL} background - Discipline's background
+             *                   }
+             */
             getDisciplineObj: function(discipline) {
                 for (let discip of this.disciplines)
                     if (discip.name === discipline) return discip;
             },
+            /**
+             * Get the appropriate style for a journal card.
+             * 
+             * @param {Object} item - {
+             *                           {String} discipline - The name of the journal's discipline,
+             *                           {String} formalDiscipline - Same as discipline, but if it's customized then formal is 'Other',
+             *                           {String} name - The journal's name,
+             *                           {Number} targetId - Journal's default target's ID,
+             *                           {String} color - The journal's color theme,
+             *                           {Number} order - The journal's sorting order
+             *                        }
+             * @returns {Object} {
+             *                      {String} backgroundImage - CSS attribute for background image,
+             *                      {String} backgroundSize - CSS attribute for background size,
+             *                      {String} backgroundPosition - CSS attribute for background position
+             *                   }
+             */
             createItemStyle: function(item) {
                 let color = (item.color === this.colorPalette[0]) ? '#000000' : item.color;
                 let discip = this.getDisciplineObj(item.formalDiscipline);
                 let background = 'url(' + discip.background + ')';
-                let gradient = 'url(' + DISCIPLINE_ICONS('./gradient_card.png') + ')';
+                let gradient = 'url(' + DISCIPLINE_ASSETS('./gradient_card.png') + ')';
                 let gradientImage = 'linear-gradient(to right, #ffffff30, ' + color + '30)';
                 let data = [
                     {
@@ -273,36 +254,83 @@
                     backgroundPosition: positions
                 }
             },
-            createAvatarStyle(item) {
+            /**
+             * Get the appropriate style for a journal card's avatar.
+             * 
+             * @param {String} color - The color theme of the journal
+             * @returns {Object} {
+             *                      {String} backgroundColor - CSS attribute for background color
+             *                   }
+             */
+            createAvatarStyle(color) {
                 let alpha = 60;
-                return { backgroundColor: item.color + alpha }
+                return { backgroundColor: color + alpha }
             },
-            sortend (ev, list) {
-                const { oldIndex, newIndex } = ev
-                this.rearrange(list, oldIndex, newIndex)
+            /**
+             * Activate when the journals' list is sortened.
+             * Save the new sort.
+             */
+            onSort(event, list) {
+                const { oldIndex, newIndex } = event;
+                this.rearrange(list, oldIndex, newIndex);
             },
-            rearrange (array, oldIndex, newIndex) {
+            /**
+             * Rearrange the journals' list, based on a signle item that changed its order.
+             * 
+             * @param {Number} oldIndex - The item's old index
+             * @param {Number} newIndex - The item's new index
+             */
+            rearrange(list, oldIndex, newIndex) {
                 if (oldIndex > newIndex) {
-                    array.splice(newIndex, 0, array[oldIndex])
-                    array.splice(oldIndex + 1, 1)
+                    list.splice(newIndex, 0, list[oldIndex])
+                    list.splice(oldIndex + 1, 1)
                 }
                 else {
-                    array.splice(newIndex + 1, 0, array[oldIndex])
-                    array.splice(oldIndex, 1)
+                    list.splice(newIndex + 1, 0, list[oldIndex])
+                    list.splice(oldIndex, 1)
                 }
+
+                this.updateOrder();
+                this.sortFlag = false; //turn off
             },
+            /**
+             * Activate when the window's size is changing.
+             * Save the new size.
+             */
             handleResize: function() {
                 this.windowDim.width = window.innerWidth;
                 this.windowDim.height = window.innerHeight;
             },
             /**
-             * Save the current order of the journals.
+             * Update the new order in the database,
+             * ans save the current order for later.
              */
-            saveOrder: function() {
-                this.currentOrder = [];
+            updateOrder: function() {
+                //update order in database
+                let changed = false;
+                for (let i in this.list) {
+                    let obj = this.list[i];
 
-                for (let obj of this.list)
-                    this.currentOrder.push(obj.order);
+                    //found a journal out of order
+                    if (this.currentOrder[i] && obj.order !== this.currentOrder[i]) {
+                        this.$store.dispatch('updateJournalOrder', {
+                            user: this.userData.email,
+                            discipline: obj.discipline,
+                            name: obj.name,
+                            newOrder: parseInt(i) + 1
+                        });
+
+                        changed = true;
+                    }
+                }
+                
+                //save current order
+                if (changed || !this.currentOrder.length) {
+                    this.currentOrder = [];
+
+                    for (let obj of this.list)
+                        this.currentOrder.push(obj.order);
+                }
             }
         }
     }
