@@ -197,7 +197,7 @@
 
             //update preview image size every time the window is resizing
             window.addEventListener('resize', () => {
-                this.imageData = this.calcPreviewImageData();
+                this.imageData = this.calcImageData();
             });
         },
         computed: {
@@ -205,7 +205,7 @@
                 colors: 'getColors'
             }),
             hitIcon() {
-                let iconContext = require.context('../../assets', false, /\.png$/);
+                let iconContext = require.context('../../assets/misc', false, /\.png$/);
                 return iconContext('./hit.png');
             },
             magnifierSize() {
@@ -579,7 +579,7 @@
                     top: top + 'px',
                     width: diam * index + 'px',
                     height: diam * index + 'px',
-                    backgroundColor: this.colors.secondary + alphaChannel
+                    backgroundColor: this.colors.primary + alphaChannel
                 };
             },
             /**
