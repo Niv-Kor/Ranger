@@ -44,10 +44,22 @@
             return {
                 periodPtr: 0,
                 info: [
-                    { text: 'Manage your Google Forms<br> surveys with great ease,<br> all in one place!', icon: 'mdi-clipboard-text-multiple'},
-                    { text: 'Share your surveys with<br>the community<br>and collect more<br>authentic responses', icon: 'mdi-account-group'},
-                    { text: 'Find the best fitting<br>respondents based on<br>demographic filters', icon: 'mdi-earth'},
-                    { text: 'Help people and friends<br>reach their survey\'s goal<br><br>', icon: 'mdi-handshake'}
+                    {
+                        text: 'Manage and document<br>all of your ranges<br> in one place!',
+                        icon: 'mdi-table-edit'
+                    },
+                    {
+                        text: 'Select from a variaty of targets, or customize<br>one of your own',
+                        icon: 'mdi-bullseye'
+                    },
+                    {
+                        text: 'Receive feedback<br>regarding your<br>performance and<br>personal progress',
+                        icon: 'mdi-graphql'
+                    },
+                    {
+                        text: 'It doesn\'t matter<br>what you shoot,<br>just enjoy shooting<br>and let us do the work!',
+                        icon: 'mdi-ammunition'
+                    }
                 ]
             }
         },

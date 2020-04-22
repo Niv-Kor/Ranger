@@ -5,10 +5,13 @@
             fab
             large
             elevation=8
-            :color='colors.primary'
+            :style="{ backgroundImage: 'url(' + colors.gradient + ')' }"
             @click="$emit('click')"
         >
-            <v-icon color='white'>
+            <v-icon
+                large
+                color='white'
+            >
                 mdi-plus-thick
             </v-icon>
         </v-btn>
@@ -34,5 +37,6 @@
         left: 0;
         right: 0;
         bottom: 40px;
+        background-size: 150px 100px;
     }
 </style>

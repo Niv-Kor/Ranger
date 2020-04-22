@@ -4,8 +4,8 @@
             <v-img
                 class='logo'
                 contain
-                width=400
-                src='../../assets/logo.png'
+                :width=300
+                src='../../assets/logos/logo.png'
                 aspect-ratio="1.5"
             ></v-img>
         </v-flex>
@@ -26,7 +26,7 @@
                         class='signup-btn'
                         rounded
                         color='white'
-                        width=150
+                        :width=150
                         @click='goto(signupPage)'
                     >
                         Sign Up
@@ -38,6 +38,7 @@
                     <v-btn
                         class='login-btn'
                         text
+                        color='white'
                         @click='goto(loginPage)'
                     >
                         Log In
@@ -123,14 +124,6 @@
 </script>
 
 <style scoped>
-    .login-btn .v-btn__content {
-            color: #000000;
-    }
-    @media only screen and (max-width: 715px) {
-        .login-btn .v-btn__content {
-            color: #FFFFFF;
-        }
-    }
     .logo {
         flex: 1 1 100%;
         margin: auto;

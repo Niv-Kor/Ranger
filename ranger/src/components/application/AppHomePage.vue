@@ -2,6 +2,7 @@
     <div>
         <v-app-bar
             app
+            elevation=0
             :color='colors.primaryDark'
         >
             <v-app-bar-nav-icon
@@ -12,13 +13,13 @@
                 <v-img
                     class='shrink mr-2'
                     contain
-                    src='../../assets/icon.png'
+                    src='../../assets/logos/icon.png'
                     transition='scale-transition'
                     width='40'
                 />
                 <v-img
                     min-width='100'
-                    src='../../assets/name.png'
+                    src='../../assets/logos/name_white.png'
                     width='100'
                 />
             </div>
