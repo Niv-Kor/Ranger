@@ -33,19 +33,35 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE LoadJournals
+ALTER PROCEDURE LoadJournals
 	@user VARCHAR(70)
 AS
 BEGIN
 	SELECT *
 	FROM Journals
 	WHERE journal_owner = @user
+	ORDER BY sort_order ASC
+END
+GO
+
+ALTER PROCEDURE UpdateJournalOrder
+	@user VARCHAR(70),
+	@discipline VARCHAR(20),
+	@journal_name VARCHAR(20),
+	@new_order INT
+AS
+BEGIN
+	UPDATE Journals
+	SET sort_order = @new_order
+	WHERE journal_owner = @user
+	  AND discipline = @discipline
+	  AND journal_name = @journal_name
 END
 GO
 
 ALTER PROCEDURE CreateJournal
 	@user VARCHAR(70),
-	@discipline VARCHAR(30),
+	@discipline VARCHAR(20),
 	@journal_name VARCHAR(20),
 	@target INT,
 	@theme VARCHAR(9)
@@ -79,3 +95,9 @@ GO
 -- Exec
 SELECT * FROM Journals;
 DELETE FROM Journals
+
+UPDATE Journals
+SET sort_order = 2
+WHERE journal_owner = 'nivkor23@gmail.com'
+	AND discipline = 'Archery'
+	AND journal_name = 'Test other'

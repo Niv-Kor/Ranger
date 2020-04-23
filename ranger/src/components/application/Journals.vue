@@ -215,24 +215,31 @@
                 let color = (item.color === this.colorPalette[0]) ? '#000000' : item.color;
                 let discip = this.getDisciplineObj(item.formalDiscipline);
                 let background = 'url(' + discip.background + ')';
-                let gradient = 'url(' + DISCIPLINE_ASSETS('./gradient_card.png') + ')';
-                let gradientImage = 'linear-gradient(to right, #ffffff30, ' + color + '30)';
+                let gradientBlack = 'linear-gradient(to left, ' + color + '40 ' + 5 + '%, #000000 ' + 80 + '%)';
+                let colorLine = 'linear-gradient(to left, ' + color + 'aa ' + 10 + '%, #000000ff ' + 90 + '%)';
+                let rangerPattern = 'url(' + DISCIPLINE_ASSETS('./ranger_pattern.png') + ')';
                 let data = [
-                    {
-                        image: gradientImage,
+                    {   //discipline photo
+                        image: colorLine,
+                        size: 'auto 4px',
+                        pos: 'center 50%'
+                    },
+                    {   //burn the image at the top
+                        image: gradientBlack,
                         size: this.tabSize.width + 'px ' + (this.tabSize.height / 2) + 'px',
-                        pos: '0 100%'
+                        pos: '0 0'
                     },
-                    {
-                        image: gradient,
-                        size: 'auto',
-                        pos: 'left top'
-                    },
-                    {
+                    {   //discipline photo
                         image: background,
                         size: 'auto',
-                        pos: 'left top'
-                    }
+                        pos: 'center top'
+                    },
+                    {   //3-color ranger patter
+                        image: rangerPattern,
+                        size: 'auto auto',
+                        pos: '0 100%'
+                    },
+                    
                 ]
 
                 let images = '';
@@ -251,7 +258,7 @@
                 return {
                     backgroundImage: images,
                     backgroundSize: sizes,
-                    backgroundPosition: positions
+                    backgroundPosition: positions,
                 }
             },
             /**
@@ -263,8 +270,20 @@
              *                   }
              */
             createAvatarStyle(color) {
-                let alpha = 60;
-                return { backgroundColor: color + alpha }
+                let gradientColor = 'radial-gradient(circle, ' + color + '00 ' + 10 + '%, #00000000 ' + 90 + '%';
+                let data = [
+                    {   //color theme at the bottom
+                        image: gradientColor,
+                        size: 'auto auto',
+                        pos: '0 -1px'
+                    },
+                ]
+
+                return {
+                    backgroundImage: data[0].image,
+                    backgroundSize: data[0].size,
+                    backgroundPosition: data[0].pos
+                }
             },
             /**
              * Activate when the journals' list is sortened.
@@ -346,6 +365,7 @@
     }
     .journal-item {
         margin: 20px 0 20px 0;
+        background-color: #ffffff;
     }
     .outer-card {
         margin-top: 15px;
@@ -353,10 +373,9 @@
         border-style: dashed none;
     }
     .card-left {
-        background-color: #ffffff60;
-        border-width: 1px;
-        border-color: #00000060;
-        border-style: solid;
+        border-width: 5px;
+        border-color: #ffffff60;
+        border-style: double;
     }
     .journal-discipline {
         color: #ffffff;
@@ -366,7 +385,5 @@
         color: #000000;
         font-size: 16px;
         font-weight: bold;
-    }
-    .sort-switch {
     }
 </style>
