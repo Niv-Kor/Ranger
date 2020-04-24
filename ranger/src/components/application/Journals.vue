@@ -109,23 +109,20 @@
                 />
             </v-col>
         </v-row>
-        <loading
-            :active.sync='isListLoading'
-            is-full-page
-            loader='dots'
-            :width=100
-            :height=100
-            :color='colors.secondary'
-        />
+        <Loading :model='isListLoading' />
     </v-container>
 </template>
 
 <script>
     import { mapGetters } from 'vuex';
+    import Loading from '../widgets/Loading';
 
     const DISCIPLINE_ASSETS = require.context('../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
 
     export default {
+        components: {
+            Loading
+        },
         data() {
             return {
                 dragData: {},
@@ -212,7 +209,7 @@
                 let discip = this.getDisciplineObj(item.formalDiscipline);
                 let background = 'url(' + discip.background + ')';
                 let gradientBlack = 'linear-gradient(to left, ' + color + '40 ' + 5 + '%, #000000 ' + 80 + '%)';
-                let colorLine = 'linear-gradient(to left, ' + color + 'aa ' + 10 + '%, #000000ff ' + 90 + '%)';
+                let colorLine = 'linear-gradient(to left, ' + color + '99 ' + 10 + '%, #000000ff ' + 90 + '%)';
                 let rangerPattern = 'url(' + DISCIPLINE_ASSETS('./ranger_pattern.png') + ')';
                 let data = [
                     {   //discipline photo

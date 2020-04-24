@@ -10,8 +10,6 @@ import { longClickDirective } from 'vue-long-click'
 import ImageMagnifier from 'vue-image-magnifier';
 import FileSelector from 'vue-file-selector';
 import Sortable from 'vue-drag-sortable';
-import Loading from 'vue-loading-overlay';
-import LoadingCSS from 'vue-loading-overlay/dist/vue-loading.css';
 
 const ROUTER = new VueRouter({
   routes: ROUTES
@@ -26,8 +24,6 @@ Vue.use(ImageMagnifier);
 Vue.use(FileSelector);
 Vue.use(VueRouter);
 Vue.use(VueKonva);
-Vue.use(LoadingCSS);
-Vue.component('loading', Loading)
 
 new Vue({
   vuetify,

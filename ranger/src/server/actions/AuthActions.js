@@ -32,7 +32,7 @@ async function signUser(socket, user) {
             let isDup = err.message.includes('duplicate');
             let reason;
 
-            if (isDup) reason = 'This email address already belongs to an existing user.';
+            if (isDup) reason = 'This email address already belongs to a user.';
             else reason = 'Server error. Please try again later';
 
             socket.emit('sign_user', {

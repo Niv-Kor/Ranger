@@ -1,12 +1,18 @@
 <template>
     <div class='t'>
         <div class='ico'>
-            <v-icon
-                x-large
-                :color='colors.secondary'
+            <transition
+                name='scale'
+                mode='out-in'
             >
-                {{ info[periodPtr].icon }}
-            </v-icon>
+                <v-icon
+                    x-large
+                    :color='colors.secondary'
+                    :key='periodPtr'
+                >
+                    {{ info[periodPtr].icon }}
+                </v-icon>
+            </transition>
         </div>
         <transition
             :name='slideDirection'
@@ -146,22 +152,11 @@
         right: 50%;
     }
     .slide-right-enter-active {
-        overflow: hidden;
-        animation: slide-right-in .3s ease-out;
+        animation: slide-right-in .3s ease-out forwards;
         transition: opacity .2s;
     }
     .slide-right-leave-active {
-        animation: slide-right-out .3s ease-out;
-        transition: opacity .2s;
-        opacity: 0;
-    }
-    .slide-left-enter-active {
-        overflow: hidden;
-        animation: slide-left-in .3s ease-out;
-        transition: opacity .2s;
-    }
-    .slide-left-leave-active {
-        animation: slide-left-out .3s ease-out;
+        animation: slide-right-out .3s ease-out forwards;
         transition: opacity .2s;
         opacity: 0;
     }
@@ -181,6 +176,15 @@
             transform: translateX(100px);
         }
     }
+    .slide-left-enter-active {
+        animation: slide-left-in .3s ease-out forwards;
+        transition: opacity .2s;
+    }
+    .slide-left-leave-active {
+        animation: slide-left-out .3s ease-out forwards;
+        transition: opacity .2s;
+        opacity: 0;
+    }
     @keyframes slide-left-in {
         from {
             transform: translateX(100px);
@@ -195,6 +199,31 @@
         }
         to {
             transform: translateX(-100px);
+        }
+    }
+    .scale-enter-active {
+        animation: scale-in .3s ease-out forwards;
+        transition: opacity .2s;
+    }
+    .scale-leave-active {
+        animation: scale-out .3s ease-out forwards;
+        transition: opacity .2s;
+        opacity: 0;
+    }
+    @keyframes scale-in {
+        from {
+            transform: scale(0);
+        }
+        to {
+            transform: scale(1);
+        }
+    }
+    @keyframes scale-out {
+        from {
+            transform: scale(1);
+        }
+        to {
+            transform: scale(0);
         }
     }
 </style>

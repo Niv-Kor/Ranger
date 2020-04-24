@@ -76,21 +76,18 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-        <loading
-            :active.sync='load'
-            is-full-page
-            loader='dots'
-            :width=100
-            :height=100
-            :color='colors.secondary'
-        />
+        <Loading :model='load' />
     </div>
 </template>
 
 <script>
     import { mapGetters } from 'vuex';
+    import Loading from '../widgets/Loading';
 
     export default {
+        components: {
+            Loading
+        },
         data() {
             return {
                 email: '',

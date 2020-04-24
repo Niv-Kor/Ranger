@@ -158,10 +158,10 @@
         opacity: 0;
     }
     .fade-enter-active {
-        transition: opacity .1s;
+        transition: opacity .2s;
     }
     .fade-leave-active {
-        transition: opacity .1s;
+        transition: opacity .2s;
         opacity: 0;
     }
 </style>
