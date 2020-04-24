@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class='t'>
         <div class='ico'>
             <v-icon
                 x-large
@@ -8,12 +8,18 @@
                 {{ info[periodPtr].icon }}
             </v-icon>
         </div>
-        <div
-            class='info-p'
-            v-html='info[periodPtr].text'
+        <transition
+            :name='slideDirection'
+            mode='out-in'
         >
-            {{ info[periodPtr].text }}
-        </div>
+            <div
+                class='info-p'
+                v-html='info[periodPtr].text'
+                :key='periodPtr'
+            >
+                {{ info[periodPtr].text }}
+            </div>
+        </transition>
         <hr class='hr' width=0%>
         <v-layout
             class='text-layout'
@@ -42,7 +48,8 @@
     export default {
         data() {
             return {
-                periodPtr: 0,
+                currentPeriodPtr: 0,
+                lastPtr: 0,
                 info: [
                     {
                         text: 'Manage and document<br>all of your ranges<br> in one place!',
@@ -66,7 +73,18 @@
         computed: {
             ...mapGetters({
                 colors: 'getColors'
-            })
+            }),
+            periodPtr: {
+                get() { return this.currentPeriodPtr; },
+                set(value) {
+                    this.lastPtr = this.currentPeriodPtr;
+                    this.currentPeriodPtr = value;
+                }
+            },
+            slideDirection() {
+                if (this.currentPeriodPtr > this.lastPtr) return 'slide-left';
+                else return 'slide-right';
+            }
         },
         methods: {
             /**
@@ -107,7 +125,6 @@
         bottom: 0;
         left: 0;
         right: 0;
-
         text-align: center;
         font-size: 24px;
         font-family: 'Comfortaa';
@@ -127,5 +144,57 @@
         bottom: 50%;
         left: 50%;
         right: 50%;
+    }
+    .slide-right-enter-active {
+        overflow: hidden;
+        animation: slide-right-in .3s ease-out;
+        transition: opacity .2s;
+    }
+    .slide-right-leave-active {
+        animation: slide-right-out .3s ease-out;
+        transition: opacity .2s;
+        opacity: 0;
+    }
+    .slide-left-enter-active {
+        overflow: hidden;
+        animation: slide-left-in .3s ease-out;
+        transition: opacity .2s;
+    }
+    .slide-left-leave-active {
+        animation: slide-left-out .3s ease-out;
+        transition: opacity .2s;
+        opacity: 0;
+    }
+    @keyframes slide-right-in {
+        from {
+            transform: translateX(-100px);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+    @keyframes slide-right-out {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(100px);
+        }
+    }
+    @keyframes slide-left-in {
+        from {
+            transform: translateX(100px);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+    @keyframes slide-left-out {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(-100px);
+        }
     }
 </style>

@@ -1,15 +1,17 @@
 <template>
     <div>
         <v-text-field
+            class='field'
             label="Email"
             v-model='email'
             outlined
             clearable
             rounded
             color='blue-grey darken-3'
-            background-color='white'
+            background-color='#ffffff90'
         />
         <v-text-field
+            class='field'
             label="Password"
             width=100
             :type="showPassword ? 'text' : 'password'"
@@ -19,19 +21,19 @@
             clearable
             rounded
             color='blue-grey darken-3'
-            background-color='white'
+            background-color='#ffffff90'
             @click:append='showPassword = !showPassword'
         />
         <v-layout justify-center>
             <v-btn
                 class='enter-btn white--text'
-                color='blue-grey darken-3'
+                :color='enterButtonColor'
                 elevation=1
                 rounded
                 x-large
                 @click='login'
             >
-                Login
+                Log in
             </v-btn>
         </v-layout>
         <v-icon
@@ -106,7 +108,8 @@
             wrongInput: {
                 get() { return this.$store.getters.isWrongAuthInput; },
                 set() { this.$store.commit('setWrongAuthInput', false); }
-            }
+            },
+            enterButtonColor() { return this.colors.secondary + 'aa'; }
         },
         watch: {
             email: function(value) {
@@ -147,11 +150,23 @@
         bottom: 20px;
         color: #FFFFFF;
     }
-    .v-text-field {
+    .field {
         margin-left: auto;
         margin-right: auto;
         left: 0;
         right: 0;
+    }
+    .field.error--text {
+        color: #de0d4d !important;
+    }
+    .field >>> .v-label {
+        color: #2e2e2e !important;
+    }
+    .field >>> input {
+        color: #2e2e2e !important;
+    }
+    .field >>> .error--text {
+        color: #2e2e2e !important;
     }
     @media only screen and (min-width: 715px) {
         .close-icon {
@@ -160,17 +175,17 @@
     }
     @media only screen and (max-width: 600px) {
         .v-text-field {
-            width: 60%;
+            width: 80%;
         }
     }
     @media only screen and (min-width: 600px) and (max-width: 900px) {
         .v-text-field {
-            width: 50%;
+            width: 60%;
         }
     }
     @media only screen and (min-width: 900px) and (max-width: 1600px) {
         .v-text-field {
-            width: 40%;
+            width: 50%;
         }
     }
     @media only screen and (min-width: 1600px) {
@@ -184,7 +199,7 @@
         margin-right: auto;
         bottom: 150px;
         margin: 0 50% 0 50%;
-        left: -47px;;
+        left: -55px;;
         text-transform: none;
     }
     .input-error {
@@ -192,5 +207,12 @@
         font-family: 'Comfortaa';
         margin: 0 5% 0 5%;
         color: red;
+    }
+    .error-title {
+        color: #ffffff;
+        margin-right: auto;
+        margin-left: auto;
+        left: 0;
+        right: 0;
     }
 </style>

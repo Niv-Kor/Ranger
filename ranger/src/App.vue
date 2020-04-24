@@ -1,5 +1,5 @@
 <template>
-  <v-app :style='styleObj'>
+  <v-app class='app' :style='styleObj'>
       <auth-home-page
         v-if='!userAuthenticated'
         @userAuthenticated='onUserAuthenticated'
@@ -67,3 +67,9 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+  .app {
+    overflow: hidden;
+  }
+</style>

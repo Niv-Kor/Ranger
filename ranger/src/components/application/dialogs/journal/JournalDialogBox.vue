@@ -452,16 +452,6 @@
     .transparent {
         opacity: 0;
     }
-    .fade-enter {
-        opacity: 0;
-    }
-    .fade-enter-active {
-        transition: opacity .08s;
-    }
-    .fade-leave-active {
-        transition: opacity .08s;
-        opacity: 0;
-    }
     .error-title {
         color: #ffffff;
         margin-right: auto;

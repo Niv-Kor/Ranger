@@ -1,18 +1,20 @@
 <template>
     <div>
         <v-text-field
+            class='field'
             label="Email"
             v-model='email'
             :rules='[inputRules.required, inputRules.validEmail]'
             outlined
             clearable
             rounded
-            color='blue-grey darken-3'
-            background-color='white'
+            solo-inverted
+            color='#000000aa'
+            background-color='#ffffff90'
         />
         <v-text-field
+            class='field'
             label="Password"
-            width=100
             :type="showPassword ? 'text' : 'password'"
             :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
             :rules='[inputRules.required, inputRules.length]'
@@ -20,13 +22,14 @@
             outlined
             clearable
             rounded
-            color='blue-grey darken-3'
-            background-color='white'
+            solo-inverted
+            color='#000000aa'
+            background-color='#ffffff90'
             @click:append='showPassword = !showPassword'
         />
           <v-text-field
+            class='field'
             label="Repeat Password"
-            width=100
             :type="showRepeatPassword ? 'text' : 'password'"
             :append-icon="showRepeatPassword ? 'mdi-eye-off' : 'mdi-eye'"
             :rules='[inputRules.required, inputRules.match]'
@@ -34,15 +37,16 @@
             outlined
             clearable
             rounded
-            color='blue-grey darken-3'
-            background-color='white'
+            solo-inverted
+            color='#000000aa'
+            background-color='#ffffff90'
             @click:append='showRepeatPassword = !showRepeatPassword'
         />
         <v-layout justify-center>
             <v-btn
                 class='enter-btn white--text'
-                color='blue-grey darken-3'
-                elevation=1
+                :color='enterButtonColor'
+                elevation=3
                 :disabled='!valid'
                 rounded
                 x-large
@@ -115,7 +119,7 @@
                 showRepeatPassword: false,
                 inputRules: {
                     required: value => !!value || 'Required.',
-                    length: v => v.length >= 8 && v.length <= 25 || 'Between 8-25 characters',
+                    length: v => v && v.length >= 8 && v.length <= 25 || 'Between 8-25 characters',
                     match: value => value === this.password || 'Passwords don\'t match',
                     validEmail: value => this.regex.email.test(value) || 'Not a valid email address'
                 }
@@ -134,7 +138,8 @@
             wrongInput: {
                 get() { return this.$store.getters.isWrongAuthInput; },
                 set() { this.$store.commit('setWrongAuthInput', false); }
-            }
+            },
+            enterButtonColor() { return this.colors.secondary + 'aa'; }
         },
         watch: {
             email: function(value) {
@@ -198,13 +203,25 @@
         left: -15px;
         margin: 0 50% 0 50%;
         bottom: 20px;
-        color: #FFFFFF;
+        color: #ffffff;
     }
-    .v-text-field {
+    .field {
         margin-left: auto;
         margin-right: auto;
         left: 0;
         right: 0;
+    }
+    .field.error--text {
+        color: #de0d4d !important;
+    }
+    .field >>> .v-label {
+        color: #2e2e2e !important;
+    }
+    .field >>> input {
+        color: #2e2e2e !important;
+    }
+    .field >>> .error--text {
+        color: #2e2e2e !important;
     }
     @media only screen and (min-width: 715px) {
         .close-icon {
@@ -213,17 +230,17 @@
     }
     @media only screen and (max-width: 600px) {
         .v-text-field {
-            width: 60%;
+            width: 80%;
         }
     }
     @media only screen and (min-width: 600px) and (max-width: 900px) {
         .v-text-field {
-            width: 50%;
+            width: 60%;
         }
     }
     @media only screen and (min-width: 900px) and (max-width: 1600px) {
         .v-text-field {
-            width: 40%;
+            width: 50%;
         }
     }
     @media only screen and (min-width: 1600px) {
@@ -239,5 +256,15 @@
         margin: 0 50% 0 50%;
         left: -56px;;
         text-transform: none;
+    }
+    .error-title {
+        color: #ffffff;
+        margin-right: auto;
+        margin-left: auto;
+        left: 0;
+        right: 0;
+    }
+    .ff {
+        opacity: 1;
     }
 </style>

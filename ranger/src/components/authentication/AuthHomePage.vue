@@ -11,41 +11,42 @@
         </v-flex>
         <transition name='fade' mode='out-in'>
             <router-view
+                class='router'
                 @cancel="goto('/auth')"
                 @authenticate='authenticateUser'
             />
         </transition>
         <transition name='fade' mode='out-in'>
-        <div
-            v-if="currentPage === '/auth'"
-            class='buttons-layout'
-        >
-            <v-layout justify-center>
-                <div>
-                    <v-btn
-                        class='signup-btn'
-                        rounded
-                        color='white'
-                        :width=150
-                        @click='goto(signupPage)'
-                    >
-                        Sign Up
-                    </v-btn>
-                </div>
-            </v-layout>
-            <v-layout justify-center>
-                <div>
-                    <v-btn
-                        class='login-btn'
-                        text
-                        color='white'
-                        @click='goto(loginPage)'
-                    >
-                        Log In
-                    </v-btn>
-                </div>
-            </v-layout>
-        </div>
+            <div
+                v-if="currentPage === '/auth'"
+                class='buttons-layout'
+            >
+                <v-layout justify-center>
+                    <div>
+                        <v-btn
+                            class='signup-btn'
+                            rounded
+                            color='white'
+                            :width=150
+                            @click='goto(signupPage)'
+                        >
+                            Sign Up
+                        </v-btn>
+                    </div>
+                </v-layout>
+                <v-layout justify-center>
+                    <div>
+                        <v-btn
+                            class='login-btn'
+                            text
+                            color='white'
+                            @click='goto(loginPage)'
+                        >
+                            Log In
+                        </v-btn>
+                    </div>
+                </v-layout>
+            </div>
         </transition>
     </div>
 </template>
