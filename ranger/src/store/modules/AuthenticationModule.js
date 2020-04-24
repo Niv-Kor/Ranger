@@ -3,6 +3,7 @@ const BCRYPT = require('bcryptjs');
 const state = {
     authEmail: '',
     authPass: '',
+    authErrorMessage: '',
     authWrongInput: false,
     authenticated: false,
     authLoading: false,
@@ -35,6 +36,9 @@ const getters = {
     },
     isAuthLoading: state => {
         return state.authLoading;
+    },
+    getAuthErrorMessage: state => {
+        return state.authErrorMessage;
     }
 };
 
@@ -53,6 +57,9 @@ const mutations = {
     },
     setAuthLoading: (state, flag) => {
         state.authLoading = flag;
+    },
+    setAuthErrorMessage: (state, msg) => {
+        state.authErrorMessage = msg;
     }
 };
 
@@ -67,12 +74,19 @@ const actions = {
             rootState.socket.emit('get_hash_password', state.authEmail);
             rootState.socket.on('get_hash_password', hash => {
                 let match = hash ? BCRYPT.compareSync(state.authPass, hash) : false;
-                resolve(match)
+                let errorCode = match ? 0 : 1;
+                let errorMessage = match ? '' : 'Some of the information you entered is not valid. Please check again.'
+
+                resolve({
+                    errorCode,
+                    errorMessage
+                })
             });
         });
     },
     /**
      * Register a user to the system with the entered personal data.
+     * This method does not send the real password to the server.
      * 
      * @returns {Boolean} True if the registration is successful.
      */
@@ -87,7 +101,12 @@ const actions = {
                 password: hashPass
             });
 
-            rootState.socket.on('sign_user', success => resolve(success));
+            rootState.socket.on('sign_user', res => {
+                resolve({
+                    errorCode: res.errorCode,
+                    errorMessage: res.message
+                })
+            });
         });
     }
 };

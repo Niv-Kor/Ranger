@@ -86,31 +86,31 @@
              * 
              * @emits {Null} userAuthenticated - When authentication is successful
              */
-            authenticateUser: function() {
-                switch (this.currentPage) {
-                    case this.signupPage:
+            authenticateUser: async function() {
+                let act = async () => {
+                    switch (this.currentPage) {
                         //sign up a new user
-                        this.$store.dispatch('signUser')
-                            .then(authentication => {
-                                if (authentication) {
-                                    this.storeSuccessfulLogin();
-                                    this.$emit('userAuthenticated');
-                                }
-                                else this.$store.commit('setWrongAuthInput', !authentication);
-                            });
-                        break;
-                    case this.loginPage:
+                        case this.signupPage:
+                            return await this.$store.dispatch('signUser');
+
                         //sign in an existing user
-                        this.$store.dispatch('authenticateUser')
-                            .then(authentication => {
-                                if (authentication) {
-                                    this.storeSuccessfulLogin();
-                                    this.$emit('userAuthenticated');
-                                }
-                                else this.$store.commit('setWrongAuthInput', !authentication);
-                            });
-                        break;
+                        case this.loginPage:
+                            return await this.$store.dispatch('authenticateUser');
+                    }
                 }
+
+                let authentication = await act();
+
+                if (authentication.errorCode === 0) {
+                    this.storeSuccessfulLogin();
+                    this.$emit('userAuthenticated');
+                }
+                else {
+                    this.$store.commit('setWrongAuthInput', true);
+                    this.$store.commit('setAuthErrorMessage', authentication.errorMessage);
+                }
+
+                this.$store.commit('setAuthLoading', false);
             },
             /**
              * Store login tokens (email and password) in the web's local storage

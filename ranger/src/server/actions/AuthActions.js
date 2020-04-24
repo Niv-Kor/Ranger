@@ -22,15 +22,24 @@ async function signUser(socket, user) {
         { name: 'hash', type: CONSTANTS.SQL.VarChar(512), value: user.password, options: {} }
     ];
 
-    //check if the user already exists
-    let validationProc = await GENERAL_ACTIONS.runProcedure('validateUser', params);
-    let exists = validationProc[0]['is_valid'];
-
     //sign and let the client know if the procedure succeeded
-    if (exists) socket.emit('sign_user', false);
-    else GENERAL_ACTIONS.runProcedure('signUp', params)
-        .then(() => socket.emit('sign_user', true))
-        .catch(() => socket.emit('sign_user', false));
+    GENERAL_ACTIONS.runProcedure('signUp', params)
+        .then(() => socket.emit('sign_user', {
+            errorCode: 0,
+            message: ''
+        }))
+        .catch(err => {
+            let isDup = err.message.includes('duplicate');
+            let reason;
+
+            if (isDup) reason = 'This email address already belongs to an existing user.';
+            else reason = 'Server error. Please try again later';
+
+            socket.emit('sign_user', {
+                errorCode: 1,
+                message: reason
+            })
+        });
 }
 
 /**

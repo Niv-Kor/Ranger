@@ -22,13 +22,6 @@
             background-color='white'
             @click:append='showPassword = !showPassword'
         />
-         <p
-            class='input-error'
-            v-if='wrongInput'
-        >
-            Some of the information you entered is not valid.<br>
-            Please check again.
-        </p>
         <v-layout justify-center>
             <v-btn
                 class='enter-btn white--text'
@@ -36,7 +29,7 @@
                 elevation=1
                 rounded
                 x-large
-                @click="$emit('authenticate')"
+                @click='login'
             >
                 Login
             </v-btn>
@@ -48,6 +41,47 @@
         >
             mdi-close-circle-outline
         </v-icon>
+        <v-dialog
+            v-model='wrongInput'
+            :max-width=290
+        >
+            <v-card>
+                <v-card-title
+                    class='error-title'
+                    :color='colors.secondary'
+                    :style="{ backgroundColor: colors.secondary }"
+                >
+                    Hold on!
+                </v-card-title>
+                <v-container>
+                    <div
+                        class='error-headline'
+                        align='center'
+                    >
+                        {{ errorMessage }}
+                    </div>
+                </v-container>
+                <v-card-actions>
+                    <v-btn
+                        class='error-ok-btn'
+                        text
+                        block
+                        :color='colors.secondary'
+                        @click='$store.commit("setWrongAuthInput", false)'
+                    >
+                        Ok
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+        <loading
+            :active.sync='load'
+            is-full-page
+            loader='dots'
+            :width=100
+            :height=100
+            :color='colors.secondary'
+        />
     </div>
 </template>
 
@@ -59,15 +93,20 @@
             return {
                 email: '',
                 password: '',
-                showPassword: false
+                showPassword: false,
             }
         },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
                 enableButton: 'getInputValidation',
-                wrongInput: 'isWrongAuthInput'
-            })
+                load: 'isAuthLoading',
+                errorMessage: 'getAuthErrorMessage'
+            }),
+            wrongInput: {
+                get() { return this.$store.getters.isWrongAuthInput; },
+                set() { this.$store.commit('setWrongAuthInput', false); }
+            }
         },
         watch: {
             email: function(value) {
@@ -88,6 +127,13 @@
                 this.password = '';
                 this.$store.commit('setWrongAuthInput', false);
                 this.$emit('cancel');
+            },
+            /**
+             * Log into the application.
+             */
+            login: function() {
+                this.$store.commit('setAuthLoading', true);
+                this.$emit('authenticate');
             }
         }
     }

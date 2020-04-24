@@ -122,14 +122,10 @@
 
 <script>
     import { mapGetters } from 'vuex';
-    import Loading from 'vue-loading-overlay';
 
     const DISCIPLINE_ASSETS = require.context('../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
 
     export default {
-        components: {
-            Loading
-        },
         data() {
             return {
                 dragData: {},

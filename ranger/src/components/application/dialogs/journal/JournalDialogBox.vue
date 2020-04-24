@@ -143,32 +143,32 @@
             />
         </v-dialog>
         <v-dialog
-                v-model='successDialog'
-                :max-width=290
-            >
-                <v-card>
-                    <v-card-title
-                        class='success-title'
-                        :color='colors.primary'
-                        :style="{ backgroundColor: colors.secondary }"
+            v-model='successDialog'
+            :max-width=290
+        >
+            <v-card>
+                <v-card-title
+                    class='success-title'
+                    :color='colors.primary'
+                    :style="{ backgroundColor: colors.secondary }"
+                >
+                    <p align=center class='success-title-flex'>
+                        Journal created successfully!
+                    </p>
+                </v-card-title>
+                <v-card-actions>
+                    <v-btn
+                        class='success-ok-btn'
+                        text
+                        block
+                        :color='colors.primaryDark'
+                        @click='successDialog = false'
                     >
-                        <p align=center class='success-title-flex'>
-                            Journal created successfully!
-                        </p>
-                    </v-card-title>
-                    <v-card-actions>
-                        <v-btn
-                            class='success-ok-btn'
-                            text
-                            block
-                            :color='colors.primaryDark'
-                            @click='successDialog = false'
-                        >
-                            Ok
-                        </v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-dialog>
+                        Ok
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
@@ -179,8 +179,6 @@
     import SelectJournalTarget from './SelectJournalTarget';
     import SelectJournalTargetConfig from './SelectJournalTargetConfig';
     import NewJournalPreview from './NewJournalPreview';
-    import Loading from 'vue-loading-overlay';
-    import 'vue-loading-overlay/dist/vue-loading.css';
 
     export default {
         components: {
@@ -188,8 +186,7 @@
             SelectJournalDiscipline,
             SelectJournalTarget,
             SelectJournalTargetConfig,
-            NewJournalPreview,
-            Loading
+            NewJournalPreview
         },
         props: [
             'model'

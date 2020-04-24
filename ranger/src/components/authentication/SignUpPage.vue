@@ -46,7 +46,7 @@
                 :disabled='!valid'
                 rounded
                 x-large
-                @click="$emit('authenticate')"
+                @click='signUp'
             >
                 Sign Up
             </v-btn>
@@ -58,6 +58,47 @@
         >
             mdi-close-circle-outline
         </v-icon>
+        <v-dialog
+            v-model='wrongInput'
+            :max-width=290
+        >
+            <v-card>
+                <v-card-title
+                    class='error-title'
+                    :color='colors.secondary'
+                    :style="{ backgroundColor: colors.secondary }"
+                >
+                    Hold on!
+                </v-card-title>
+                <v-container>
+                    <div
+                        class='error-headline'
+                        align='center'
+                    >
+                        {{ errorMessage }}
+                    </div>
+                </v-container>
+                <v-card-actions>
+                    <v-btn
+                        class='error-ok-btn'
+                        text
+                        block
+                        :color='colors.secondary'
+                        @click='$store.commit("setWrongAuthInput", false)'
+                    >
+                        Ok
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+        <loading
+            :active.sync='load'
+            is-full-page
+            loader='dots'
+            :width=100
+            :height=100
+            :color='colors.secondary'
+        />
     </div>
 </template>
 
@@ -84,22 +125,23 @@
             ...mapGetters({
                 colors: 'getColors',
                 regex: 'getAuthRegex',
-                wrongInput: 'isWrongAuthInput'
-                
+                load: 'isAuthLoading',
+                errorMessage: 'getAuthErrorMessage'
             }),
             valid() {
                 return this.isEmailValid() && this.isPasswordValid() && this.isRepeatPasswordValid();
+            },
+            wrongInput: {
+                get() { return this.$store.getters.isWrongAuthInput; },
+                set() { this.$store.commit('setWrongAuthInput', false); }
             }
         },
         watch: {
-            valid: function(value) {
-                this.$store.dispatch('setValidation', value);
-            },
             email: function(value) {
-                this.$store.dispatch('setAuthEmail', value);
+                this.$store.commit('setAuthEmail', value);
             },
             password: function(value) {
-                this.$store.dispatch('setAuthPassword', value);
+                this.$store.commit('setAuthPassword', value);
             }
         },
         methods: {
@@ -138,6 +180,13 @@
                 this.repeatPassword = '';
                 this.$store.commit('setWrongAuthInput', false);
                 this.$emit('cancel');
+            },
+            /**
+             * Register the user.
+             */
+            signUp: function() {
+                this.$store.commit('setAuthLoading', true);
+                this.$emit('authenticate');
             }
         }
     }
