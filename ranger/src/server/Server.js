@@ -14,8 +14,8 @@ CONSTANTS.IO.on('connection', socket => {
         ACTIONS.auth.signUser(socket, user)
     });
 
-    socket.on('validate_user', user => {
-        ACTIONS.auth.validateUser(socket, user);
+    socket.on('get_hash_password', user => {
+        ACTIONS.auth.gerHashedPassword(socket, user);
     });
 
     /* Journals */

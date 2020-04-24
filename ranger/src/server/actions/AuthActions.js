@@ -2,7 +2,7 @@ const CONSTANTS = require('../Constants');
 const GENERAL_ACTIONS = require('./GeneralActions');
 
 module.exports = {
-    validateUser,
+    gerHashedPassword,
     signUser
 };
 
@@ -19,7 +19,7 @@ module.exports = {
 async function signUser(socket, user) {
     let params = [
         { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: user.email, options: {} },
-        { name: 'password', type: CONSTANTS.SQL.VarChar(40), value: user.password, options: {} }
+        { name: 'hash', type: CONSTANTS.SQL.VarChar(512), value: user.password, options: {} }
     ];
 
     //check if the user already exists
@@ -27,8 +27,10 @@ async function signUser(socket, user) {
     let exists = validationProc[0]['is_valid'];
 
     //sign and let the client know if the procedure succeeded
-    if (!exists) await GENERAL_ACTIONS.runProcedure('signUp', params);
-    socket.emit('sign_user', !exists);
+    if (exists) socket.emit('sign_user', false);
+    else GENERAL_ACTIONS.runProcedure('signUp', params)
+        .then(() => socket.emit('sign_user', true))
+        .catch(() => socket.emit('sign_user', false));
 }
 
 /**
@@ -36,18 +38,14 @@ async function signUser(socket, user) {
  * Let the client know the answer.
  * 
  * @param {SocketIO.Socket} socket - The socket used by the server.
- * @param {Object} user - {
- *                           {String} email - User data token,
- *                           {String} password - User's password
- *                        }
+ * @param {String} user - User data token
  */
-async function validateUser(socket, user) {
+async function gerHashedPassword(socket, userToken) {
     let params = [
-        { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: user.email, options: {} },
-        { name: 'password', type: CONSTANTS.SQL.VarChar(40), value: user.password, options: {} }
+        { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: userToken, options: {} }
     ];
-
-    let recSet = await GENERAL_ACTIONS.runProcedure('validateUser', params);
-    let isValid = recSet[0]['is_valid'];
-    socket.emit('validate_user', isValid);
+    
+    let recSet = await GENERAL_ACTIONS.runProcedure('GetUserHashedPassword', params);
+    let hashPass = recSet.length ? recSet[0]['hashPass'] : null;
+    socket.emit('get_hash_password', hashPass);
 }

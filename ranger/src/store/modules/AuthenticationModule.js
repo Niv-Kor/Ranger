@@ -1,8 +1,11 @@
+const BCRYPT = require('bcryptjs');
+
 const state = {
     authEmail: '',
     authPass: '',
     authWrongInput: false,
     authenticated: false,
+    authLoading: false,
     authRegex: {
         email: /^[0-9A-Za-z_-]{1,}@[0-9A-Za-z_-]{1,}\.[0-9A-Za-z.]{1,}$/,
         password: /^[0-9A-Za-z]{8,25}$/
@@ -16,19 +19,22 @@ const getters = {
             password: state.authPass
         }
     },
-    getInputValidation: (state) => {
+    getInputValidation: state => {
         let emailValid = state.authRegex.email.test(state.authEmail);
         let passValid = state.authRegex.password.test(state.authPass);
         return emailValid && passValid;
     },
-    isWrongAuthInput: (state) => {
+    isWrongAuthInput: state => {
         return state.authWrongInput;
     },
     getAuthRegex: state => {
         return state.authRegex;
     },
-    getAuthentication: (state) => {
+    getAuthentication: state => {
         return state.authenticated;
+    },
+    isAuthLoading: state => {
+        return state.authLoading;
     }
 };
 
@@ -44,6 +50,9 @@ const mutations = {
     },
     setAuthentication: (state, flag) => {
         state.authenticated = flag;
+    },
+    setAuthLoading: (state, flag) => {
+        state.authLoading = flag;
     }
 };
 
@@ -55,29 +64,32 @@ const actions = {
      */
     authenticateUser: async ({ state, rootState }) => {
         return new Promise((resolve) => {
-            rootState.socket.emit('validate_user', {
-                email: state.authEmail,
-                password: state.authPass
+            rootState.socket.emit('get_hash_password', state.authEmail);
+            rootState.socket.on('get_hash_password', hash => {
+                let match = hash ? BCRYPT.compareSync(state.authPass, hash) : false;
+                resolve(match)
             });
-
-            rootState.socket.on('validate_user', isValid => { resolve(isValid); });
         });
     },
     /**
-     * Sign a user up with the entered data.
+     * Register a user to the system with the entered personal data.
      * 
      * @returns {Boolean} True if the registration is successful.
      */
     signUser: async ({ state, rootState }) => {
+        //encrypt
+        let salt = BCRYPT.genSaltSync(10);
+        let hashPass = BCRYPT.hashSync(state.authPass, salt);
+
         return new Promise((resolve) => {
             rootState.socket.emit('sign_user', {
                 email: state.authEmail,
-                password: state.authPass
+                password: hashPass
             });
 
-            rootState.socket.on('sign_user', success => { resolve(success); });
+            rootState.socket.on('sign_user', success => resolve(success));
         });
-    },
+    }
 };
 
 export default {
