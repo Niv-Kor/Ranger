@@ -1,7 +1,8 @@
-import AppCarousel from './components/authentication/AppCarousel';
+import AppCarousel from './components/widgets/AppCarousel';
 import LoginPage from './components/authentication/LoginPage';
 import SignUpPage from './components/authentication/SignUpPage';
-import Journals from './components/application/Journals';
+import JournalsTab from './components/application/journals/JournalsTab';
+import Journal from './components/application/journals/Journal';
 
 export const ROUTES = [
     //authentication
@@ -10,5 +11,6 @@ export const ROUTES = [
     { path: '/auth/signup', component: SignUpPage },
 
     //application
-    { path: '/home/journals', component: Journals }
+    { path: '/home/journals', component: JournalsTab },
+    { path: '/home/journal/:id', component: Journal }
 ];

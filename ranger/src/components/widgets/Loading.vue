@@ -29,7 +29,6 @@
             model: {
                 type: Boolean,
                 required: true,
-                default: false
             }
         },
         computed: {

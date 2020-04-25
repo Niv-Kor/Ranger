@@ -48,7 +48,6 @@
                                 <v-list-item-avatar
                                     class='card-left'
                                     size=70
-                                    :style='createAvatarStyle(item.color)'
                                 >
                                     <v-img :src='getDisciplineObj(item.formalDiscipline).avatar' />
                                 </v-list-item-avatar>
@@ -74,17 +73,18 @@
                         shaped
                     >
                         <v-list-item
-                            v-for='item in list'
+                            v-for='(item, index) in list'
                             :key="item.discipline + ', ' + item.name"
+                            :index='index'
                             class='journal-item elevation-3'
                             dense
                             :selectable=false
                             :style='createItemStyle(item)'
+                            @click='goto(index)'
                         >
                             <v-list-item-avatar
                                 class='card-left'
                                 size=70
-                                :style='createAvatarStyle(item.color)'
                             >
                                 <v-img :src='getDisciplineObj(item.formalDiscipline).avatar' />
                             </v-list-item-avatar>
@@ -115,9 +115,9 @@
 
 <script>
     import { mapGetters } from 'vuex';
-    import Loading from '../widgets/Loading';
+    import Loading from '../../widgets/Loading';
 
-    const DISCIPLINE_ASSETS = require.context('../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
+    const DISCIPLINE_ASSETS = require.context('../../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
 
     export default {
         components: {
@@ -130,10 +130,6 @@
                 windowDim: {
                     width: 0,
                     height: 0
-                },
-                tabSize: {
-                    width: 350,
-                    height: 110
                 },
                 disciplines: [
                     {
@@ -162,7 +158,13 @@
                 colorPalette: 'getNewJournalColorPalette',
                 list: 'getAllJournals',
                 isListLoading: 'isJournalsListLoading'
-            })
+            }),
+            tabSize() {
+                return {
+                    width: this.windowDim.width * .9,
+                    height: 110
+                }
+            }
         },
         created() {
             window.addEventListener('resize', this.handleResize);
@@ -173,6 +175,18 @@
             window.removeEventListener('resize', this.handleResize);
         },
         methods: {
+            /**
+             * Push an address to the router.
+             * 
+             * @param {String} path - The address to push to the router
+             */
+            goto: function(journalIndex) {
+                let journal = this.list[journalIndex];
+                let id = `${journal.discipline}-${journal.name}`;
+                let path = `/home/journal/${id}`;
+                this.$router.push({ path: path }).catch(() => {});
+                this.$store.commit('setSelectedJournalIndex', journalIndex);
+            },
             /**
              * Get the appropriate discipline object based on the discipline's name.
              * 
@@ -232,7 +246,6 @@
                         size: 'auto auto',
                         pos: '0 100%'
                     },
-                    
                 ]
 
                 let images = '';
@@ -252,30 +265,6 @@
                     backgroundImage: images,
                     backgroundSize: sizes,
                     backgroundPosition: positions,
-                }
-            },
-            /**
-             * Get the appropriate style for a journal card's avatar.
-             * 
-             * @param {String} color - The color theme of the journal
-             * @returns {Object} {
-             *                      {String} backgroundColor - CSS attribute for background color
-             *                   }
-             */
-            createAvatarStyle(color) {
-                let gradientColor = 'radial-gradient(circle, ' + color + '00 ' + 10 + '%, #00000000 ' + 90 + '%';
-                let data = [
-                    {   //color theme at the bottom
-                        image: gradientColor,
-                        size: 'auto auto',
-                        pos: '0 -1px'
-                    },
-                ]
-
-                return {
-                    backgroundImage: data[0].image,
-                    backgroundSize: data[0].size,
-                    backgroundPosition: data[0].pos
                 }
             },
             /**

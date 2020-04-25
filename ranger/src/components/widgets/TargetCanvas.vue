@@ -79,7 +79,6 @@
             src: {
                 type: String,
                 required: true,
-                default: undefined
             },
             /**
              * Maximum number of available hits.
@@ -101,8 +100,8 @@
              * The most valuable point in the target.
              * 
              * @example Object {
-             *                    x: <Number>{hit's x coordinate (in percentage from 0)},
-             *                    y: <Number>{hit's y coordinate (in percentage from 0)}
+             *                    {Number} x - Hit's x coordinate (in percentage from 0),
+             *                    {Number} y - Hit's y coordinate (in percentage from 0)
              *                 },
              */
             bullseye: {
@@ -115,8 +114,8 @@
              * 
              * @example Array [
              *                   Object {
-             *                             x: <Number>{hit's x coordinate (in percentage from 0)},
-             *                             y: <Number>{hit's y coordinate (in percentage from 0)}
+             *                             {Number} x - Hit's x coordinate (in percentage from 0),
+             *                             {Number} y - Hit's y coordinate (in percentage from 0)
              *                          },
              *                   ...
              *                ]
@@ -147,9 +146,9 @@
              * that represent its distribution of values over the whole target.
              * 
              * @example Object {
-             *                    rings: <Number>{amount of rings to show},
-             *                    diameter: <Number>{the diameter of the center ring as
-             *                                       percentage of width (min=1, max=100)}
+             *                    {Number} rings - Amount of rings to show,
+             *                    {Number} diameter - The diameter of the center ring as
+             *                                        percentage of width (min=1, max=100)}
              *                 },
              */
             displayValueRings: {

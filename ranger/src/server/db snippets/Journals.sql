@@ -1,14 +1,19 @@
 -- Tables
 CREATE TABLE Journals (
+	id INT IDENTITY(1,1),
 	journal_owner VARCHAR(70) NOT NULL,
 	discipline VARCHAR(20) NOT NULL,
 	journal_name VARCHAR(20) NOT NULL,
 	target_id INT NOT NULL,
 	theme_color VARCHAR(9) DEFAULT '#fafafa',
-	sort_order INT NOT NULL
+	sort_order INT NOT NULL,
 
-	PRIMARY KEY(journal_owner, discipline, journal_name)
-	FOREIGN KEY(target_id) REFERENCES Targets(id)
+	PRIMARY KEY(id),
+	FOREIGN KEY(target_id) REFERENCES Targets(id),
+
+	CONSTRAINT unique_journal UNIQUE CLUSTERED (
+		journal_owner, discipline, journal_name
+	)
 );
 GO
 
@@ -89,6 +94,20 @@ BEGIN
 		@theme,
 		@order
 	)
+END
+GO
+
+CREATE PROCEDURE GetJournalId
+	@user VARCHAR(70),
+	@discipline VARCHAR(20),
+	@journal_name VARCHAR(20)
+AS
+BEGIN
+	SELECT id
+	FROM Journals
+	WHERE journal_owner = @user
+	  AND discipline = @discipline
+	  AND journal_name = @journal_name
 END
 GO
 

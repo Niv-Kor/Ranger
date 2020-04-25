@@ -47,7 +47,7 @@
 <script>
     import { mapGetters } from 'vuex';
     import AppDrawer from './AppDrawer';
-    import PlusButton from './PlusButton';
+    import PlusButton from '../widgets/PlusButton';
     import JournalDialogBox from './dialogs/journal/JournalDialogBox';
 
     export default {

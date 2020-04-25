@@ -11,7 +11,6 @@
         </v-flex>
         <transition name='fade' mode='out-in'>
             <router-view
-                class='router'
                 @cancel="goto('/auth')"
                 @authenticate='authenticateUser'
             />
@@ -58,7 +57,7 @@
         data() {
             return {
                 loginPage: '/auth/login',
-                signupPage: '/auth/signup',
+                signupPage: '/auth/signup'
             }
         },
         computed: {

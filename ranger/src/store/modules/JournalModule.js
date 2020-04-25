@@ -1,20 +1,27 @@
 const state = {
     journals: [],
-    journalsListLoading: false
+    journalsListLoading: false,
+    selectedJournalIndex: 0
 }
 
 const getters = {
-    getAllJournals: (state) => {
+    getAllJournals: state => {
         return state.journals;
     },
-    isJournalsListLoading: (state) => {
+    isJournalsListLoading: state => {
         return state.journalsListLoading;
+    },
+    getSelectedJournalIndex: state => {
+        return state.selectedJournalIndex;
     }
 };
 
 const mutations = {
     setJournalsListLoading: (state, value) => {
         state.journalsListLoading = value;
+    },
+    setSelectedJournalIndex: (state, value) => {
+        state.selectedJournalIndex = value;
     }
 };
 
