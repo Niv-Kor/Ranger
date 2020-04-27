@@ -33,28 +33,16 @@
                 <router-view />
             </v-container>
         </v-content>
-        <plus-button
-            v-if='buttonFunc(currentPage)'
-            @click="$store.commit('emitPopupEvent', { page: currentPage, flag: true })"
-        />
-        <journal-dialog-box
-            :model="buttonFunc('/journals').popupModel"
-            @close="$store.commit('emitPopupEvent', { page: currentPage, flag: false })"
-        />
     </div>
 </template>
 
 <script>
     import { mapGetters } from 'vuex';
     import AppDrawer from './AppDrawer';
-    import PlusButton from '../widgets/PlusButton';
-    import JournalDialogBox from './dialogs/journal/JournalDialogBox';
 
     export default {
         components: {
-            AppDrawer,
-            PlusButton,
-            JournalDialogBox
+            AppDrawer
         },
         data() {
             return {

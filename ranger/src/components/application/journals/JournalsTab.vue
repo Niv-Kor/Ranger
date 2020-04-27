@@ -109,6 +109,15 @@
                 />
             </v-col>
         </v-row>
+        <plus-button
+            v-if='!isListLoading'
+            class='plus'
+            @click='createJournalModel = true'
+        />
+        <journal-dialog-box
+            :model="createJournalModel"
+            @close='createJournalModel = false'
+        />
         <Loading :model='isListLoading' />
     </v-container>
 </template>
@@ -116,17 +125,22 @@
 <script>
     import { mapGetters } from 'vuex';
     import Loading from '../../widgets/Loading';
+    import PlusButton from '../../widgets/PlusButton';
+    import JournalDialogBox from '../dialogs/journal/JournalDialogBox';
 
     const JOURNAL_ASSETS = require.context('../../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
 
     export default {
         components: {
-            Loading
+            Loading,
+            PlusButton,
+            JournalDialogBox
         },
         data() {
             return {
                 dragData: {},
                 sortFlag: false,
+                createJournalModel: false,
                 windowDim: {
                     width: 0,
                     height: 0
@@ -367,5 +381,9 @@
         color: #000000;
         font-size: 16px;
         font-weight: bold;
+    }
+    .plus {
+        position: absolute;
+        bottom: -80px;
     }
 </style>

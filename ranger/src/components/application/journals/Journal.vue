@@ -27,7 +27,7 @@
             <v-col>
                 <v-card
                     class='outer-card'
-                    :height='windowDim.height - 320'
+                    :height='windowDim.height - 350'
                     :width='windowDim.width * .9'
                     :style="{ borderColor: colors.primary + '50' }"
                     elevation=0
@@ -106,10 +106,22 @@
                     </transition>                        
                 </v-card>
                 <v-card
-                    class="control-line overflow-y-auto"
+                    class='control-line'
                     :height='30'
                     :width='windowDim.width * .9'
                     :color='colors.primary'
+                />
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col>
+                <plus-button
+                    class='plus'
+                    @click='createRangeModel = true'
+                />
+                <range-dialog-box
+                    :model="createRangeModel"
+                    @close='createRangeModel = false'
                 />
             </v-col>
         </v-row>
@@ -118,6 +130,8 @@
 
 <script>
     import { mapGetters } from 'vuex';
+    import PlusButton from '../../widgets/PlusButton';
+    import RangeDialogBox from '../dialogs/range/RangeDialogBox';
 
     const FITA_TARGET = require.context('../../../assets/targets/small/archery/', false, /\.png$/)
     const JOURNAL_ASSETS = require.context('../../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
@@ -125,6 +139,10 @@
     const THREE = require('three');
 
     export default {
+        components: {
+            PlusButton,
+            RangeDialogBox
+        },
         data() {
             return {
                 windowDim: {
@@ -134,6 +152,7 @@
                 datePicker: false,
                 toggleDelay: false,
                 showRanges: true,
+                createRangeModel: false,
                 datePickerModel: new Date().toISOString().substr(0, 10),
                 list: [
                     {
@@ -453,5 +472,8 @@
         background-position: 0 0;
         background-size: 100px 20px;
         background-color: #ffffff;
+    }
+    .plus {
+        bottom: -80px;
     }
 </style>

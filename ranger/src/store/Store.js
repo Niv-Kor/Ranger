@@ -2,7 +2,6 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import io from 'socket.io-client';
 import Auth from './modules/AuthenticationModule'
-import App from './modules/ApplicationModule';
 import JournalCreation from './modules/JournalCreationModule';
 import Journals from './modules/JournalModule';
 
@@ -31,7 +30,6 @@ export const STORE = new Vuex.Store({
     },
     modules: {
         Auth,
-        App,
         JournalCreation,
         Journals
     }
