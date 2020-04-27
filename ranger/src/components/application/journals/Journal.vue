@@ -117,7 +117,7 @@
             <v-col>
                 <plus-button
                     class='plus'
-                    @click='createRangeModel = true'
+                    @click='openRangeCreationDialog'
                 />
                 <range-dialog-box
                     :model="createRangeModel"
@@ -385,12 +385,16 @@
             /**
              * Get the appropriate text color, according to the card's background color.
              */
-            getCardTextColor(hour) {
+            getCardTextColor: function(hour) {
                 if (hour === 5 || hour === 6) return '#ffffff';
                 else if (hour > 6 && hour <= 16) return '#000000';
                 else if (hour > 16 && hour < 18) return '#000000';
                 else return '#ffffff';
             },
+            openRangeCreationDialog: function() {
+                this.createRangeModel = true;
+                this.$store.dispatch('initNewRangeValues');
+            }
         }
     }
 </script>
@@ -474,6 +478,10 @@
         background-color: #ffffff;
     }
     .plus {
-        bottom: -80px;
+        position: fixed;
+        margin: auto;
+        left: 0;
+        right: 0;
+        bottom: 40px;
     }
 </style>

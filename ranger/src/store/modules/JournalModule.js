@@ -1,7 +1,8 @@
 const state = {
     journals: [],
     journalsListLoading: false,
-    selectedJournalIndex: 0
+    selectedJournal: 0,
+    testImage: ''
 }
 
 const getters = {
@@ -13,6 +14,9 @@ const getters = {
     },
     getSelectedJournalIndex: state => {
         return state.selectedJournalIndex;
+    },
+    getTestImage: state => {
+        return state.testImage;
     }
 };
 

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class='div-container'>
         <v-btn
             class='plus'
             fab
@@ -32,11 +32,6 @@
 
 <style scoped>
     .plus {
-        position: absolute;
-        margin: auto;
-        left: 0;
-        right: 0;
-        bottom: 40px;
         background-size: 150px 100px;
     }
 </style>

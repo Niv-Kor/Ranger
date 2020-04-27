@@ -37,6 +37,7 @@
                         <select-range-time
                             v-show='currentTab == 0'
                             @loading='activateLoading'
+                            @change-tab='setTab'
                         />
                     </v-card>
                     <v-container>
@@ -260,107 +261,7 @@
              * @returns {Boolean} True if the next tab is available.
              */
             canContinueNextTab: async function() {
-                return new Promise((resolve, reject) => {
-                    switch (this.currentTab) {
-                        //select discipline
-                        case 0:
-                            //need to enter a valid custom discipline name
-                            if (this.useCustomDiscipline) {
-                                let name = this.customDiscipline;
-
-                                //name is empty
-                                if (!name) {
-                                    this.popError('Enter the name of your range\'s discipline');
-                                    resolve(false);
-                                }
-                                else {
-                                    let regex = this.regex.disciplineName;
-
-                                    if (!regex.expression.test(name)) {
-                                        this.popError(regex.message);
-                                        resolve(false);
-                                    }
-                                }
-                            }
-                            
-                            resolve(true);
-                            break;
-
-                        //select target
-                        case 1:
-                            //need to enter a valid custom target
-                            if (this.useCustomTarget) {
-                                if (!this.customTarget.base64Data) {
-                                    this.popError('You need to upload an image of your target');
-                                    resolve(false);
-                                }
-                                else if (!this.customTarget.chosenName) {
-                                    this.popError('Enter the target\'s name');
-                                    resolve(false);
-                                }
-                                else {
-                                    let regex = this.regex.targetName;
-                                    let name = this.customTarget.chosenName;
-
-                                    if (!regex.expression.test(name)) {
-                                        this.popError(regex.message);
-                                        resolve(false);
-                                    }
-                                    else {
-                                        this.$store.dispatch('checkTargetExists', name)
-                                            .then(res => {
-                                                if (res) this.popError('A target for \'' + this.discipline + '\' ' +
-                                                                       'with that name already exists');
-
-                                                resolve(!res);
-                                            });
-                                    }
-                                }
-                            }
-                            else resolve(true);
-                            break;
-                        
-                        //configure custom target
-                        case 2:
-                            if (!this.customTarget.center) {
-                                this.popError('You must mark the target\'s bullseye point');
-                                resolve(false)
-                            }
-
-                            resolve(true);
-                            break;
-
-                        //select journal theme
-                        case 3:
-                            if (!this.journalName) {
-                                this.popError('Enter the journal\'s name');
-                                resolve(false);
-                            }
-                            else {
-                                let regex = this.regex.journalName;
-                                let name = this.journalName;
-
-                                if (!regex.expression.test(name)) {
-                                    this.popError(regex.message);
-                                    resolve(false);
-                                }
-
-                                this.$store.dispatch('checkJournalExists', name)
-                                    .then(res => {
-                                        if (res) this.popError('A journal with that name already exists');
-                                        resolve(!res);
-                                    })
-                            }
-
-                            break;
-
-                        case 4:
-                            resolve(true)
-                            break;
-                        
-                        default: reject();
-                    }
-                });
+                return true;
             },
             /**
              * Pop an error message in a new dialog.

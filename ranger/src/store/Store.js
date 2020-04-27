@@ -4,6 +4,7 @@ import io from 'socket.io-client';
 import Auth from './modules/AuthenticationModule'
 import JournalCreation from './modules/JournalCreationModule';
 import Journals from './modules/JournalModule';
+import Ranges from './modules/RangeCreationModule';
 
 const SERVER_DOMAIN = 'http://localhost:19200';
 const GRADIENT_CONTEXT = require.context('../assets', false, /\.png$/);
@@ -31,6 +32,7 @@ export const STORE = new Vuex.Store({
     modules: {
         Auth,
         JournalCreation,
-        Journals
+        Journals,
+        Ranges
     }
 });

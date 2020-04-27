@@ -1,6 +1,8 @@
 const CONSTANTS = require('../Constants');
 const FTP_SERVER = require('../FTPServer');
+const LOGGER = require('../Logger');
 const GENERAL_ACTIONS = require('./GeneralActions');
+const TARGETS_DICT = {};
 
 module.exports = {
     createJournal,
@@ -8,6 +10,7 @@ module.exports = {
     loadJournals,
     updateJournalOrder
 };
+
 
 /**
  * Create a new shooting journal for a user.
@@ -19,7 +22,7 @@ module.exports = {
  *                           {String} name - Journal name,
  *                           {String} storedTarget - Stored target path,
  *                           {Object} customTarget - {
- *                                                      {String} base64Img - Base64 represntation of the image,
+ *                                                      {String} base64Data - Base64 represntation of the image,
  *                                                      {String} chosenName - Name of the image,
  *                                                      {Object} center - {
  *                                                                           {Number} x - x coordinate (in percentages),
@@ -43,7 +46,7 @@ async function createJournal(socket, data) {
         let base64 = data.customTarget.base64Data;
         let imageType = base64.split('data:image/').pop().split(';')[0];
         let destName = data.user + '_' + targetName;
-        let dir = '/db/target/custom/';
+        let dir = '/db/targets/custom/';
         uploadedTargetDestPath = dir + destName + '.' + imageType;
         
         let customTargetParams = [
@@ -62,7 +65,7 @@ async function createJournal(socket, data) {
 
         //store custom target photo in the server
         let compression = 400;
-        FTP_SERVER.uploadImage(base64, destName, dir, compression);
+        await FTP_SERVER.uploadImage(base64, destName, dir, compression);
     }
     else {
         targetName = data.storedTarget;
@@ -127,12 +130,24 @@ async function journalExists(user, discipline, name) {
  * @param {String} user - Username token
  * @returns {Array} [
  *                     {
+ *                        {Number} id - The ID of the journal,
  *                        {String} discipline - The name of the journal's discipline,
  *                        {String} formalDiscipline - Same as discipline, but if it's customized then formal is 'Other',
  *                        {String} name - The journal's name,
- *                        {Number} targetId - Journal's default target's ID,
  *                        {String} color - The journal's color theme,
- *                        {Number} order - The journal's sorting order
+ *                        {Number} order - The journal's sorting order,
+ *                        {Object} target - {
+ *                                             {Number} id - Target's unique ID,
+ *                                             {String} name - The default target's name,
+ *                                             {String} base64Data - Target's base64 image data,
+ *                                             {Number} rings - Amount of target rings,
+ *                                             {Number} ringsDiameter - The diameter of each ring in the target,
+ *                                             {Object} center - {
+ *                                                                  {Number} x - x coordinates if the center (in percentages),
+ *                                                                  {Number} y - y coordinates if the center (in percentages),
+ *                                                               }
+ *                                          }
+ *                        {Number} targetId - Journal's default target's ID,
  *                     }
  *                     ...
  *                  ]
@@ -142,27 +157,56 @@ async function loadJournals(user) {
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
     ];
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         GENERAL_ACTIONS.runProcedure('LoadJournals', params)
-            .then(res => {
+            .then(async res => {
                 let journals = [];
 
                 for (let obj of res) {
                     let discipline = obj['discipline'];
                     let isFormal = CONSTANTS.FORMAL_DISCIPLINES.includes(discipline);
                     let formalDiscip = isFormal ? discipline : 'Other';
+                    let deftargetPath = obj['target_path'];
+                    let targetPathSplit = deftargetPath.split('.');
+                    let fileType = targetPathSplit[targetPathSplit.length - 1];
+                    let targetId = obj['target_id'];
+                    let targetBase64 = '';
+                    
+                    //check if target's base64 code is already cached
+                    let cachedBase64 = TARGETS_DICT[`target #${targetId}`];
+                    if (cachedBase64) targetBase64 = cachedBase64;
+                    //fetch and cache it
+                    else {
+                        let base64Prefix = `data:image/${fileType};base64,`;
+                        let base64Suffix = await FTP_SERVER.downloadImage(obj['target_path']);
+                        targetBase64 = base64Prefix + base64Suffix;
+                        TARGETS_DICT[`target #${targetId}`] = targetBase64;
+                    }
 
                     journals.push({
+                        id: obj['id'],
                         discipline: discipline,
                         formalDiscipline: formalDiscip,
                         name: obj['journal_name'],
-                        targetId: obj['target_id'],
                         color: obj['theme_color'],
-                        order: obj['sort_order']
+                        order: obj['sort_order'],
+                        target: {
+                            id: targetId,
+                            name: obj['target_name'],
+                            base64Data: targetBase64,
+                            rings: obj['target_rings'],
+                            ringsDiameter: obj['target_rings_diameter'],
+                            center: {
+                                x: obj['target_center_x'],
+                                y: obj['target_center_y']
+                            }
+                        }
                     });
                 }
+
                 resolve(journals);
-            });
+            })
+        .catch(err => LOGGER.error('Could not load journals properly', err));
     });
 }
 

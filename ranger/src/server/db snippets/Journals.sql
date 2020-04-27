@@ -42,7 +42,14 @@ ALTER PROCEDURE LoadJournals
 	@user VARCHAR(70)
 AS
 BEGIN
-	SELECT *
+	SELECT j.id, j.discipline, j.journal_name, t.j.theme_color, j.sort_order
+	id: obj['id'],
+                        discipline: discipline,
+                        formalDiscipline: formalDiscip,
+                        name: obj['journal_name'],
+                        targetImage: obj['target_id'],
+                        color: obj['theme_color'],
+                        order: obj['sort_order']
 	FROM Journals
 	WHERE journal_owner = @user
 	ORDER BY sort_order ASC

@@ -136,7 +136,7 @@
             <Loading :model='load' />
         </v-dialog>
         <v-dialog
-            v-model='successDialog'
+            v-model='successDialogModel'
             :max-width=290
         >
             <v-card>
@@ -183,9 +183,23 @@
             NewJournalPreview,
             Loading
         },
-        props: [
-            'model'
-        ],
+        props: {
+            /**
+             * The model of the dialog component (show or hide).
+             */
+            model: {
+                type: Boolean,
+                required: true,
+            },
+            /**
+             * Either allow or stall the success popup dialog if it's meant to pop.
+             * If the dialog is suppose to pop while not allowed, it will pop the moment it is.
+             */
+            allowSuccessPopup: {
+                type: Boolean,
+                required: true
+            }
+        },
         data() {
             return {
                 load: false,
@@ -211,6 +225,9 @@
                 let show = this.currentTab === this.totalTabs - 1;
                 return show ? 'CREATE' : '';
             },
+            successDialogModel() {
+                return this.successDialog && this.$props.allowSuccessPopup;
+            }
         },
         watch: {
             model(value) {

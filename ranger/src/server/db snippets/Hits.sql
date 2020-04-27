@@ -5,7 +5,7 @@ CREATE TABLE Hits (
 	coord_x DECIMAL NOT NULL,
 	coord_y DECIMAL NOT NULL,
 	score INT NOT NULL,
-	end_no INT NOT NULL
+	end_no INT NOT NULL,
 
 	PRIMARY KEY(id),
 	FOREIGN KEY(range_id) REFERENCES Ranges(id)
@@ -15,3 +15,4 @@ CREATE TABLE Hits (
 
 -- Exec
 SELECT * FROM Hits
+DROP TABLE Hits

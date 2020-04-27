@@ -1,17 +1,17 @@
 <template>
-        <v-container
-            class='container'
-            fluid
+    <v-container
+        class='container'
+        fluid
+    >
+        <h1>Shooting Journals</h1>
+        <p
+            v-if='!list.length && !isListLoading'
+            class='no-surveys-message'
         >
-            <h1>Shooting Journals</h1>
-            <p
-                v-if='!list.length'
-                class='no-surveys-message'
-            >
-                You don't own any journals yet.<br>
-                Use the '+' button below<br>
-                to get started.
-            </p>
+            You don't own any journals yet.<br>
+            Use the '+' button below<br>
+            to get started.
+        </p>
         <v-row v-else no-gutters>
             <v-col>
                 <v-card
@@ -115,7 +115,8 @@
             @click='createJournalModel = true'
         />
         <journal-dialog-box
-            :model="createJournalModel"
+            :model='createJournalModel'
+            :allow-success-popup='!isListLoading'
             @close='createJournalModel = false'
         />
         <Loading :model='isListLoading' />
@@ -383,7 +384,10 @@
         font-weight: bold;
     }
     .plus {
-        position: absolute;
-        bottom: -80px;
+        position: fixed;
+        margin: auto;
+        left: 0;
+        right: 0;
+        bottom: 40px;
     }
 </style>

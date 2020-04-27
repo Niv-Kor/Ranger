@@ -78,7 +78,7 @@
              */
             src: {
                 type: String,
-                required: true,
+                required: true
             },
             /**
              * Maximum number of available hits.
