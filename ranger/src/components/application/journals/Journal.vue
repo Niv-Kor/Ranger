@@ -4,17 +4,16 @@
         fluid
     >
         <h1>{{ journal.name }}</h1>
-        <v-row no-gutters>
+        <v-row no-gutters class='mb-1'>
             <v-col>
                 <v-btn
                     class='calendar-btn'
                     block
                     :height='40'
-                    :width='windowDim.width * .8'
+                    :width='windowDim.width * .4'
                     :color='colors.primary'
                     @click='toggleDatePicker'
                 >
-                    <p></p>
                     <v-icon
                         medium
                         color='white'
@@ -22,6 +21,10 @@
                         mdi-calendar-clock
                     </v-icon>
                 </v-btn>
+            </v-col>
+        </v-row>
+        <v-row no-gutters>
+            <v-col>
                 <v-card
                     class='outer-card'
                     :height='windowDim.height - 320'
@@ -32,7 +35,7 @@
                     <transition name='slide' mode='in-out'>
                         <v-date-picker
                             v-if='datePicker'
-                            v-model='pickerModel' 
+                            v-model='datePickerModel' 
                             first-day-of-week=0
                             full-width
                             scrollable
@@ -53,7 +56,7 @@
                                 v-for='(item, index) in list'
                                 :key='item.date'
                                 :index='index'
-                                class='journal-item elevation-3'
+                                class='range-item elevation-3'
                                 :style='createItemStyle(item.hour)'
                                 :selectable=false
                             >
@@ -62,14 +65,33 @@
                                         class='card-title'
                                         :style='{ color: getCardTextColor(item.hour) }'
                                     >
-                                        {{ item.date }} {{ item.hour }}:00
+                                        {{ item.date }}
+                                        <span
+                                            :style='{
+                                                fontSize: "14px",
+                                                marginLeft: "10px",
+                                                marginTop: "3px"
+                                            }'
+                                        >
+                                            {{ item.hour }}:00
+                                        </span>
                                     </v-card-title>
                                     <br>
                                     <v-card-text
                                         class='card-text'
-                                        :style='{ color: getCardTextColor(item.hour) }'
                                     >
-                                        {{ item.score }}
+                                        <span
+                                            :style='{
+                                                color: getScoreColor(item.score, item.total),
+                                                filter: "drop-shadow(0 0 10px #00ffff)",
+                                                fontWeight: "bold"
+                                            }'
+                                        >
+                                            {{ item.score }}
+                                        </span>
+                                        <span :style='{ color: "#000000" }'>
+                                            / {{ item.total }}
+                                        </span>
                                     </v-card-text>
                                 </v-list-item-content>
                                 <v-list-item-avatar
@@ -83,6 +105,12 @@
                         </v-list>
                     </transition>                        
                 </v-card>
+                <v-card
+                    class="control-line overflow-y-auto"
+                    :height='30'
+                    :width='windowDim.width * .9'
+                    :color='colors.primary'
+                />
             </v-col>
         </v-row>
     </v-container>
@@ -92,7 +120,9 @@
     import { mapGetters } from 'vuex';
 
     const FITA_TARGET = require.context('../../../assets/targets/small/archery/', false, /\.png$/)
+    const JOURNAL_ASSETS = require.context('../../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
     const RANGES_CONTEXT = require.context('../../../assets/ranges/', false, /\.png$/)
+    const THREE = require('three');
 
     export default {
         data() {
@@ -104,41 +134,48 @@
                 datePicker: false,
                 toggleDelay: false,
                 showRanges: true,
-                pickerModel: new Date().toISOString().substr(0, 10),
+                datePickerModel: new Date().toISOString().substr(0, 10),
                 list: [
                     {
-                        date: '16/4/20',
-                        score: '272/300',
+                        date: '16 - 04 - 20',
+                        score: 272,
+                        total: 300,
                         hour: 2
                     },
                     {
-                        date: '12/4/20',
-                        score: '261/300',
+                        date: '12 - 04 - 20',
+                        score: 261,
+                        total: 280,
                         hour: 5
                     },
                     {
-                        date: '09/4/20',
-                        score: '271/300',
+                        date: '09 - 04 - 20',
+                        score: 271,
+                        total: 300,
                         hour: 8
                     },
                     {
-                        date: '02/4/20',
-                        score: '249/300',
+                        date: '02 - 04 - 20',
+                        score: 249,
+                        total: 1700,
                         hour: 11
                     },
                     {
-                        date: '18/3/20',
-                        score: '243/300',
+                        date: '18 - 03 - 20',
+                        score: 143,
+                        total: 300,
                         hour: 15
                     },
                     {
-                        date: '12/3/20',
-                        score: '290/300',
+                        date: '12 - 03 - 20',
+                        score: 290,
+                        total: 300,
                         hour: 18
                     },
                     {
-                        date: '04/3/20',
-                        score: '265/300',
+                        date: '04 - 03 - 20',
+                        score: 265,
+                        total: 270,
                         hour: 21
                     }
                 ],
@@ -158,10 +195,6 @@
             }),
             journal() {
                 return this.journals[this.journalIndex];
-            },
-            rangeItemClass() {
-                let className = 'range-item';
-                return this.showRanges ? className : className + ' transparent';
             },
             outerCardClass() {
                 let className = 'outer-card';
@@ -191,19 +224,32 @@
              * Toggle the date picker window.
              */
             toggleDatePicker: function() {
-                //prevent opening the window again before fully closing it
-                if (!this.datePicker && this.toggleDelay) return;
+                if (this.toggleDelay) return;
+                this.toggleDelay = true;
 
-                if (this.datePicker) {
+                //toggle from ranges to calendar
+                if (this.showRanges) {
+                    this.showRanges = false;
+                    setTimeout(() => {
+                        this.datePicker = true;
+                        this.toggleDelay = false;
+                    }, 200);
+                }
+                //toggle from calendar to ranges
+                else {
+                    this.datePicker = false;
                     setTimeout(() => {
                         this.showRanges = true;
                         this.toggleDelay = false;
                     }, 500);
                 }
-                else this.showRanges = false;
-
-                this.datePicker = !this.datePicker
-                this.toggleDelay = true;
+            },
+            getScoreColor: function(score, total) {
+                let percent = score / total;
+                let zeroScore = new THREE.Color('#b70000');
+                let fullScore = new THREE.Color('#11b700');
+                let lerpedColor = zeroScore.lerp(fullScore, percent);
+                return `#${lerpedColor.getHexString()}`;
             },
             /**
              * Get the appropriate style for a journal card.
@@ -219,6 +265,7 @@
                 let colorRange = [];
                 let hoursRange = [];
                 let grassLight = '';
+                let useFlare = false;
                 hour = parseInt(hour);
 
                 if (hour === 5 || hour === 6) {
@@ -230,6 +277,7 @@
                     colorRange = this.skyColors[1];
                     hoursRange = [7, 16];
                     grassLight = 'dark'
+                    useFlare = true;
                 }
                 else if (hour > 16 && hour <= 18) {
                     colorRange = this.skyColors[2];
@@ -242,25 +290,53 @@
                     grassLight = 'light'
                 }
 
-                const THREE = require('three')
-
                 let dayPercent = (hour - hoursRange[0]) / (hoursRange[1] - hoursRange[0]);
                 let minColor = new THREE.Color(colorRange[0]);
                 let maxColor = new THREE.Color(colorRange[1]);
                 let skyColor = minColor.lerp(maxColor, dayPercent).getHexString();
 
-                let baseBackground = 'url(' + RANGES_CONTEXT(`./range_card_${grassLight}.png`) + ')';
-                let hourGradient = 'linear-gradient(to top, #' + skyColor + ' ' + 50 + '%, #' + skyColor + ' ' + 50 + '%)';
+                let grass = 'url(' + RANGES_CONTEXT(`./grass_${grassLight}.png`) + ')';
+                let stars = 'url(' + RANGES_CONTEXT(`./stars.png`) + ')';
+                let flare = 'url(' + RANGES_CONTEXT(`./flare.png`) + ')';
+                let hourGradient = 'linear-gradient(to right, #' + skyColor + ' ' + 60 + '%, #000000bb ' + 120 + '%)';
+                let scoreLine = 'linear-gradient(to right, #ffffff ' + 40 + '%, #00000000 ' + 100 + '%)';
+                let rangerPattern = 'url(' + JOURNAL_ASSETS('./ranger_pattern.png') + ')';
                 let data = [
                     {   //base image behind the sky
-                        image: baseBackground,
+                        image: grass,
                         size: 'auto auto',
-                        pos: '0 0'
+                        pos: '0 0',
+                        condition: true
+                    },
+                    {   //base image behind the sky
+                        image: stars,
+                        size: 'auto auto',
+                        pos: '0 0',
+                        condition: true
+                    },
+                    {   //sun flare effect
+                        image: flare,
+                        size: 'auto auto',
+                        pos: '0 0',
+                        condition: useFlare
+                    },
+                    {   //3-color ranger patter
+                        image: rangerPattern,
+                        size: 'auto 20px',
+                        pos: '0 77px',
+                        condition: true
+                    },
+                    {   //a white line behind the range results
+                        image: scoreLine,
+                        size: this.windowDim.width * .6 + 'px 20px',
+                        pos: '0 77px',
+                        condition: true
                     },
                     {   //color of the sky based on the hour of the day
                         image: hourGradient,
                         size: 'auto auto',
-                        pos: '0 0'
+                        pos: '0 0',
+                        condition: true
                     }
                 ]
 
@@ -270,11 +346,14 @@
 
                 for (let i in data) {
                     let bg = data[i];
-                    let comma = (i < data.length - 1) ? ',' : '';
 
-                    images += bg.image + comma;
-                    sizes += bg.size + comma;
-                    positions += bg.pos + comma;
+                    if (bg.condition) {
+                        let comma = (i < data.length - 1) ? ',' : '';
+
+                        images += bg.image + comma;
+                        sizes += bg.size + comma;
+                        positions += bg.pos + comma;
+                    }
                 }
 
                 return {
@@ -307,7 +386,7 @@
     }
     .outer-card {
         border-width: 1px;
-        border-style: none none dashed none;
+        border-style: none dashed none dashed;
         overflow: auto;
     }
     .slide-enter-active {
@@ -341,7 +420,8 @@
         animation: fade-in .5s ease-out forwards;
     }
     .fade-leave-active {
-        opacity: 0;
+        animation: fade-out .2s ease-out forwards;
+        /* opacity: 0; */
     }
     @keyframes fade-in {
         from {
@@ -351,14 +431,27 @@
             opacity: 1;
         }
     }
+    @keyframes fade-out {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
     .ranges-list {
         list-style-type: none;
         overflow-y: hidden;
     }
-    .transparent {
-        opacity: 1;
+    .range-item {
+        margin: 10px 0 10px 0;
     }
     .overflow-hidden {
         overflow-y: hidden;
+    }
+    .hor-score-line {
+        background-position: 0 0;
+        background-size: 100px 20px;
+        background-color: #ffffff;
     }
 </style>

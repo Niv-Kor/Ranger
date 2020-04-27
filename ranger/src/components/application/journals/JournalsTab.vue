@@ -117,7 +117,7 @@
     import { mapGetters } from 'vuex';
     import Loading from '../../widgets/Loading';
 
-    const DISCIPLINE_ASSETS = require.context('../../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
+    const JOURNAL_ASSETS = require.context('../../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
 
     export default {
         components: {
@@ -134,18 +134,18 @@
                 disciplines: [
                     {
                         name: 'Archery',
-                        avatar: DISCIPLINE_ASSETS('./archery_avatar.png'),
-                        background: DISCIPLINE_ASSETS('./archery_card.png')
+                        avatar: JOURNAL_ASSETS('./archery_avatar.png'),
+                        background: JOURNAL_ASSETS('./archery_card.png')
                     },
                     {
                         name: 'Firearm',
-                        avatar: DISCIPLINE_ASSETS('./firearm_avatar.png'),
-                        background: DISCIPLINE_ASSETS('./firearm_card.png')
+                        avatar: JOURNAL_ASSETS('./firearm_avatar.png'),
+                        background: JOURNAL_ASSETS('./firearm_card.png')
                     },
                     {
                         name: 'Other',
-                        avatar: DISCIPLINE_ASSETS('./other_avatar.png'),
-                        background: DISCIPLINE_ASSETS('./other_card.png')
+                        avatar: JOURNAL_ASSETS('./other_avatar.png'),
+                        background: JOURNAL_ASSETS('./other_card.png')
                     }
                 ],
                 currentOrder: []
@@ -224,7 +224,7 @@
                 let background = 'url(' + discip.background + ')';
                 let gradientBlack = 'linear-gradient(to left, ' + color + '40 ' + 5 + '%, #000000 ' + 80 + '%)';
                 let colorLine = 'linear-gradient(to left, ' + color + '99 ' + 10 + '%, #000000ff ' + 90 + '%)';
-                let rangerPattern = 'url(' + DISCIPLINE_ASSETS('./ranger_pattern.png') + ')';
+                let rangerPattern = 'url(' + JOURNAL_ASSETS('./ranger_pattern.png') + ')';
                 let data = [
                     {   //discipline photo
                         image: colorLine,
@@ -245,7 +245,7 @@
                         image: rangerPattern,
                         size: 'auto auto',
                         pos: '0 100%'
-                    },
+                    }
                 ]
 
                 let images = '';
