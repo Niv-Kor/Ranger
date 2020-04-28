@@ -23,8 +23,8 @@ CONSTANTS.IO.on('connection', socket => {
         ACTIONS.journals.createJournal(socket, data);
     });
 
-    socket.on('load_journals', async user => {
-        let journals = await ACTIONS.journals.loadJournals(user);
+    socket.on('load_journals', async (user, ignoreTargets) => {
+        let journals = await ACTIONS.journals.loadJournals(user, ignoreTargets);
         socket.emit('load_journals', journals);
     })
 

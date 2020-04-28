@@ -152,7 +152,7 @@ async function journalExists(user, discipline, name) {
  *                     ...
  *                  ]
  */
-async function loadJournals(user) {
+async function loadJournals(user, ignoreTargetIds) {
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
     ];
@@ -172,9 +172,12 @@ async function loadJournals(user) {
                     let targetId = obj['target_id'];
                     let targetBase64 = '';
                     
-                    //check if target's base64 code is already cached
-                    let cachedBase64 = TARGETS_DICT[`target #${targetId}`];
-                    if (cachedBase64) targetBase64 = cachedBase64;
+                    //check if target's base64 code is already cached or should be ignored
+                    let cachedAtClient = ignoreTargetIds.includes(targetId);
+                    let cachedAtServer = !!TARGETS_DICT[`target #${targetId}`];
+
+                    if (cachedAtClient) targetBase64 = null;
+                    else if (cachedAtServer) targetBase64 = TARGETS_DICT[`target #${targetId}`];
                     //fetch and cache it
                     else {
                         let base64Prefix = `data:image/${fileType};base64,`;

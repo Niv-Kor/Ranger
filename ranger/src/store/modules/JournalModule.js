@@ -33,13 +33,37 @@ const actions = {
     /**
      * Load all of the user's journals.
      */
-    loadAllJournals: ({ commit, state, rootState }) => {
+    loadAllJournals: async ({ commit, state, rootState }) => {
         commit('setJournalsListLoading', true);
-        rootState.socket.emit('load_journals', rootState.Auth.authEmail);
-        rootState.socket.on('load_journals', res => {
+        let dataManager = rootState.data;
+        let storedIDs = await dataManager.getTargetsIDs();
+
+        rootState.socket.on('load_journals', async res => {
             state.journals = res;
+
+            for (let obj of res) {
+                let target = obj.target;
+
+                //store target in indexedDB
+                if (target.base64Data) {
+                    dataManager.insertTarget({
+                        id: target.id,
+                        image: target.base64Data
+                    });
+                }
+                //pull target from indexedDB
+                else {
+                    let targetId = target.id;
+                    let imageData = await dataManager.fetchTarget(targetId).image;
+                    target.base64Data = imageData;
+                }
+            }
+
+            //finish
             commit('setJournalsListLoading', false);
         });
+
+        rootState.socket.emit('load_journals', rootState.Auth.authEmail, storedIDs);
     },
     /**
      * Update the order of a single journal card.

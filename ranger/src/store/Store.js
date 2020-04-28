@@ -5,6 +5,7 @@ import Auth from './modules/AuthenticationModule'
 import JournalCreation from './modules/JournalCreationModule';
 import Journals from './modules/JournalModule';
 import Ranges from './modules/RangeCreationModule';
+import { DataManager } from '../db/DataManager';
 
 const SERVER_DOMAIN = 'http://localhost:19200';
 const GRADIENT_CONTEXT = require.context('../assets', false, /\.png$/);
@@ -19,7 +20,8 @@ export const STORE = new Vuex.Store({
             neutral: '#78909c',
             gradient: GRADIENT_CONTEXT('./gradient.png')
         },
-        socket: io(SERVER_DOMAIN)
+        socket: io(SERVER_DOMAIN),
+        data: new DataManager()
     },
     getters: {
         getColors: state => {
@@ -27,6 +29,9 @@ export const STORE = new Vuex.Store({
         },
         getSocket: state => {
             return state.socket;
+        },
+        getDataManager: state => {
+            return state.data;
         }
     },
     modules: {
