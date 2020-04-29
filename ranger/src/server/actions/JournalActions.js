@@ -2,7 +2,7 @@ const CONSTANTS = require('../Constants');
 const FTP_SERVER = require('../FTPServer');
 const LOGGER = require('../Logger');
 const GENERAL_ACTIONS = require('./GeneralActions');
-const TARGETS_DICT = {};
+const TARGETS_CACHE = require('./TargetActions').TARGETS_CACHE;
 
 module.exports = {
     createJournal,
@@ -10,7 +10,6 @@ module.exports = {
     loadJournals,
     updateJournalOrder
 };
-
 
 /**
  * Create a new shooting journal for a user.
@@ -128,6 +127,8 @@ async function journalExists(user, discipline, name) {
  * Load all journals of a single user.
  * 
  * @param {String} user - Username token
+ * @param {Array} ignoreTargetIds - All targets' IDs that should not be fetched from the FTP server.
+ *                                  These targets will have 'null' as their 'base64Image' value.
  * @returns {Array} [
  *                     {
  *                        {Number} id - The ID of the journal,
@@ -166,24 +167,24 @@ async function loadJournals(user, ignoreTargetIds) {
                     let discipline = obj['discipline'];
                     let isFormal = CONSTANTS.FORMAL_DISCIPLINES.includes(discipline);
                     let formalDiscip = isFormal ? discipline : 'Other';
-                    let deftargetPath = obj['target_path'];
-                    let targetPathSplit = deftargetPath.split('.');
-                    let fileType = targetPathSplit[targetPathSplit.length - 1];
                     let targetId = obj['target_id'];
-                    let targetBase64 = '';
                     
                     //check if target's base64 code is already cached or should be ignored
                     let cachedAtClient = ignoreTargetIds.includes(targetId);
-                    let cachedAtServer = !!TARGETS_DICT[`target #${targetId}`];
-
+                    let cachedAtServer = !!TARGETS_CACHE[`target #${targetId}`];
+                    let targetBase64 = '';
+                    
                     if (cachedAtClient) targetBase64 = null;
-                    else if (cachedAtServer) targetBase64 = TARGETS_DICT[`target #${targetId}`];
+                    else if (cachedAtServer) targetBase64 = TARGETS_CACHE[`target #${targetId}`];
                     //fetch and cache it
                     else {
+                        let defTargetPath = obj['target_path'];
+                        let targetPathSplit = defTargetPath.split('.');
+                        let fileType = targetPathSplit[targetPathSplit.length - 1];
                         let base64Prefix = `data:image/${fileType};base64,`;
-                        let base64Suffix = await FTP_SERVER.downloadImage(obj['target_path']);
+                        let base64Suffix = await FTP_SERVER.downloadImage(defTargetPath);
                         targetBase64 = base64Prefix + base64Suffix;
-                        TARGETS_DICT[`target #${targetId}`] = targetBase64;
+                        TARGETS_CACHE[`target #${targetId}`] = targetBase64;
                     }
 
                     journals.push({

@@ -98,6 +98,16 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE GetTargets
+	@user VARCHAR(70)
+AS
+BEGIN
+	SELECT *
+	FROM Targets
+	WHERE target_owner = @user
+END
+GO
+
 -- Exec
 SELECT * FROM Targets
 

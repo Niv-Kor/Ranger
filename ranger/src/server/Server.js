@@ -38,6 +38,11 @@ CONSTANTS.IO.on('connection', socket => {
     })
 
     /* Targets */
+    socket.on('get_targets', async (user, ignoreTargets) => {
+        let targets = await ACTIONS.targets.getTargets(user, ignoreTargets);
+        socket.emit('get_targets', targets);
+    })
+
     socket.on('target_exists', async data => {
         let exists = await ACTIONS.targets.targetExists(data.user, data.discipline, data.targetName);
         socket.emit('target_exists', exists);

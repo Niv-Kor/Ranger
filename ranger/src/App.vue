@@ -53,6 +53,7 @@ export default {
       this.$store.commit('setAuthentication', true);
       this.$router.push({ path: '/home' }).catch(() => {});
       this.$store.dispatch('loadAllJournals');
+      this.$store.dispatch('loadAllTargets');
     },
     /**
      * @returns {Object} {

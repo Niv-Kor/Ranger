@@ -9,7 +9,7 @@
                     Is it taking place right now?
                 </span>
                 <span v-else>
-                    At what date did it take place?
+                    When did it take place?
                 </span>
             </p>
         </v-container>
@@ -53,7 +53,7 @@
                             @click='toggleDatePicker'
                         >
                             <span class='date label'>
-                                {{ datePickerModel }}
+                                {{ dateLabel }}
                             </span>
                         </v-btn>
                     </v-col>
@@ -103,6 +103,7 @@
 
 <script>
     import { mapGetters } from 'vuex';
+    import Moment from 'moment';
 
     export default {
         data() {
@@ -112,14 +113,21 @@
                 datePicker: true,
                 timePicker: false,
                 toggleDelay: false,
-                datePickerModel: new Date().toISOString().substr(0, 10),
-                timePickerModel: '00:00',
+                datePickerModel: Moment().format('YYYY-MM-DD'),
+                timePickerModel: Moment().format('hh:mm')
             }
         },
         computed: {
             ...mapGetters({
                 colors: 'getColors'
-            })
+            }),
+            dateLabel() {
+                let dateSplit = this.datePickerModel.split('-');
+                let day = dateSplit[2];
+                let month = dateSplit[1];
+                let year = dateSplit[0];
+                return `${day}-${month}-${year}`;
+            }
         },
         methods: {
             /**
@@ -165,7 +173,10 @@
             toggleAnotherDateSelection: function() {
                 if (this.askDate) {
                     this.askDate = false;
-                    setTimeout(() => this.showDatePickers = true, 300);
+                    setTimeout(() => {
+                        this.showDatePickers = true;
+                        this.$emit('show-next');
+                    }, 300);
                 }
                 else {
                     this.showDatePickers = false;

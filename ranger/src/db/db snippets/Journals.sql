@@ -42,15 +42,20 @@ ALTER PROCEDURE LoadJournals
 	@user VARCHAR(70)
 AS
 BEGIN
-	SELECT j.id, j.discipline, j.journal_name, t.j.theme_color, j.sort_order
-	id: obj['id'],
-                        discipline: discipline,
-                        formalDiscipline: formalDiscip,
-                        name: obj['journal_name'],
-                        targetImage: obj['target_id'],
-                        color: obj['theme_color'],
-                        order: obj['sort_order']
-	FROM Journals
+	SELECT j.id,
+		   j.discipline,
+		   j.journal_name,
+		   j.theme_color,
+		   j.sort_order,
+		   t.id AS target_id,
+		   t.image_name AS target_name,
+		   t.image_path AS target_path,
+		   t.center_y AS target_center_x,
+		   t.center_x AS target_center_y,
+		   t.rings AS target_rings,
+		   t.rings_diameter AS target_rings_diameter
+	FROM Journals j
+	INNER JOIN Targets t ON j.target_id = t.id
 	WHERE journal_owner = @user
 	ORDER BY sort_order ASC
 END

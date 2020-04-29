@@ -10,10 +10,6 @@ const state = {
         hours: 0,
         minutes: 0
     },
-    newRangeDefaultTarget: {
-        id: -1,
-        base64Data: ''
-    },
     newRangeSelectedTargetId: -1,
 }
 
@@ -65,6 +61,9 @@ const actions = {
             hours: parseInt(today[3]),
             minutes: parseInt(today[4])
         });
+    },
+    createRange: (/*{ state }*/) => {
+        //TODO
     }
 };
 
