@@ -226,10 +226,7 @@ const actions = {
             });
 
             rootState.socket.on('create_journal', res => {
-                //load journals and targets anew
-                dispatch('loadAllJournals');
-                dispatch('loadAllTargets');
-                dispatch('loadAllRanges');
+                dispatch('reloadAllData');
                 
                 if (res.exitCode) console.error(res.message);
                 resolve(res.exitCode === 0);

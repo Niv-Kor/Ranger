@@ -35,6 +35,16 @@ export const STORE = new Vuex.Store({
             return state.data;
         }
     },
+    actions: {
+        /**
+         * Reload all journals, targets and ranges from the data base.
+         */
+        reloadAllData: ({ dispatch }) => {
+            dispatch('loadAllJournals');
+            dispatch('loadAllTargets');
+            dispatch('loadAllRanges');
+        }
+    },
     modules: {
         Auth,
         JournalCreation,

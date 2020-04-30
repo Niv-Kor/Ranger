@@ -52,9 +52,7 @@ export default {
     onUserAuthenticated: function() {
       this.$store.commit('setAuthentication', true);
       this.$router.push({ path: '/home' }).catch(() => {});
-      this.$store.dispatch('loadAllJournals');
-      this.$store.dispatch('loadAllTargets');
-      this.$store.dispatch('loadAllRanges');
+      this.$store.dispatch('reloadAllData');
     },
     /**
      * @returns {Object} {
