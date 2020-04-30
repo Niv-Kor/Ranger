@@ -34,17 +34,21 @@
                         :height=360
                         flat
                     >
-                        <select-range-time
-                            v-show='currentTab == 0'
-                            @show-next='showTimeTabNext = true'
-                            @loading='activateLoading'
-                            @change-tab='setTab'
-                        />
-                        <select-range-target
-                            v-show='currentTab == 1'
-                            @loading='activateLoading'
-                            @change-tab='setTab'
-                        />
+                        <div :key='tabsRefresher + ",0"'> <!-- refresh component after close -->
+                            <select-range-time
+                                v-show='currentTab == 0'
+                                @show-next='showTimeTabNext = true'
+                                @loading='activateLoading'
+                                @change-tab='setTab'
+                            />
+                        </div>
+                        <div :key='tabsRefresher + ",1"'> <!-- refresh component after close -->
+                            <select-range-target
+                                v-show='currentTab == 1'
+                                @loading='activateLoading'
+                                @change-tab='setTab'
+                            />
+                        </div>
                     </v-card>
                     <v-container>
                         <!-- create button -->
@@ -84,6 +88,39 @@
                     </v-container>
                 </v-container>
             </v-card>
+            <v-dialog
+                v-model='errorDialog'
+                :max-width=290
+            >
+                <v-card>
+                    <v-card-title
+                        class='error-title'
+                        :color='colors.secondary'
+                        :style="{ backgroundColor: colors.secondary }"
+                    >
+                        Hold on!
+                    </v-card-title>
+                    <v-container>
+                        <div
+                            class='error-headline'
+                            align='center'
+                        >
+                            {{ errorMessage }}
+                        </div>
+                    </v-container>
+                    <v-card-actions>
+                        <v-btn
+                            class='error-ok-btn'
+                            text
+                            block
+                            :color='colors.secondary'
+                            @click="errorDialog = false"
+                        >
+                            Ok
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
             <Loading :model='load' />
         </v-dialog>
     </div>
@@ -107,19 +144,28 @@
         data() {
             return {
                 load: false,
+                errorDialog: false,
                 showTimeTabNext: false,
+                tabsRefresher: false,
+                errorMessage: '',
                 currentTab: 0,
                 totalTabs: 2,
             }
         },
         computed: {
             ...mapGetters({
-                colors: 'getColors'
+                colors: 'getColors',
+                dateTimeFormat: 'getNewRangeDateTimeFormat',
+                journals: 'getAllJournals',
+                journalIndex: 'getSelectedJournalIndex'
             }),
             createButtonText() {
                 let show = this.currentTab === this.totalTabs - 1;
                 return show ? 'CREATE' : '';
             },
+            journalId() {
+                return this.journals[this.journalIndex].id;
+            }
         },
         watch: {
             model(value) {
@@ -138,6 +184,8 @@
                 //let the dialog close completely before tabs reorganization
                 setTimeout(() => {
                     this.currentTab = 0;
+                    this.showTimeTabNext = false;
+                    this.tabsRefresher = !this.tabsRefresher;
                     this.$store.dispatch('initNewRangeValues');
                 }, 100);
             },
@@ -165,6 +213,29 @@
                 }
             },
             /**
+             * Check if the user can continue to the next tab.
+             * Only available if the current tab consists of legal input data.
+             * 
+             * @returns {Boolean} True if the next tab is available.
+             */
+            canContinueNextTab: async function() {
+                return new Promise((resolve, reject) => {
+                    switch (this.currentTab) {
+                        //select date and time
+                        case 0:
+                            resolve(true);
+                            break;
+
+                        //select target
+                        case 1:
+                            resolve(true);
+                            break;
+
+                        default: reject();
+                    }
+                });
+            },
+            /**
              * Set a tab to a specific index.
              * 
              * @param {Number} tabIndex - The index of the tab to set
@@ -176,9 +247,34 @@
              */
             createRange: async function() {
                 this.load = true;
-                await this.$store.dispatch('createRange');
+                let res = await this.$store.dispatch('createRange');
                 this.load = false;
                 this.close();
+
+                //jump to range pange
+                if (res) {
+                    let rangeId = 0;
+                    let dateTime = this.dateTimeFormat;
+
+                    for (let i = 0; i < dateTime.length; i++) {
+                        let ch = dateTime.charCodeAt(i);
+                        rangeId = ((rangeId << 5) - rangeId) + ch;
+                        rangeId |= 0;
+                    }
+
+                    let journalId = this.journalId;
+                    let path = `/home/journal/${this.journalId}/${rangeId}`;
+                    this.$router.push({ path, journalId, rangeId }).catch(err => {console.log('err:', err)});
+                }
+            },
+            /**
+             * Pop an error message in a new dialog.
+             * 
+             * @param {String} message - The message to display
+             */
+            popError: function(message) {
+                this.errorDialog = true;
+                this.errorMessage = message;
             },
             /**
              * Activate a loading component over the screen
@@ -224,5 +320,15 @@
     }
     .transparent {
         opacity: 0;
+    }
+    .error-title {
+        color: #ffffff;
+        margin-right: auto;
+        margin-left: auto;
+        left: 0;
+        right: 0;
+    }
+    .error-ok-btn {
+        text-transform: none;
     }
 </style>

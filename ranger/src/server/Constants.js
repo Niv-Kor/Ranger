@@ -47,5 +47,6 @@ module.exports = {
     DB_CONFIG,
     FTP_CONFIG,
     FILE_SYSTEM,
-    FORMAL_DISCIPLINES
+    FORMAL_DISCIPLINES,
+    performance
 }

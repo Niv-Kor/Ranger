@@ -5,7 +5,7 @@
                 class='subtitle'
                 align=center
             >
-                Which one is your target<br>
+                Which one is your target?
             </p>
         </v-container>
         <v-row no-gutters>
@@ -116,6 +116,15 @@
                 if (element.id === defTargetId) return -1;
                 else return 0;
             })
+
+            //set range target as default to begin with
+            this.$store.commit('setNewRangeSelectedTargetId', defTargetId);
+        },
+        watch: {
+            selectedTargetIndex(value) {
+                let targetId = this.targets[value].id;
+                this.$store.commit('setNewRangeSelectedTargetId', targetId);
+            }
         },
         methods: {
             /**

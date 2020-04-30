@@ -1,69 +1,46 @@
 const state = {
-    journals: [],
-    targets: [],
-    journalsListLoading: false,
-    selectedJournal: 0
+    ranges: [],
+    RangesListLoading: false,
 }
 
 const getters = {
-    getAllJournals: state => {
-        return state.journals;
-    },
-    getAllTargets: state => {
-        return state.targets;
-    },
-    isJournalsListLoading: state => {
-        return state.journalsListLoading;
-    },
-    getSelectedJournalIndex: state => {
-        return state.selectedJournalIndex;
+    getAllRanges: state => {
+        return state.ranges;
     }
 };
 
 const mutations = {
-    setJournalsListLoading: (state, value) => {
-        state.journalsListLoading = value;
-    },
-    setSelectedJournalIndex: (state, value) => {
-        state.selectedJournalIndex = value;
+    setRangesListLoading: (state, value) => {
+        state.RangesListLoading = value;
     }
 };
 
 const actions = {
     /**
-     * Load all of the user's journals.
+     * Load all of the user's ranges.
      */
-    loadAllJournals: async ({ commit, state, rootState }) => {
-        commit('setJournalsListLoading', true);
-        let dataManager = rootState.data;
-        let storedIDs = await dataManager.getTargetsIDs();
+    loadAllRanges: async ({ commit, state, rootState }) => {
+        commit('setRangesListLoading', true);
 
-        rootState.socket.on('load_journals', async res => {
-            state.journals = res;
-
-            for (let obj of res) {
-                let target = obj.target;
-
-                //push target to indexedDB
-                if (target.base64Data) {
-                    dataManager.insertTarget({
-                        id: target.id,
-                        image: target.base64Data
-                    });
-                }
-                //pull target from indexedDB
-                else {
-                    let targetId = target.id;
-                    let imageData = await dataManager.fetchTarget(targetId);
-                    target.base64Data = imageData.image;
-                }
-            }
+        rootState.socket.on('load_ranges', async res => {
+            state.ranges[`journal #${res.journalId}`] = res.ranges;
 
             //finish
-            commit('setJournalsListLoading', false);
+            commit('setRangesListLoading', false);
         });
 
-        rootState.socket.emit('load_journals', rootState.Auth.authEmail, storedIDs);
+        let journalKeys = [];
+        let userJournals = rootState.Journals.journals;
+        for (let journal of userJournals) journalKeys.push(journal.id);
+
+        for (let id of journalKeys) {
+            let data = {
+                user: rootState.Auth.authEmail,
+                journalId: id
+            }
+
+            rootState.socket.emit('load_ranges', data);
+        }
     },
     /**
      * Load all of the user's targets.

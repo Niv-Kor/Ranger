@@ -3,8 +3,9 @@ import Vuex from 'vuex';
 import io from 'socket.io-client';
 import Auth from './modules/AuthenticationModule'
 import JournalCreation from './modules/JournalCreationModule';
+import RangeCreation from './modules/RangeCreationModule';
 import Journals from './modules/JournalModule';
-import Ranges from './modules/RangeCreationModule';
+import Ranges from './modules/RangeModule';
 import { DataManager } from '../db/DataManager';
 
 const SERVER_DOMAIN = 'http://localhost:19200';
@@ -37,6 +38,7 @@ export const STORE = new Vuex.Store({
     modules: {
         Auth,
         JournalCreation,
+        RangeCreation,
         Journals,
         Ranges
     }

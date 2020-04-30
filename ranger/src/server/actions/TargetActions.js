@@ -17,10 +17,9 @@ module.exports = {
  * @param {String} name - The chosen name of the target
  * @returns {Boolean} True if the target already exists in the database.
  */
-async function targetExists(user, discipline, name) {
+async function targetExists(user, name) {
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: discipline, options: {} },
         { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
     ];
 

@@ -140,6 +140,9 @@ const mutations = {
 };
 
 const actions = {
+    /**
+     * Init all values.
+     */
     initNewJournalValues: ({ commit }) => {
         commit('setNewJournalName', '');
         commit('setNewJournalColorTheme', '#ffffff');
@@ -156,16 +159,17 @@ const actions = {
         commit('setNewJournalUploadedTargetRingsAmount', 1);
         commit('setNewJournalUploadedTargetRingsDiameter', 20);
     },
+    /**
+     * Check if a target alredy exists in the database.
+     * 
+     * @param {String} name - The target's name
+     * @returns {Boolean} True if the target already exists.
+     */
     checkTargetExists: async ({ rootState }, name) => {
         if (!name) return false;
 
-        let useCustomDiscip = state.useCustomDiscipline;
-        let customDiscipName = state.newJournalCustomDiscipline;
-        let defDiscipName = state.newJournalDiscipline;
-        let discipName = useCustomDiscip ? customDiscipName : defDiscipName;
         let data = {
             user: rootState.Auth.authEmail,
-            discipline: discipName,
             targetName: name
         };
 
@@ -178,7 +182,7 @@ const actions = {
      * Check if a journal alredy exists in the database.
      * 
      * @param {String} name - The journal's name
-     * @returns {Boolean} True if the already journal exists.
+     * @returns {Boolean} True if the journal already exists.
      */
     checkJournalExists: async ({ rootState }, name) => {
         if (!name) return false;
@@ -222,8 +226,10 @@ const actions = {
             });
 
             rootState.socket.on('create_journal', res => {
-                //load journals anew
+                //load journals and targets anew
                 dispatch('loadAllJournals');
+                dispatch('loadAllTargets');
+                dispatch('loadAllRanges');
                 
                 if (res.exitCode) console.error(res.message);
                 resolve(res.exitCode === 0);

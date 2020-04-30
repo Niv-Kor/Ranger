@@ -54,6 +54,7 @@ export default {
       this.$router.push({ path: '/home' }).catch(() => {});
       this.$store.dispatch('loadAllJournals');
       this.$store.dispatch('loadAllTargets');
+      this.$store.dispatch('loadAllRanges');
     },
     /**
      * @returns {Object} {

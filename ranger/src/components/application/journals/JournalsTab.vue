@@ -199,7 +199,7 @@
                 let journal = this.list[journalIndex];
                 let id = `${journal.discipline}-${journal.name}`;
                 let path = `/home/journal/${id}`;
-                this.$router.push({ path: path }).catch(() => {});
+                this.$router.push({ path, id }).catch(() => {});
                 this.$store.commit('setSelectedJournalIndex', journalIndex);
             },
             /**

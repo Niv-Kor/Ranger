@@ -3,6 +3,7 @@ import LoginPage from './components/authentication/LoginPage';
 import SignUpPage from './components/authentication/SignUpPage';
 import JournalsTab from './components/application/journals/JournalsTab';
 import Journal from './components/application/journals/Journal';
+import Range from './components/application/ranges/Range';
 
 export const ROUTES = [
     //authentication
@@ -12,5 +13,6 @@ export const ROUTES = [
 
     //application
     { path: '/home/journals', component: JournalsTab },
-    { path: '/home/journal/:id', component: Journal }
+    { path: '/home/journal/:id', component: Journal },
+    { path: '/home/journal/:journalId/:rangeId', component: Range }
 ];

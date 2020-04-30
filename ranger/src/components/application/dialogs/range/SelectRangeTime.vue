@@ -129,6 +129,19 @@
                 return `${day}-${month}-${year}`;
             }
         },
+        created() {
+            //store the default date and time
+            this.storeDate(this.datePickerModel);
+            this.storeTime(this.timePickerModel);
+        },
+        watch: {
+            datePickerModel(value) {
+                this.storeDate(value);
+            },
+            timePickerModel(value) {
+                this.storeTime(value);
+            }
+        },
         methods: {
             /**
              * Toggle the date picker widget on or off.
@@ -170,6 +183,10 @@
                     setTimeout(() => this.toggleDelay = false, 500);
                 }
             },
+            /**
+             * Toggle between the tab that asks if the range is taking place right now,
+             * and the tab that lets the uses select the actual date of the range.
+             */
             toggleAnotherDateSelection: function() {
                 if (this.askDate) {
                     this.askDate = false;
@@ -182,6 +199,33 @@
                     this.showDatePickers = false;
                     setTimeout(() => this.askDate = true, 300);
                 }
+            },
+            /**
+             * Push the date to the store.
+             * 
+             * @param {String} date - The date model (YYYY-MM-DD)
+             */
+            storeDate: function(date) {
+                let split = date.split('-');
+
+                this.$store.commit('setNewRangeDate', {
+                    day: split[2],
+                    month: split[1],
+                    year: split[0]
+                })
+            },
+            /**
+             * Push the time to the store.
+             * 
+             * @param {String} time - The time model (hh:dd)
+             */
+            storeTime: function(time) {
+                let split = time.split(':');
+
+                this.$store.commit('setNewRangeTime', {
+                    hours: split[0],
+                    minutes: split[1],
+                })
             }
         }
     }

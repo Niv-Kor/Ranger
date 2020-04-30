@@ -4,7 +4,8 @@ const ACTIONS = {
     general: require('./actions/GeneralActions'),
     auth: require('./actions/AuthActions'),
     targets: require('./actions/TargetActions'),
-    journals: require('./actions/JournalActions')
+    journals: require('./actions/JournalActions'),
+    ranges: require('./actions/RangeActions')
 }
 
 //configure client requests
@@ -44,8 +45,19 @@ CONSTANTS.IO.on('connection', socket => {
     })
 
     socket.on('target_exists', async data => {
-        let exists = await ACTIONS.targets.targetExists(data.user, data.discipline, data.targetName);
+        let exists = await ACTIONS.targets.targetExists(data.user, data.targetName);
         socket.emit('target_exists', exists);
+    })
+
+    /* Ranges */
+    socket.on('create_range', async data => {
+        let res = await ACTIONS.ranges.createRange(data);
+        socket.emit('create_range', res);
+    })
+
+    socket.on('load_ranges', async data => {
+        let res = await ACTIONS.ranges.loadRanges(data);
+        socket.emit('load_ranges', res);
     })
 });
 

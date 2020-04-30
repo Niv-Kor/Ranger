@@ -20,8 +20,29 @@ const getters = {
     getNewRangeTime: state => {
         return state.newRangeTime;
     },
-    getNewRangeDefaultTarget: state => {
-        return state.newRangeDefaultTarget;
+    getNewRangeSelectedTargetId: state => {
+        return state.newRangeSelectedTargetId;
+    },
+    getNewRangeDateTimeFormat: state => {
+        let padZeros = (num, pad) => {
+            let numLen = ('' + num).length;
+            
+            for (let i = 0; i < pad - numLen; i++)
+                num = 0 + num;
+
+            return num;
+        }
+
+        let date = state.newRangeDate;
+        let time = state.newRangeTime;
+        let YYYY = padZeros(date.year, 4);
+        let MM = padZeros(date.month, 2);
+        let DD = padZeros(date.day, 2);
+        let hh = padZeros(time.hours, 2);
+        let mm = padZeros(time.minutes, 2);
+
+        //YYYY-MM-DD hh:mm:ss
+        return `${YYYY}-${MM}-${DD} ${hh}:${mm}:00`;
     }
 };
 
@@ -41,6 +62,9 @@ const mutations = {
 };
 
 const actions = {
+    /**
+     * Init all values.
+     */
     initNewRangeValues: ({ commit }) => {
         //find this moment
         let today = MOMENT().format('DD-MM-YYYY-hh-mm').split('-');
@@ -57,13 +81,31 @@ const actions = {
             month: parseInt(today[1]),
             year: parseInt(today[2])
         });
+
         commit('setNewRangeTime', {
             hours: parseInt(today[3]),
             minutes: parseInt(today[4])
         });
     },
-    createRange: (/*{ state }*/) => {
-        //TODO
+    /**
+     * Create a new range in the data base.
+     */
+    createRange: async ({ state, rootState, getters, rootGetters }) => {
+        return new Promise(resolve => {
+            //get journal id
+            let journals = rootGetters.getAllJournals;
+            let selectedJournalIndex = rootGetters.getSelectedJournalIndex;
+            let selectedJournalId = journals[selectedJournalIndex].id;
+
+            let data = {
+                journalId: selectedJournalId,
+                targetId: state.newRangeSelectedTargetId,
+                date: getters.getNewRangeDateTimeFormat
+            }
+
+            rootState.socket.on('create_range', res => resolve(res));
+            rootState.socket.emit('create_range', data);
+        });
     }
 };
 

@@ -294,9 +294,7 @@
                     this.load = false;
 
                     //triggers a confirmation dialog
-                    setTimeout(() => {
-                        this.successDialog = true;
-                    }, 1000);
+                    setTimeout(() => this.successDialog = true, 1000);
 
                     this.close();
                 }
@@ -477,9 +475,6 @@
         font-weight: bold;
         font-size: 24px;
         margin-top: 10px;
-    }
-    .details-header {
-        font-weight: bold;
     }
     .success-ok-btn {
         text-transform: none;

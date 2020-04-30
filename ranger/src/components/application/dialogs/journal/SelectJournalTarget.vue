@@ -171,7 +171,7 @@
                         },
                         {
                             name: 'ISSF Rapid Fire',
-                            src: FIREARM_CONTEXT('./ISSF Rapid Fire Pistol.png'),
+                            src: FIREARM_CONTEXT('./ISSF Rapid Fire.png'),
                             custom: false
                         },
                         {
