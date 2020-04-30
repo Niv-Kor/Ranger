@@ -8,7 +8,7 @@ import Journals from './modules/JournalModule';
 import Ranges from './modules/RangeModule';
 import { DataManager } from '../db/DataManager';
 
-const SERVER_DOMAIN = 'http://localhost:19200';
+const FRONT_SERVER_DOMAIN = 'http://localhost:19200';
 const GRADIENT_CONTEXT = require.context('../assets', false, /\.png$/);
 Vue.use(Vuex);
 
@@ -21,7 +21,7 @@ export const STORE = new Vuex.Store({
             neutral: '#78909c',
             gradient: GRADIENT_CONTEXT('./gradient.png')
         },
-        socket: io(SERVER_DOMAIN),
+        socket: null,
         data: new DataManager()
     },
     getters: {
@@ -43,6 +43,18 @@ export const STORE = new Vuex.Store({
             dispatch('loadAllJournals');
             dispatch('loadAllTargets');
             dispatch('loadAllRanges');
+        },
+        /**
+         * Request a client handler from the front server.
+         */
+        connectServer: async ({ state }) => {
+            return new Promise(resolve => {
+                state.socket = io(FRONT_SERVER_DOMAIN);
+                state.socket.on('connection', port => {
+                    state.socket = io(`http://localhost:${port}`);
+                    resolve();
+                })
+            })
         }
     },
     modules: {

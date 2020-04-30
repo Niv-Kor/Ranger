@@ -49,9 +49,10 @@ export default {
     /**
      * Activate when the user is authenticated.
      */
-    onUserAuthenticated: function() {
+    onUserAuthenticated: async function() {
       this.$store.commit('setAuthentication', true);
       this.$router.push({ path: '/home' }).catch(() => {});
+      await this.$store.dispatch('connectServer');
       this.$store.dispatch('reloadAllData');
     },
     /**

@@ -1,9 +1,10 @@
 const HTTP = require('http');
-const SERVER = HTTP.createServer();
+const FRONT_SERVER = HTTP.createServer();
 const SOCKET = require('socket.io');
 const FILE_SYSTEM = require('fs');
-const IO = SOCKET.listen(SERVER);
+const FRONT_IO = SOCKET.listen(FRONT_SERVER);
 const SERVER_PORT = 19200;
+const PORT_HANDLER = require('get-port');
 const TEMP = require('tempfile');
 const { performance } = require('perf_hooks');
 const FORMAL_DISCIPLINES = [
@@ -38,9 +39,10 @@ const FTP_CLIENT = new FTP();
 module.exports = {
     HTTP,
     SQL,
-    SERVER,
+    FRONT_SERVER,
     SOCKET,
-    IO,
+    FRONT_IO,
+    PORT_HANDLER,
     TEMP,
     FTP_CLIENT,
     SERVER_PORT,
