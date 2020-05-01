@@ -76,6 +76,11 @@ CONSTANTS.FRONT_IO.on('connection', async socket => {
             let res = await ACTIONS.ranges.loadRanges(data);
             socket.emit('load_ranges', res);
         })
+
+        socket.on('range_exists', async data => {
+            let exists = await ACTIONS.ranges.rangeExists(data);
+            socket.emit('range_exists', exists);
+        })
     });
 });
 

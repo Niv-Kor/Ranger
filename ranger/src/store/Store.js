@@ -39,9 +39,9 @@ export const STORE = new Vuex.Store({
         /**
          * Reload all journals, targets and ranges from the data base.
          */
-        reloadAllData: ({ dispatch }) => {
-            dispatch('loadAllJournals');
-            dispatch('loadAllTargets');
+        reloadAllData: async ({ dispatch }) => {
+            await dispatch('loadAllJournals');
+            await dispatch('loadAllTargets');
             dispatch('loadAllRanges');
         },
         /**

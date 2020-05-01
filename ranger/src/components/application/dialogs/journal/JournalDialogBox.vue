@@ -277,7 +277,10 @@
              * 
              * @param {Number} tabIndex - The index of the tab to set
              */
-            setTab: function(tabIndex) { this.currentTab = tabIndex; },
+            setTab: function(tabIndex) {
+                if (tabIndex === this.currentTab + 1) this.incrementTab;
+                else this.currentTab = tabIndex;
+            },
             /**
              * Create a new journal based on the user's input.
              * A new journal will be created only if the input is valid.

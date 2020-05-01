@@ -2,6 +2,7 @@
 CREATE TABLE Users (
 	email VARCHAR(70) NOT NULL,
 	hashPass VARCHAR(512) NOT NULL,
+
 	PRIMARY KEY(email)
 );
 GO
@@ -42,8 +43,25 @@ BEGIN
 END
 GO
 
+INSERT INTO Users(email, hashPass)
+VALUES('default', 'hFnXXeJR8eIsqI8InNuiTnXy
+				   /jVVPtZymeRaCcrj4LaxYAob
+				   CfhYYQMAaoLuNb1vG9RCXIya
+				   RW/8MSVIve/rwlY7DuxtssZr
+				   rpsxza2Hwcj+MrlOfEILGgSO
+				   8EY4Z052EWzhGdB8Onot9+xC
+				   vEkho8LD17v8rr9Ki7gIjFLz
+				   XidFRAOdO4sOV9oPSmcdTf2E
+				   RtnsqpIugY4/bTujbdRmONwy
+				   IqndoGLSU7fFbl724VUOCDWU
+				   V9NzOs2BbbxnfolhQk7gNilq
+				   rMSKpITyGw1q2aHgTzuw4scp
+				   FXYsRYJ7eVNxb9ajfAoBOwAF
+				   ri82w9r9TISeG1JfzENOfpf
+				   SiHUD')
+
 -- Exec
 SELECT * FROM Users
 GO
 
-DELETE FROM Users
+DROP TABLE Users

@@ -38,32 +38,35 @@ const actions = {
         let dataManager = rootState.data;
         let storedIDs = await dataManager.getTargetsIDs();
 
-        rootState.socket.on('load_journals', async res => {
-            state.journals = res;
+        return new Promise(resolve => {
+            rootState.socket.on('load_journals', async res => {
+                state.journals = res;
 
-            for (let obj of res) {
-                let target = obj.target;
+                for (let obj of res) {
+                    let target = obj.target;
 
-                //push target to indexedDB
-                if (target.base64Data) {
-                    dataManager.insertTarget({
-                        id: target.id,
-                        image: target.base64Data
-                    });
+                    //push target to indexedDB
+                    if (target.base64Data) {
+                        dataManager.insertTarget({
+                            id: target.id,
+                            image: target.base64Data
+                        });
+                    }
+                    //pull target from indexedDB
+                    else {
+                        let targetId = target.id;
+                        let imageData = await dataManager.fetchTarget(targetId);
+                        target.base64Data = imageData.image;
+                    }
                 }
-                //pull target from indexedDB
-                else {
-                    let targetId = target.id;
-                    let imageData = await dataManager.fetchTarget(targetId);
-                    target.base64Data = imageData.image;
-                }
-            }
 
-            //finish
-            commit('setJournalsListLoading', false);
-        });
+                //finish
+                commit('setJournalsListLoading', false);
+                resolve();
+            });
 
-        rootState.socket.emit('load_journals', rootState.Auth.authEmail, storedIDs);
+            rootState.socket.emit('load_journals', rootState.Auth.authEmail, storedIDs);
+        })
     },
     /**
      * Load all of the user's targets.

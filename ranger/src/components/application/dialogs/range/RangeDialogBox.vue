@@ -155,9 +155,9 @@
         computed: {
             ...mapGetters({
                 colors: 'getColors',
-                dateTimeFormat: 'getNewRangeDateTimeFormat',
                 journals: 'getAllJournals',
-                journalIndex: 'getSelectedJournalIndex'
+                journalIndex: 'getSelectedJournalIndex',
+                formattedDateTime: 'getNewRangeFormattedDateTime'
             }),
             createButtonText() {
                 let show = this.currentTab === this.totalTabs - 1;
@@ -222,10 +222,23 @@
                 return new Promise((resolve, reject) => {
                     switch (this.currentTab) {
                         //select date and time
-                        case 0:
-                            resolve(true);
-                            break;
+                        case 0: {
+                            let journalId = this.journalId;
+                            let date = this.formattedDateTime;
 
+                            this.$store.dispatch('checkRangeExists', { journalId, date })
+                                .then(exists => {
+                                    if (exists) {
+                                        this.popError('A range with these exact date and time already exists. ' +
+                                                    'Delete it first, or use it instead.');
+
+                                        resolve(false);
+                                    }
+                                    else resolve(true);
+                                })
+
+                            break;
+                        }
                         //select target
                         case 1:
                             resolve(true);
@@ -240,7 +253,10 @@
              * 
              * @param {Number} tabIndex - The index of the tab to set
              */
-            setTab: function(tabIndex) { this.currentTab = tabIndex; },
+            setTab: function(tabIndex) {
+                if (tabIndex === this.currentTab + 1) this.incrementTab();
+                else this.currentTab = tabIndex;
+            },
             /**
              * Create a new journal based on the user's input.
              * A new journal will be created only if the input is valid.
@@ -254,7 +270,7 @@
                 //jump to range pange
                 if (res) {
                     let rangeId = 0;
-                    let dateTime = this.dateTimeFormat;
+                    let dateTime = this.formattedDateTime;
 
                     for (let i = 0; i < dateTime.length; i++) {
                         let ch = dateTime.charCodeAt(i);
@@ -264,7 +280,7 @@
 
                     let journalId = this.journalId;
                     let path = `/home/journal/${this.journalId}/${rangeId}`;
-                    this.$router.push({ path, journalId, rangeId }).catch(err => {console.log('err:', err)});
+                    this.$router.push({ path, journalId, rangeId }).catch(() => {});
                 }
             },
             /**

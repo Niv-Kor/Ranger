@@ -8,7 +8,8 @@ const state = {
     },
     newRangeTime: {
         hours: 0,
-        minutes: 0
+        minutes: 0,
+        seconds: 0
     },
     newRangeSelectedTargetId: -1,
 }
@@ -23,7 +24,7 @@ const getters = {
     getNewRangeSelectedTargetId: state => {
         return state.newRangeSelectedTargetId;
     },
-    getNewRangeDateTimeFormat: state => {
+    getNewRangeFormattedDateTime: state => {
         let padZeros = (num, pad) => {
             let numLen = ('' + num).length;
             
@@ -40,9 +41,10 @@ const getters = {
         let DD = padZeros(date.day, 2);
         let hh = padZeros(time.hours, 2);
         let mm = padZeros(time.minutes, 2);
+        let ss = padZeros(time.seconds, 2);
 
         //YYYY-MM-DD hh:mm:ss
-        return `${YYYY}-${MM}-${DD} ${hh}:${mm}:00`;
+        return `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}`;
     }
 };
 
@@ -52,9 +54,10 @@ const mutations = {
         state.newRangeDate.month = month;
         state.newRangeDate.year = year;
     },
-    setNewRangeTime: (state, { hours, minutes }) => {
+    setNewRangeTime: (state, { hours, minutes, seconds }) => {
         state.newRangeTime.hours = hours;
         state.newRangeTime.minutes = minutes;
+        if (seconds !== undefined) state.newRangeTime.seconds = seconds;
     },
     setNewRangeSelectedTargetId: (state, value) => {
         state.newRangeSelectedTargetId = value;
@@ -67,14 +70,7 @@ const actions = {
      */
     initNewRangeValues: ({ commit }) => {
         //find this moment
-        let today = MOMENT().format('DD-MM-YYYY-hh-mm').split('-');
-        let dayPart = MOMENT().format('a');
-
-        //convert am:pm to 24 model
-        if (dayPart === 'pm') {
-            today[3] = parseInt(today[3]) + 12;
-            if (today[3] === 24) today[3] = 0;
-        }
+        let today = MOMENT().format('DD-MM-YYYY-HH-mm').split('-');
 
         commit('setNewRangeDate', {
             day: parseInt(today[0]),
@@ -90,7 +86,7 @@ const actions = {
     /**
      * Create a new range in the data base.
      */
-    createRange: async ({ state, rootState, getters, rootGetters }) => {
+    createRange: async ({ dispatch, state, rootState, getters, rootGetters }) => {
         return new Promise(resolve => {
             //get journal id
             let journals = rootGetters.getAllJournals;
@@ -100,10 +96,13 @@ const actions = {
             let data = {
                 journalId: selectedJournalId,
                 targetId: state.newRangeSelectedTargetId,
-                date: getters.getNewRangeDateTimeFormat
+                date: getters.getNewRangeFormattedDateTime
             }
 
-            rootState.socket.on('create_range', res => resolve(res));
+            rootState.socket.on('create_range', res => {
+                dispatch('loadAllRanges');
+                resolve(res)
+            });
             rootState.socket.emit('create_range', data);
         });
     }

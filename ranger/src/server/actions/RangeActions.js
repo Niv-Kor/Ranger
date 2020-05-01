@@ -4,7 +4,8 @@ const GENERAL_ACTIONS = require('./GeneralActions');
 
 module.exports = {
     createRange,
-    loadRanges
+    loadRanges,
+    rangeExists
 };
 
 /**
@@ -52,7 +53,9 @@ async function createRange(data) {
  *                                              {Number} id - The ID of the range,
  *                                              {String} date - The date at which the range took place,
  *                                              {Number} targetId - The ID of the range's target,
- *                                              {Number} ends - Amount of ends in the range
+ *                                              {Number} ends - Amount of ends in the range,
+ *                                              {Number} score - The range's score,
+ *                                              {Number} total - The range's total achievable score
  *                                           }
  *                                           ...
  *                                        ]
@@ -73,8 +76,10 @@ async function loadRanges(data) {
                     ranges.push({
                         id: obj['id'],
                         date: obj['date'],
-                        targetId: obj['target_it'],
-                        end: obj['ends']
+                        targetId: obj['target_id'],
+                        ends: obj['ends'],
+                        score: obj['score'],
+                        total: obj['total']
                     })
                 }
 
@@ -88,4 +93,24 @@ async function loadRanges(data) {
                 reject();
             })
     })
+}
+
+/**
+ * Check if a journal already exists in the database.
+ * 
+ * @param {String} data - {
+ *                           {Number} journalId - The ID of the journal to which the ranges belongs
+ *                           {String} date - The date at which the range took place
+ *                        }
+ * @returns {Boolean} True if the range already exists in the data base.
+ */
+async function rangeExists(data) {
+    let params = [
+        { name: 'journal_id', type: CONSTANTS.SQL.Int, value: data.journalId, options: {} },
+        { name: 'date', type: CONSTANTS.SQL.VarChar(19), value: data.date, options: {} },
+    ];
+    
+    let query = await GENERAL_ACTIONS.runProcedure('RangeExists', params);
+    let exists = query[0]['range_exists'];
+    return exists;
 }

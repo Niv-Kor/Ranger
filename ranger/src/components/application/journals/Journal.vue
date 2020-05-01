@@ -4,33 +4,16 @@
         fluid
     >
         <h1>{{ journal.name }}</h1>
-        <v-row no-gutters class='mb-1'>
-            <v-col>
-                <v-btn
-                    class='calendar-btn'
-                    block
-                    :height='40'
-                    :width='windowDim.width * .4'
-                    :color='colors.primary'
-                    @click='toggleDatePicker'
-                >
-                    <v-icon
-                        medium
-                        color='white'
-                    >
-                        mdi-calendar-clock
-                    </v-icon>
-                </v-btn>
-            </v-col>
-        </v-row>
         <v-row no-gutters>
             <v-col>
                 <v-card
                     class='outer-card'
-                    :height='windowDim.height - 350'
+                    ref='vcard'
+                    :height='windowDim.height - 420'
                     :width='windowDim.width * .9'
-                    :style="{ borderColor: colors.primary + '50' }"
+                    :style='createOuterCardStyle(cardRefresher)'
                     elevation=0
+                    @scroll='cardRefresher = !cardRefresher'
                 >
                     <transition name='slide' mode='in-out'>
                         <v-date-picker
@@ -39,8 +22,9 @@
                             first-day-of-week=0
                             full-width
                             scrollable
+                            :max='getNowDate()'
                             :color='colors.secondary'
-                            @click:date='toggleDatePicker'
+                            @click:date='onDatePick'
                         />
                     </transition>
                     <transition transition name='fade' mode='in-out'>
@@ -53,27 +37,28 @@
                             dense
                         >
                             <v-list-item
-                                v-for='(item, index) in list'
-                                :key='item.date'
-                                :index='index'
                                 class='range-item elevation-3'
-                                :style='createItemStyle(item.hour)'
+                                ref='item'
+                                v-for='(item, index) in filteredList'
+                                :key='item.id'
+                                :index='index'
+                                :style='createItemStyle(item.time)'
                                 :selectable=false
                             >
                                 <v-list-item-content>
                                     <v-card-title
                                         class='card-title'
-                                        :style='{ color: getCardTextColor(item.hour) }'
+                                        :style='{ color: getCardTextColor(item.time) }'
                                     >
                                         {{ item.date }}
                                         <span
                                             :style='{
                                                 fontSize: "14px",
-                                                marginLeft: "10px",
+                                                marginLeft: "20px",
                                                 marginTop: "3px"
                                             }'
                                         >
-                                            {{ item.hour }}:00
+                                            {{ item.time }}
                                         </span>
                                     </v-card-title>
                                     <br>
@@ -99,49 +84,74 @@
                                     size=70
                                     :right=true
                                 >
-                                    <v-img :src='src' />
+                                    <v-img :src='item.targetSrc' />
                                 </v-list-item-avatar>
                             </v-list-item>
                         </v-list>
-                    </transition>                        
+                    </transition>       
                 </v-card>
-                <v-card
-                    class='control-line'
-                    :height='30'
-                    :width='windowDim.width * .9'
-                    :color='colors.primary'
-                />
+                <!-- clear filter -->
+                <v-row >
+                    <v-col :cols=6>
+                        <v-btn
+                            class='calendar-btn'
+                            block
+                            :outlined='listFilter.active'
+                            :disabled='!listFilter.active'
+                            :height='40'
+                            :width='windowDim.width * .4'
+                            :color='colors.neutral'
+                            @click='clearFilter'
+                        >
+                            <span class='filter-btn'>most recent</span>
+                        </v-btn>
+                    </v-col>
+                    <v-col :cols=6>
+                        <!-- pick date -->
+                        <v-btn
+                            class='calendar-btn'
+                            block
+                            outlined
+                            :height='40'
+                            :width='windowDim.width * .4'
+                            :color='colors.neutral'
+                            @click='toggleDatePicker'
+                        >
+                            <span class='filter-btn'>older</span>
+                        </v-btn>
+                    </v-col>
+                </v-row>
             </v-col>
         </v-row>
-        <v-row>
-            <v-col>
-                <plus-button
-                    class='plus'
-                    @click='openRangeCreationDialog'
-                />
-                <range-dialog-box
-                    :model="createRangeModel"
-                    @close='createRangeModel = false'
-                />
-            </v-col>
-        </v-row>
+        <plus-button
+            class='plus'
+            @click='openRangeCreationDialog'
+        />
+        <range-dialog-box
+            :model="createRangeModel"
+            @close='createRangeModel = false'
+        />
+        <Loading :model='isListLoading' />
     </v-container>
 </template>
 
 <script>
     import { mapGetters } from 'vuex';
+    import Moment from 'moment';
+    import Loading from '../../widgets/Loading';
     import PlusButton from '../../widgets/PlusButton';
     import RangeDialogBox from '../dialogs/range/RangeDialogBox';
 
-    const FITA_TARGET = require.context('../../../assets/targets/small/archery/', false, /\.png$/)
     const JOURNAL_ASSETS = require.context('../../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
     const RANGES_CONTEXT = require.context('../../../assets/ranges/', false, /\.png$/)
+    const FILTERED_RANGES = 5;
     const THREE = require('three');
 
     export default {
         components: {
             PlusButton,
-            RangeDialogBox
+            RangeDialogBox,
+            Loading
         },
         data() {
             return {
@@ -149,83 +159,87 @@
                     width: 0,
                     height: 0
                 },
+                listFilter: {
+                    from: -1,
+                    to: -1,
+                    active: false
+                },
+                cardRefresher: false,
                 datePicker: false,
                 toggleDelay: false,
                 showRanges: true,
                 createRangeModel: false,
-                datePickerModel: new Date().toISOString().substr(0, 10),
-                list: [
-                    {
-                        date: '16 - 04 - 20',
-                        score: 272,
-                        total: 300,
-                        hour: 2
-                    },
-                    {
-                        date: '12 - 04 - 20',
-                        score: 261,
-                        total: 280,
-                        hour: 5
-                    },
-                    {
-                        date: '09 - 04 - 20',
-                        score: 271,
-                        total: 300,
-                        hour: 8
-                    },
-                    {
-                        date: '02 - 04 - 20',
-                        score: 249,
-                        total: 1700,
-                        hour: 11
-                    },
-                    {
-                        date: '18 - 03 - 20',
-                        score: 143,
-                        total: 300,
-                        hour: 15
-                    },
-                    {
-                        date: '12 - 03 - 20',
-                        score: 290,
-                        total: 300,
-                        hour: 18
-                    },
-                    {
-                        date: '04 - 03 - 20',
-                        score: 265,
-                        total: 270,
-                        hour: 21
-                    }
-                ],
+                datePickerModel: this.getNowDate(),
                 skyColors: [
                     [0x19042a, 0x357eec],
                     [0x56c5ff, 0x00a7ff],
                     [0x56c5ff, 0x115499],
-                    [0x061647, 0x020611]
-                ]
+                    [0x061647, 0x020611],
+                    [0x020611, 0x020611]
+                ],
             }
         },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
                 journalIndex: 'getSelectedJournalIndex',
-                journals: 'getAllJournals'
+                journals: 'getAllJournals',
+                allTargets: 'getAllTargets',
+                allRanges: 'getAllRanges',
+                isListLoading: 'isRangesListLoading'
             }),
+            list() {
+                if (this.isListLoading) return [];
+                let journalRanges = this.allRanges[`journal #${this.journal.id}`];
+
+                let list = [];
+                for (let obj of journalRanges) {
+                    //extract date
+                    let DD = obj.date.substr(8, 2);
+                    let MM = obj.date.substr(5, 2);
+                    let YYYY = obj.date.substr(2, 2);
+                    let hh = obj.date.substr(11, 2);
+                    let mm = obj.date.substr(14, 2);
+                    let date = `${DD} - ${MM} - ${YYYY}`;
+                    let time = `${hh}:${mm}`
+
+                    //extract target data
+                    let target = this.allTargets.find(x => x.id === obj.targetId);
+                    let targetSrc = target.base64Data;
+
+                    list.push({
+                        id: obj.id,
+                        date,
+                        time,
+                        score: obj.score,
+                        total: obj.total,
+                        targetSrc
+                    });
+                }
+
+                return list;
+            },
+            filteredList() {
+                let from = this.listFilter.from;
+                let to = this.listFilter.to;
+
+                if (from === -1 || to === -1) return this.list;
+                else return this.list.slice(from, to);
+            },
             journal() {
                 return this.journals[this.journalIndex];
             },
             outerCardClass() {
                 let className = 'outer-card';
                 return !this.toggleDelay ? className : className + ' overflow-hidden';
-            },
-            src() {
-                return FITA_TARGET("./FITA.png");
             }
         },
         created() {
             window.addEventListener('resize', this.handleResize);
             this.handleResize();
+        },
+        mounted() {
+            this.clearFilter();
         },
         destroyed() {
             window.removeEventListener('resize', this.handleResize);
@@ -250,6 +264,10 @@
                 if (this.showRanges) {
                     this.showRanges = false;
                     setTimeout(() => {
+                        //scroll outer card back to top
+                        let cardComponent = this.$refs.vcard;
+                        if (cardComponent) cardComponent.$refs.link.scrollTop = 0;
+
                         this.datePicker = true;
                         this.toggleDelay = false;
                     }, 200);
@@ -263,6 +281,71 @@
                     }, 500);
                 }
             },
+            /**
+             * Filter the list according to the selected date.
+             * 
+             * @param {String} selectedDate - The selected date in format 'YYYY-MM-DD'.
+             *                                This parameter is fires as an event from the v-date-picker component.
+             * @param {Number} amount - The amount of ranges to filter out around the selected date.
+             */
+            filterRanges: function(selectedDate, amount) {
+                selectedDate = Moment(selectedDate, 'YYYY-MM-DD');
+                this.listFilter.active = !!selectedDate.diff(this.getNowDate(), 'days');
+
+                //find the ranges that took place before the selected date
+                let prev = this.list.filter(x => {
+                    let xDate = Moment(x.date, 'DD - MM - YYYY');
+                    let difference = xDate.from(selectedDate);
+                    return difference.includes('ago');
+                })
+
+                //find the ranges that take place after the selected date
+                let next = this.list.filter(x => {
+                    let xDate = Moment(x.date, 'DD - MM - YYYY');
+                    let difference = xDate.from(selectedDate);
+                    return difference.includes('in');
+                })
+
+                //find the correct amounts from before the selected date and after it
+                let before = prev.length;
+                let after = next.length;
+                let beforePercent = .7;
+                let beforeItems = Math.min(parseInt(beforePercent * amount), before);
+                let afterItems = Math.min(amount - beforeItems, after);
+                let difference = amount - (beforeItems + afterItems);
+                beforeItems += difference; //in case there are not enough ranges after
+
+                //filter the list (more recent ranges are in the beginning)
+                let listLen = this.list.length;
+                this.listFilter.to = listLen - before + beforeItems;
+                this.listFilter.from = after - afterItems;
+            },
+            /**
+             * Clear the ranges filter and show the most recent ones.
+             */
+            clearFilter: function() {
+                this.filterRanges(this.getNowDate(), FILTERED_RANGES);
+                this.listFilter.active = false;
+            },
+            /**
+             * Activate when a filter date is selected.
+             * Close the picker and filter the list accordingly.
+             * 
+             * @param {String} ev - The selected date in format 'YYYY-MM-DD'.
+             *                      This parameter is fires as an event from the v-date-picker component.
+             */
+            onDatePick: function(ev) {
+                this.toggleDatePicker();
+                this.filterRanges(ev, FILTERED_RANGES);
+            },
+            /**
+             * Get the appropriate color for the score lable.
+             * 
+             * @param {Number} score - The range's score
+             * @param {Number} totla - The range's maximum achievable score
+             * @returns {String} The appropriate color for the score label,
+             *                   rangin from red (min) to green (max).
+             */
             getScoreColor: function(score, total) {
                 let percent = score / total;
                 let zeroScore = new THREE.Color('#b70000');
@@ -280,12 +363,15 @@
              *                      {String} backgroundPosition - CSS attribute for background position
              *                   }
              */
-            createItemStyle: function(hour) {
+            createItemStyle: function(time) {
+                let hour = this.extractHour(time);
+                let minutes = this.extractMinutes(time);
                 let colorRange = [];
                 let hoursRange = [];
                 let grassLight = '';
                 let useFlare = false;
                 hour = parseInt(hour);
+                minutes = parseInt(minutes);
 
                 if (hour === 5 || hour === 6) {
                     colorRange = this.skyColors[0];
@@ -303,17 +389,26 @@
                     hoursRange = [17, 18];
                     grassLight = 'dark'
                 }
-                else if ((hour > 18 && hour <= 24) || (hour >= 0 && hour < 5)) {
+                else if (hour > 18 && hour <= 24) {
                     colorRange = this.skyColors[3];
-                    hoursRange = [19, 4];
+                    hoursRange = [19, 24];
+                    grassLight = 'light'
+                }
+                else { //hour >= 0 && hour < 5
+                    colorRange = this.skyColors[4];
+                    hoursRange = [0, 4];
                     grassLight = 'light'
                 }
 
-                let dayPercent = (hour - hoursRange[0]) / (hoursRange[1] - hoursRange[0]);
+                //calculate the percentage of color darkness
+                let minRange = hoursRange[0] * 60;
+                let maxRange = hoursRange[1] * 60;
+                let minutesRange = Math.abs(maxRange - minRange) + 59;
+                let dayParticle = hour * 60 + minutes;
+                let dayPercent = (dayParticle - minRange) / minutesRange;
                 let minColor = new THREE.Color(colorRange[0]);
                 let maxColor = new THREE.Color(colorRange[1]);
                 let skyColor = minColor.lerp(maxColor, dayPercent).getHexString();
-
                 let grass = 'url(' + RANGES_CONTEXT(`./grass_${grassLight}.png`) + ')';
                 let stars = 'url(' + RANGES_CONTEXT(`./stars.png`) + ')';
                 let flare = 'url(' + RANGES_CONTEXT(`./flare.png`) + ')';
@@ -383,18 +478,65 @@
                 }
             },
             /**
+             * Generate a style for the outer card component.
+             */
+            createOuterCardStyle() {
+                let fromTopScroll = 0;
+                let scrollHeight = .1;
+                let alphaGradient = null;
+
+                if (this.$refs.vcard) {
+                    let cardComponent = this.$refs.vcard.$refs.link;
+                    fromTopScroll = cardComponent.scrollTop;
+                    scrollHeight = cardComponent.offsetTop;
+                    let opacity = 1 - (fromTopScroll / scrollHeight);
+                    let gradientPercent = opacity * 20;
+                    let transparency = Math.min(Math.max((80 + gradientPercent), 80), 100); //clamp 80-100
+                    alphaGradient = 'linear-gradient(to top, #000000ff ' + transparency + '%, #00000000 100%)';
+                }
+
+                return {
+                    maskImage: alphaGradient,
+                    borderColor: this.colors.primary + '50'
+                }
+            },
+            /**
              * Get the appropriate text color, according to the card's background color.
              */
-            getCardTextColor: function(hour) {
+            getCardTextColor: function(time) {
+                let hour = this.extractHour(time);
+
                 if (hour === 5 || hour === 6) return '#ffffff';
                 else if (hour > 6 && hour <= 16) return '#000000';
                 else if (hour > 16 && hour < 18) return '#000000';
                 else return '#ffffff';
             },
+            /**
+             * Activate when the plus button is pressed.
+             * Open the range creation dialog.
+             */
             openRangeCreationDialog: function() {
                 this.createRangeModel = true;
                 this.$store.dispatch('initNewRangeValues');
-            }
+            },
+            /**
+             * Extract the hour from a time string.
+             * 
+             * @param {String} time - hh:mm time format
+             * @returns {Number} The hour as a number.
+             */
+            extractHour: function(time) { return time.substr(0, 2); },
+            /**
+             * Extract the minutes from a time string.
+             * 
+             * @param {String} time - hh:mm time format
+             * @returns {Number} The minutes as a number.
+             */
+            extractMinutes: function(time) { return time.substr(3, 2); },
+            /**
+             * @returns {String} The date right now in YYYY-MM-DD format.
+             */
+            getNowDate: function() { return Moment().format('YYYY-MM-DD'); }
         }
     }
 </script>
@@ -404,11 +546,9 @@
         text-align: center;
         font-family: 'Comfortaa';
     }
-    .calendar-btn {
-        margin-top: 20px;
-    }
     .outer-card {
         border-width: 1px;
+        margin-top: 100px;
         border-style: none dashed none dashed;
         overflow: auto;
     }
@@ -421,7 +561,7 @@
     }
     @keyframes slide-in {
         from {
-            transform: translateY(-300px);
+            transform: translateY(300px);
             opacity: 0;
         }
         to {
@@ -435,7 +575,7 @@
             opacity: 1;
         }
         to {
-            transform: translateY(-300px);
+            transform: translateY(300px);
             opacity: 0;
         }
     }

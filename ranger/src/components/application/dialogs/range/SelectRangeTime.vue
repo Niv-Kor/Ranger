@@ -22,7 +22,7 @@
                     block
                     :color='colors.secondary'
                     :style='{ borderColor: colors.neutral }'
-                    @click='$emit("change-tab", 1)'
+                    @click='startNow'
                 >
                     Starting now!
                 </v-btn>
@@ -79,6 +79,7 @@
                         first-day-of-week=0
                         full-width
                         scrollable
+                        :max='getNowDate()'
                         :disabled='toggleDelay'
                         :color='colors.secondary'
                     />
@@ -113,8 +114,8 @@
                 datePicker: true,
                 timePicker: false,
                 toggleDelay: false,
-                datePickerModel: Moment().format('YYYY-MM-DD'),
-                timePickerModel: Moment().format('hh:mm')
+                datePickerModel: this.getNowDate(),
+                timePickerModel: this.getNowTime()
             }
         },
         computed: {
@@ -225,7 +226,25 @@
                 this.$store.commit('setNewRangeTime', {
                     hours: split[0],
                     minutes: split[1],
+                    seconds: split[0]
                 })
+            },
+            /**
+             * @returns {String} The date right now in YYYY-MM-DD format.
+             */
+            getNowDate: function() { return Moment().format('YYYY-MM-DD'); },
+            /**
+             * @returns {String} The time right now in hh:mm 24 hours format.
+             */
+            getNowTime: function() { return Moment().format('HH:mm:ss'); },
+            /**
+             * Activate when the 'Starting now!' button is pressed.
+             * Quickly skip to the next tab.
+             */
+            startNow: function() {
+                this.storeDate(this.getNowDate());
+                this.storeTime(this.getNowTime());
+                this.$emit('change-tab', 1);
             }
         }
     }

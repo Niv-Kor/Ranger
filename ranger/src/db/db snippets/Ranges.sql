@@ -7,7 +7,12 @@ CREATE TABLE Ranges (
 	ends INT DEFAULT 1,
 
 	PRIMARY KEY(id),
-	FOREIGN KEY(journal_id) REFERENCES Journals(id),
+
+	CONSTRAINT FK_Ranges_Journals_id
+	FOREIGN KEY(journal_id) REFERENCES Journals(id) ON DELETE CASCADE,
+
+	--target must never be deleted if it appears in Ranges
+	CONSTRAINT FK_Ranges_Targets_id
 	FOREIGN KEY(target_id) REFERENCES Targets(id),
 
 	CONSTRAINT unique_range UNIQUE CLUSTERED (
@@ -30,6 +35,18 @@ BEGIN
 		@date,
 		@target
 	)
+END
+GO
+
+CREATE PROCEDURE RangeExists
+	@journal_id INT,
+	@date VARCHAR(19)
+AS
+BEGIN
+	SELECT CAST(COUNT(1) AS BIT) AS range_exists
+	FROM Ranges
+	WHERE journal_id = @journal_id
+	  AND shooting_date = @date
 END
 GO
 
@@ -73,18 +90,62 @@ ALTER PROCEDURE LoadRanges
 	@journal_id INT
 AS
 BEGIN
+	DECLARE
+		@scores TABLE(
+					    id INT NOT NULL,
+						score INT DEFAULT 0,
+						total INT DEFAULT 0
+					 )
+	
+	-- get scores and total for each range
+	INSERT INTO @scores(id, score, total)
 	SELECT r.id,
-		   r.shooting_date as 'date',
+		   ISNULL(SUM(h.score), 0) AS 'score',
+		   ISNULL(COUNT(h.score), 0) * 10 AS 'total'
+	FROM Ranges r
+	FULL OUTER JOIN Hits h ON h.range_id = r.id
+	WHERE r.journal_id = @journal_id
+	GROUP BY r.id
+	
+	-- pull all ranges of a single journal
+	SELECT r.id,
+		   r.shooting_date AS 'date',
 		   r.target_id,
-		   r.ends
+		   r.ends,
+		   ISNULL(s.score, 0) AS 'score',
+		   ISNULL(s.total, 0) AS 'total'
 	FROM Ranges r
 	INNER JOIN Journals j ON j.id = r.journal_id
+	INNER JOIN @scores s ON s.id = r.id
 	WHERE j.journal_owner = @shooter
 	  AND j.id = @journal_id
+	GROUP BY r.id,
+			 r.shooting_date,
+			 r.target_id,
+			 r.ends,
+			 s.score,
+			 s.total
 	ORDER BY CONVERT(DATETIME, r.shooting_date, 120) DESC
 END
 GO
 
+SELECT r.id,
+		   r.shooting_date AS 'date',
+		   r.target_id,
+		   r.ends
+	FROM Ranges r
+	INNER JOIN Journals j ON j.id = r.journal_id
+	FULL OUTER JOIN Hits h ON h.range_id = r.id
+	WHERE j.journal_owner = 'nivkor23@gmail.com'
+	  AND j.id = 3
+	  AND h.range_id = r.id
+	GROUP BY r.id,
+			 r.shooting_date,
+			 r.target_id,
+			 r.ends
+	ORDER BY CONVERT(DATETIME, r.shooting_date, 120) DESC
+
 -- Exec
 SELECT * FROM Ranges
+DELETE FROM Ranges
 DROP TABLE Ranges

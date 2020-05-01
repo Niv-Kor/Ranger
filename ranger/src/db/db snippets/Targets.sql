@@ -9,8 +9,12 @@ CREATE TABLE Targets (
 	center_y DECIMAL(6,3) DEFAULT NULL,
 	rings INT DEFAULT 1,
 	rings_diameter INT DEFAULT 10,
+	active TINYINT DEFAULT 1,
 
 	PRIMARY KEY(id),
+
+	CONSTRAINT FK_Targets_Users_email
+	FOREIGN KEY(target_owner) REFERENCES Users(email) ON DELETE CASCADE,
 
 	CONSTRAINT unique_target UNIQUE CLUSTERED (
 		target_owner, image_name
@@ -108,5 +112,6 @@ GO
 SELECT * FROM Targets
 
 DELETE FROM Targets
+WHERE id > 12
 
 GO
