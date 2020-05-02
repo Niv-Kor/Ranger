@@ -1,6 +1,6 @@
 const state = {
     ranges: [],
-    RangesListLoading: false,
+    RangesListLoading: false
 }
 
 const getters = {
@@ -55,6 +55,7 @@ const actions = {
      * @returns {Boolean} True if the range already exists.
      */
     checkRangeExists: async ({ rootState }, { journalId, date }) => {
+        console.log('check for date ', date);
         if (!date) return false;
 
         let data = {
@@ -66,6 +67,29 @@ const actions = {
             rootState.socket.emit('range_exists', data);
             rootState.socket.on('range_exists', res => resolve(res));
         });
+    },
+    /**
+     * Generate a URL path for a range.
+     * The URL will always be the same, based on the range's date and the ID of the
+     * journal to which it belongs.
+     * 
+     * @param {Number} journalId - The ID of the range's journal
+     * @param {String} date - The date at which the range took place ('DD-MM-YYYY' format)
+     * @returns {String} The appropriate URL path for the range.
+     */
+    generateRangeURL: (_, { journalId, date }) => {
+        return new Promise(resolve => {
+            let rangeId = 0;
+
+            for (let i = 0; i < date.length; i++) {
+                let ch = date.charCodeAt(i);
+                rangeId = ((rangeId << 5) - rangeId) + ch;
+                rangeId |= 0;
+            }
+
+            let path = `/home/journal/${journalId}/${rangeId}`;
+            resolve({ path, journalId, rangeId });
+        })
     }
 };
 

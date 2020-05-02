@@ -269,18 +269,12 @@
 
                 //jump to range pange
                 if (res) {
-                    let rangeId = 0;
-                    let dateTime = this.formattedDateTime;
+                    let path = await this.$store.dispatch('generateRangeURL', {
+                        journalId: this.journalId,
+                        date: this.formattedDateTime
+                    });
 
-                    for (let i = 0; i < dateTime.length; i++) {
-                        let ch = dateTime.charCodeAt(i);
-                        rangeId = ((rangeId << 5) - rangeId) + ch;
-                        rangeId |= 0;
-                    }
-
-                    let journalId = this.journalId;
-                    let path = `/home/journal/${this.journalId}/${rangeId}`;
-                    this.$router.push({ path, journalId, rangeId }).catch(() => {});
+                    this.$router.push(path).catch(() => {});
                 }
             },
             /**

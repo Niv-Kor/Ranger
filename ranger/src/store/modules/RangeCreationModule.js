@@ -39,12 +39,12 @@ const getters = {
         let YYYY = padZeros(date.year, 4);
         let MM = padZeros(date.month, 2);
         let DD = padZeros(date.day, 2);
-        let hh = padZeros(time.hours, 2);
+        let HH = padZeros(time.hours, 2);
         let mm = padZeros(time.minutes, 2);
         let ss = padZeros(time.seconds, 2);
 
         //YYYY-MM-DD hh:mm:ss
-        return `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}`;
+        return `${YYYY}-${MM}-${DD} ${HH}:${mm}:${ss}`;
     }
 };
 
@@ -57,7 +57,7 @@ const mutations = {
     setNewRangeTime: (state, { hours, minutes, seconds }) => {
         state.newRangeTime.hours = hours;
         state.newRangeTime.minutes = minutes;
-        if (seconds !== undefined) state.newRangeTime.seconds = seconds;
+        state.newRangeTime.seconds = seconds;
     },
     setNewRangeSelectedTargetId: (state, value) => {
         state.newRangeSelectedTargetId = value;
@@ -70,7 +70,7 @@ const actions = {
      */
     initNewRangeValues: ({ commit }) => {
         //find this moment
-        let today = MOMENT().format('DD-MM-YYYY-HH-mm').split('-');
+        let today = MOMENT().format('DD-MM-YYYY-HH-mm-ss').split('-');
 
         commit('setNewRangeDate', {
             day: parseInt(today[0]),
@@ -80,7 +80,8 @@ const actions = {
 
         commit('setNewRangeTime', {
             hours: parseInt(today[3]),
-            minutes: parseInt(today[4])
+            minutes: parseInt(today[4]),
+            seconds: parseInt(today[5])
         });
     },
     /**

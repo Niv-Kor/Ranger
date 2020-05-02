@@ -2,15 +2,24 @@
     <v-container
         class='container'
         fluid
-    >
+    >   
         <h1>{{ journal.name }}</h1>
+        <h4>Created {{ journalCreationDate }}</h4>
+        <h4>
+            <span :style='{ color: colors.primary }'>{{ list.length }}</span> ranges
+        </h4>
+        <decorations
+            class='decorations'
+            :score='overallScore.score'
+            :total='overallScore.total'
+            :color='journal.color'
+        />
         <v-row no-gutters>
             <v-col>
                 <v-card
                     class='outer-card'
                     ref='vcard'
                     :height='windowDim.height - 420'
-                    :width='windowDim.width * .9'
                     :style='createOuterCardStyle(cardRefresher)'
                     elevation=0
                     @scroll='cardRefresher = !cardRefresher'
@@ -22,8 +31,10 @@
                             first-day-of-week=0
                             full-width
                             scrollable
+                            :events='rangeEvents'
+                            :event-color='colors.secondary'
                             :max='getNowDate()'
-                            :color='colors.secondary'
+                            :color='colors.neutral'
                             @click:date='onDatePick'
                         />
                     </transition>
@@ -44,6 +55,7 @@
                                 :index='index'
                                 :style='createItemStyle(item.time)'
                                 :selectable=false
+                                @click='gotoRange(item.date, item.rawTime)'
                             >
                                 <v-list-item-content>
                                     <v-card-title
@@ -99,7 +111,6 @@
                             :outlined='listFilter.active'
                             :disabled='!listFilter.active'
                             :height='40'
-                            :width='windowDim.width * .4'
                             :color='colors.neutral'
                             @click='clearFilter'
                         >
@@ -113,10 +124,13 @@
                             block
                             outlined
                             :height='40'
-                            :width='windowDim.width * .4'
                             :color='colors.neutral'
                             @click='toggleDatePicker'
                         >
+                            <div class='older-icon'>
+                            <v-icon v-if='datePicker'>mdi-menu-up</v-icon>
+                            <v-icon v-else>mdi-menu-down</v-icon>
+                            </div>
                             <span class='filter-btn'>older</span>
                         </v-btn>
                     </v-col>
@@ -140,6 +154,7 @@
     import Moment from 'moment';
     import Loading from '../../widgets/Loading';
     import PlusButton from '../../widgets/PlusButton';
+    import Decorations from '../../widgets/Decorations';
     import RangeDialogBox from '../dialogs/range/RangeDialogBox';
 
     const JOURNAL_ASSETS = require.context('../../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
@@ -151,6 +166,7 @@
         components: {
             PlusButton,
             RangeDialogBox,
+            Decorations,
             Loading
         },
         data() {
@@ -198,10 +214,11 @@
                     let DD = obj.date.substr(8, 2);
                     let MM = obj.date.substr(5, 2);
                     let YYYY = obj.date.substr(2, 2);
-                    let hh = obj.date.substr(11, 2);
+                    let HH = obj.date.substr(11, 2);
                     let mm = obj.date.substr(14, 2);
+                    let ss = obj.date.substr(17, 2);
                     let date = `${DD} - ${MM} - ${YYYY}`;
-                    let time = `${hh}:${mm}`
+                    let time = `${HH}:${mm}:${ss}`
 
                     //extract target data
                     let target = this.allTargets.find(x => x.id === obj.targetId);
@@ -210,7 +227,8 @@
                     list.push({
                         id: obj.id,
                         date,
-                        time,
+                        time: time.substr(0, 5),
+                        rawTime: time,
                         score: obj.score,
                         total: obj.total,
                         targetSrc
@@ -232,6 +250,31 @@
             outerCardClass() {
                 let className = 'outer-card';
                 return !this.toggleDelay ? className : className + ' overflow-hidden';
+            },
+            rangeEvents() {
+                let events = [];
+
+                for (let obj of this.list) {
+                    let date = Moment(obj.date, 'DD - MM - YYYY');
+                    let formatted = date.format('YYYY-MM-DD');
+                    events.push(formatted);
+                }
+
+                return events;
+            },
+            journalCreationDate() {
+                return Moment().format('DD-MM-YYYY');
+            },
+            overallScore() {
+                let score = 0;
+                let total = 0;
+
+                for (let range of this.list) {
+                    score += range.score;
+                    total += range.total;
+                }
+
+                return { score, total };
             }
         },
         created() {
@@ -252,6 +295,22 @@
             handleResize: function() {
                 this.windowDim.width = window.innerWidth;
                 this.windowDim.height = window.innerHeight;
+            },
+            /**
+             * Go to a range's URL.
+             * 
+             * @param {String} date - A range's date [DD - MM - YYYY]
+             * @param {String} time - A range's time [HH:mm:ss]
+             */
+            gotoRange: async function(date, time) {
+                let formattedDate = Moment(date, 'DD - MM - YYYY').format('YYYY-MM-DD').toString();
+                let dateTime = formattedDate + ' ' + time;
+                let path = await this.$store.dispatch('generateRangeURL', {
+                    journalId: this.journal.id,
+                    date: dateTime
+                });
+                
+                this.$router.push(path).catch(err => {console.log(err)});
             },
             /**
              * Toggle the date picker window.
@@ -481,24 +540,27 @@
              * Generate a style for the outer card component.
              */
             createOuterCardStyle() {
-                let fromTopScroll = 0;
-                let scrollHeight = .1;
-                let alphaGradient = null;
+                let topAlphaGradient = null;
+                let bottomAlphaGradient = null;
 
-                if (this.$refs.vcard) {
+                if (this.$refs.vcard && this.$refs.item && this.$refs.item[0]) {
+                    //find scroll positions
                     let cardComponent = this.$refs.vcard.$refs.link;
-                    fromTopScroll = cardComponent.scrollTop;
-                    scrollHeight = cardComponent.offsetTop;
-                    let opacity = 1 - (fromTopScroll / scrollHeight);
-                    let gradientPercent = opacity * 20;
-                    let transparency = Math.min(Math.max((80 + gradientPercent), 80), 100); //clamp 80-100
-                    alphaGradient = 'linear-gradient(to top, #000000ff ' + transparency + '%, #00000000 100%)';
+                    let rangeComponent = this.$refs.item[0].$refs.link;
+                    let fromTopScroll = cardComponent.scrollTop;
+                    let scrollHeight = (rangeComponent.clientHeight) * FILTERED_RANGES;
+
+                    //find the appropriate transparency
+                    let scrollPercent = fromTopScroll / scrollHeight;
+                    let gradientPercent = scrollPercent * 20;
+                    let transparency = 100 - Math.min(Math.max((80 + gradientPercent), 80), 100); //clamp 0-20
+
+                    //define masks
+                    bottomAlphaGradient = 'linear-gradient(to top, #000000ff 0%, #00000000 ' + transparency + '%)';
+                    topAlphaGradient = 'linear-gradient(to top, #000000ff ' + (80 + transparency) + '%, #00000000 100%)';
                 }
 
-                return {
-                    maskImage: alphaGradient,
-                    borderColor: this.colors.primary + '50'
-                }
+                return { maskImage: topAlphaGradient + ', ' + bottomAlphaGradient }
             },
             /**
              * Get the appropriate text color, according to the card's background color.
@@ -547,10 +609,12 @@
         font-family: 'Comfortaa';
     }
     .outer-card {
-        border-width: 1px;
-        margin-top: 100px;
-        border-style: none dashed none dashed;
+        margin-top: 15px;
         overflow: auto;
+        mask-composite: source-out;
+    }
+    .decorations {
+        margin-top: 10px;
     }
     .slide-enter-active {
         animation: slide-in .5s ease-out forwards;
@@ -616,6 +680,10 @@
         background-position: 0 0;
         background-size: 100px 20px;
         background-color: #ffffff;
+    }
+    .older-icon {
+        position: absolute;
+        left: 0;
     }
     .plus {
         position: fixed;

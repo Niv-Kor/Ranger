@@ -31,3 +31,7 @@ new Vue({
   store: STORE,
   render: h => h(App),
 }).$mount('#app')
+
+export default {
+  ROUTER
+};

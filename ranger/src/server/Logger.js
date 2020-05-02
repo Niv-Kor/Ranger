@@ -1,4 +1,5 @@
-const MSG_PREFIX = '>>> ';
+const Moment = require('Moment');
+const MSG_PREFIX = '>>>';
 const ERR_PREFIX = '\n!---ERROR: ';
 const ERR_SUFFIX = '!---\n';
 
@@ -12,7 +13,10 @@ module.exports  = {
  * 
  * @param {String} msg - The message to log
  */
-function log(msg) { console.log(MSG_PREFIX + msg); }
+function log(msg) {
+    let time = Moment().format('HH:mm');
+    console.log(`${time} ${MSG_PREFIX} ${msg}`);
+}
 
 /**
  * Log an error message to the server's console.

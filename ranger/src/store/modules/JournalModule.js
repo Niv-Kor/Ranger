@@ -16,7 +16,7 @@ const getters = {
         return state.journalsListLoading;
     },
     getSelectedJournalIndex: state => {
-        return state.selectedJournalIndex;
+        return state.selectedJournal;
     }
 };
 
@@ -25,7 +25,7 @@ const mutations = {
         state.journalsListLoading = value;
     },
     setSelectedJournalIndex: (state, value) => {
-        state.selectedJournalIndex = value;
+        state.selectedJournal = value;
     }
 };
 

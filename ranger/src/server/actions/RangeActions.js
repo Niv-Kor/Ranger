@@ -51,7 +51,7 @@ async function createRange(data) {
  *                      {Object} ranges - [
  *                                           {
  *                                              {Number} id - The ID of the range,
- *                                              {String} date - The date at which the range took place,
+ *                                              {String} date - The date at which the range took place [DD-MM-YYYY],
  *                                              {Number} targetId - The ID of the range's target,
  *                                              {Number} ends - Amount of ends in the range,
  *                                              {Number} score - The range's score,

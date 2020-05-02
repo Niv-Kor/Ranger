@@ -226,7 +226,7 @@
                 this.$store.commit('setNewRangeTime', {
                     hours: split[0],
                     minutes: split[1],
-                    seconds: split[0]
+                    seconds: split[2]
                 })
             },
             /**
