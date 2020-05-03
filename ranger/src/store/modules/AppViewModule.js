@@ -26,35 +26,62 @@ const state = {
         }
     ],
     appTitles: [
-        {
+        { //my journals
             titleStatic: true,
             title: 'Shooting Journals',
             titlePrefix: '',
             prefixCondition: '/home/journals',
+            suffixCondition: '',
             additionalSlashes: 0
         },
-        {
+        { //journal page
             titleStatic: false,
             title: {
                 domain: 2,
                 splitBy: '-',
                 index: 1
             },
-            titlePrefix: 'Journal',
+            titlePrefix: 'journal',
             prefixCondition: '/home/journals/',
+            suffixCondition: '',
             additionalSlashes: 0
         },
-        {
+        { //range page
             titleStatic: false,
             title: {
                 domain: 2,
                 splitBy: '-',
                 index: 1
             },
-            titlePrefix: 'Journal',
+            titlePrefix: 'range',
             prefixCondition: '/home/journals/',
+            suffixCondition: '',
             additionalSlashes: 1
         },
+        { //journal settings
+            titleStatic: false,
+            title: {
+                domain: 2,
+                splitBy: '-',
+                index: 1
+            },
+            titlePrefix: 'edit journal',
+            prefixCondition: '/home/journals/',
+            suffixCondition: 'settings',
+            additionalSlashes: 1
+        },
+        { //range settings
+            titleStatic: false,
+            title: {
+                domain: 2,
+                splitBy: '-',
+                index: 1
+            },
+            titlePrefix: 'edit range',
+            prefixCondition: '/home/journals/',
+            suffixCondition: 'settings',
+            additionalSlashes: 2
+        }
     ]
 }
 
@@ -118,27 +145,36 @@ const getters = {
         let title = '';
         let prefix = '';
 
-        for (let item of state.appTitles) {
-            if (routerPath.includes(item.prefixCondition)) {
-                let prefixLen = item.prefixCondition.length;
+        let fileteredItems = state.appTitles.filter(x => {
+            if (!routerPath.includes(x.prefixCondition)) return false;
+            else {
+                //match slash count
+                let prefixLen = x.prefixCondition.length;
                 let suffixLen = routerPath.length - prefixLen;
                 let suffix = routerPath.substr(prefixLen, suffixLen);
                 let slashCount = suffix.split('/').length - 1;
+                return x.additionalSlashes === slashCount;
+            }
+        })
 
-                if (item.additionalSlashes === slashCount) {
-                    prefix = item.titlePrefix;
+        let meetSuffix = fileteredItems.find(x => {
+            let domains = routerPath.split('/');
+            return x.suffixCondition === domains[domains.length - 1];
+        })
 
-                    //static title
-                    if (item.titleStatic) title = item.title;
-                    //dynamic title
-                    else {
-                        let domains = routerPath.split('/');
-                        let matchDomain = domains[item.title.domain + 1];
-                        let domainSplit = matchDomain.split(item.title.splitBy);
-                        let rawTitle = domainSplit[item.title.index];
-                        title = rawTitle.replace('%20', ' ');
-                    }
-                }
+        if (fileteredItems.length) {
+            let finalCandidate = meetSuffix ? meetSuffix : fileteredItems[0];
+            prefix = finalCandidate.titlePrefix;
+
+            //static title
+            if (finalCandidate.titleStatic) title = finalCandidate.title;
+            //dynamic title
+            else {
+                let pathDomains = routerPath.split('/');
+                let matchDomain = pathDomains[finalCandidate.title.domain + 1];
+                let domainSplit = matchDomain.split(finalCandidate.title.splitBy);
+                let rawTitle = domainSplit[finalCandidate.title.index];
+                title = rawTitle.replace('%20', ' ');
             }
         }
 
