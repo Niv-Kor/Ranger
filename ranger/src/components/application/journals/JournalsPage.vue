@@ -3,10 +3,9 @@
         class='container'
         fluid
     >
-        <h1>Shooting Journals</h1>
         <p
             v-if='!list.length && !isListLoading'
-            class='no-surveys-message'
+            class='no-journals-message'
         >
             You don't own any journals yet.<br>
             Use the '+' button below<br>
@@ -357,7 +356,7 @@
         text-align: center;
         font-family: 'Comfortaa';
     }
-    .no-surveys-message {
+    .no-journals-message {
         margin-top: 20px;
     }
     .journal-item {

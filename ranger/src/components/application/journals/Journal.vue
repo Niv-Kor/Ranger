@@ -6,7 +6,9 @@
         <h1>{{ journal.name }}</h1>
         <h4>Created {{ journalCreationDate }}</h4>
         <h4>
-            <span :style='{ color: colors.primary }'>{{ list.length }}</span> ranges
+            <span :style='{ color: colors.primary }'>{{ list.length }} </span>
+            <span v-if='list.length === 1'>range</span>
+            <span v-else>ranges</span>
         </h4>
         <decorations
             class='decorations'
@@ -24,83 +26,93 @@
                     elevation=0
                     @scroll='cardRefresher = !cardRefresher'
                 >
-                    <transition name='slide' mode='in-out'>
-                        <v-date-picker
-                            v-if='datePicker'
-                            v-model='datePickerModel' 
-                            first-day-of-week=0
-                            full-width
-                            scrollable
-                            :events='rangeEvents'
-                            :event-color='colors.secondary'
-                            :max='getNowDate()'
-                            :color='colors.neutral'
-                            @click:date='onDatePick'
-                        />
-                    </transition>
-                    <transition transition name='fade' mode='in-out'>
-                        <v-list
-                            v-if='showRanges'
-                            class='ranges-list'
-                            tile
-                            nav
-                            flat
-                            dense
-                        >
-                            <v-list-item
-                                class='range-item elevation-3'
-                                ref='item'
-                                v-for='(item, index) in filteredList'
-                                :key='item.id'
-                                :index='index'
-                                :style='createItemStyle(item.time)'
-                                :selectable=false
-                                @click='gotoRange(item.date, item.rawTime)'
+                    <p
+                        v-if='!list.length && !isListLoading'
+                        class='no-ranges-message'
+                    >
+                        This journal is empty.<br>
+                        Use the '+' button below<br>
+                        to record your first range.
+                    </p>
+                    <div v-else>
+                        <transition name='slide' mode='in-out'>
+                            <v-date-picker
+                                v-if='datePicker'
+                                v-model='datePickerModel' 
+                                first-day-of-week=0
+                                full-width
+                                scrollable
+                                :events='rangeEvents'
+                                :event-color='colors.secondary'
+                                :max='getNowDate()'
+                                :color='colors.neutral'
+                                @click:date='onDatePick'
+                            />
+                        </transition>
+                        <transition transition name='fade' mode='in-out'>
+                            <v-list
+                                v-if='showRanges'
+                                class='ranges-list'
+                                tile
+                                nav
+                                flat
+                                dense
                             >
-                                <v-list-item-content>
-                                    <v-card-title
-                                        class='card-title'
-                                        :style='{ color: getCardTextColor(item.time) }'
-                                    >
-                                        {{ item.date }}
-                                        <span
-                                            :style='{
-                                                fontSize: "14px",
-                                                marginLeft: "20px",
-                                                marginTop: "3px"
-                                            }'
-                                        >
-                                            {{ item.time }}
-                                        </span>
-                                    </v-card-title>
-                                    <br>
-                                    <v-card-text
-                                        class='card-text'
-                                    >
-                                        <span
-                                            :style='{
-                                                color: getScoreColor(item.score, item.total),
-                                                filter: "drop-shadow(0 0 10px #00ffff)",
-                                                fontWeight: "bold"
-                                            }'
-                                        >
-                                            {{ item.score }}
-                                        </span>
-                                        <span :style='{ color: "#000000" }'>
-                                            / {{ item.total }}
-                                        </span>
-                                    </v-card-text>
-                                </v-list-item-content>
-                                <v-list-item-avatar
-                                    class='card-left'
-                                    size=70
-                                    :right=true
+                                <v-list-item
+                                    class='range-item elevation-3'
+                                    ref='item'
+                                    v-for='(item, index) in filteredList'
+                                    :key='item.id'
+                                    :index='index'
+                                    :style='createItemStyle(item.time)'
+                                    :selectable=false
+                                    @click='gotoRange(item.date, item.rawTime)'
                                 >
-                                    <v-img :src='item.targetSrc' />
-                                </v-list-item-avatar>
-                            </v-list-item>
-                        </v-list>
-                    </transition>       
+                                    <v-list-item-content>
+                                        <v-card-title
+                                            class='card-title'
+                                            :style='{ color: getCardTextColor(item.time) }'
+                                        >
+                                            {{ item.date }}
+                                            <span
+                                                :style='{
+                                                    fontSize: "14px",
+                                                    marginLeft: "20px",
+                                                    marginTop: "3px"
+                                                }'
+                                            >
+                                                {{ item.time }}
+                                            </span>
+                                        </v-card-title>
+                                        <br>
+                                        <v-card-text
+                                            class='card-text'
+                                        >
+                                            <span
+                                                :style='{
+                                                    color: getScoreColor(item.score, item.total),
+                                                    filter: "drop-shadow(0 0 10px #00ffff)",
+                                                    fontWeight: "bold"
+                                                }'
+                                            >
+                                                {{ item.score }}
+                                            </span>
+                                            <span :style='{ color: "#000000" }'>
+                                                / {{ item.total }}
+                                            </span>
+                                        </v-card-text>
+                                    </v-list-item-content>
+                                    <v-list-item-avatar
+                                        class='card-left'
+                                        size=70
+                                        :right=true
+                                    >
+                                        <v-img :src='item.targetSrc' />
+                                    </v-list-item-avatar>
+                                </v-list-item>
+                            </v-list>
+                        </transition>
+                    </div>
                 </v-card>
                 <!-- clear filter -->
                 <v-row >
@@ -607,6 +619,12 @@
     .container {
         text-align: center;
         font-family: 'Comfortaa';
+    }
+    .no-ranges-message {
+        position: absolute;
+        bottom: 40px;
+        left: 0;
+        right: 0;
     }
     .outer-card {
         margin-top: 15px;
