@@ -43,6 +43,7 @@ BEGIN
 END
 GO
 
+-- insert default user
 INSERT INTO Users(email, hashPass)
 VALUES('default', 'hFnXXeJR8eIsqI8InNuiTnXy
 				   /jVVPtZymeRaCcrj4LaxYAob
@@ -65,3 +66,4 @@ SELECT * FROM Users
 GO
 
 DROP TABLE Users
+GO

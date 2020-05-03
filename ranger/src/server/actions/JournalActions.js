@@ -83,7 +83,7 @@ async function createJournal(socket, data) {
     let journalParams = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
-        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name, options: {} },
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(15), value: data.name, options: {} },
         { name: 'target', type: CONSTANTS.SQL.Int, value: targetId, options: {} },
         { name: 'theme', type: CONSTANTS.SQL.VarChar(9), value: data.colorTheme, options: {} },
     ];
@@ -115,7 +115,7 @@ async function journalExists(user, discipline, name) {
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: discipline, options: {} },
-        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(15), value: name, options: {} }
     ];
     
     let query = await GENERAL_ACTIONS.runProcedure('JournalExists', params);
@@ -228,7 +228,7 @@ function updateJournalOrder(data) {
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
-        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(20), value: data.name, options: {} },
+        { name: 'journal_name', type: CONSTANTS.SQL.VarChar(15), value: data.name, options: {} },
         { name: 'new_order', type: CONSTANTS.SQL.Int, value: data.newOrder, options: {} },
     ];
 

@@ -163,8 +163,8 @@
                 let show = this.currentTab === this.totalTabs - 1;
                 return show ? 'CREATE' : '';
             },
-            journalId() {
-                return this.journals[this.journalIndex].id;
+            journal() {
+                return this.journals[this.journalIndex];
             }
         },
         watch: {
@@ -223,7 +223,7 @@
                     switch (this.currentTab) {
                         //select date and time
                         case 0: {
-                            let journalId = this.journalId;
+                            let journalId = this.journal.id;
                             let date = this.formattedDateTime;
 
                             this.$store.dispatch('checkRangeExists', { journalId, date })
@@ -270,7 +270,7 @@
                 //jump to range pange
                 if (res) {
                     let path = await this.$store.dispatch('generateRangeURL', {
-                        journalId: this.journalId,
+                        journalName: `${this.journal.discipline}-${this.journal.name}`,
                         date: this.formattedDateTime
                     });
 

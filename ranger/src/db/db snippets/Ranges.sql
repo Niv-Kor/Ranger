@@ -5,6 +5,7 @@ CREATE TABLE Ranges (
 	shooting_date VARCHAR(19) NOT NULL,
 	target_id INT NOT NULL,
 	ends INT DEFAULT 1,
+	is_training TINYINT DEFAULT 0,
 
 	PRIMARY KEY(id),
 
@@ -19,6 +20,7 @@ CREATE TABLE Ranges (
 		journal_id, shooting_date
 	)
 )
+GO
 
 -- Procedures
 ALTER PROCEDURE CreateRange
@@ -129,23 +131,12 @@ BEGIN
 END
 GO
 
-SELECT r.id,
-		   r.shooting_date AS 'date',
-		   r.target_id,
-		   r.ends
-	FROM Ranges r
-	INNER JOIN Journals j ON j.id = r.journal_id
-	FULL OUTER JOIN Hits h ON h.range_id = r.id
-	WHERE j.journal_owner = 'nivkor23@gmail.com'
-	  AND j.id = 3
-	  AND h.range_id = r.id
-	GROUP BY r.id,
-			 r.shooting_date,
-			 r.target_id,
-			 r.ends
-	ORDER BY CONVERT(DATETIME, r.shooting_date, 120) DESC
-
 -- Exec
 SELECT * FROM Ranges
+GO
+
 DELETE FROM Ranges
+GO
+
 DROP TABLE Ranges
+GO

@@ -73,11 +73,12 @@ const actions = {
      * The URL will always be the same, based on the range's date and the ID of the
      * journal to which it belongs.
      * 
-     * @param {Number} journalId - The ID of the range's journal
+     * @param {Number} journalName - The discipline of the range's journal,
+     *                               followed by the journa's name, and separated by a dash.
      * @param {String} date - The date at which the range took place ('DD-MM-YYYY' format)
      * @returns {String} The appropriate URL path for the range.
      */
-    generateRangeURL: (_, { journalId, date }) => {
+    generateRangeURL: (_, { journalName, date }) => {
         return new Promise(resolve => {
             let rangeId = 0;
 
@@ -87,15 +88,15 @@ const actions = {
                 rangeId |= 0;
             }
 
-            let path = `/home/journal/${journalId}/${rangeId}`;
-            resolve({ path, journalId, rangeId });
+            let path = `/home/journals/${journalName}/${rangeId}`;
+            resolve({ path, journalName, rangeId });
         })
     }
 };
 
 export default {
-    state: state,
-    getters: getters,
-    mutations: mutations,
-    actions: actions
+    state,
+    getters,
+    mutations,
+    actions
 }

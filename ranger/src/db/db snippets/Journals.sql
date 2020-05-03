@@ -3,19 +3,27 @@ CREATE TABLE Journals (
 	id INT IDENTITY(1,1),
 	journal_owner VARCHAR(70) NOT NULL,
 	discipline VARCHAR(20) NOT NULL,
-	journal_name VARCHAR(20) NOT NULL,
-	target_id INT NOT NULL,
+	journal_name VARCHAR(12) NOT NULL,
+	target_id INT DEFAULT NULL,
 	theme_color VARCHAR(9) DEFAULT '#fafafa',
 	sort_order INT NOT NULL,
 
 	PRIMARY KEY(id),
-	FOREIGN KEY(target_id) REFERENCES Targets(id),
+
+	CONSTRAINT FK_Journals_Users_email
+	FOREIGN KEY(journal_owner) REFERENCES Users(email) ON DELETE CASCADE,
+
+	CONSTRAINT FK_Journals_Targets_id
+	FOREIGN KEY(target_id) REFERENCES Targets(id) ON DELETE NO ACTION,
 
 	CONSTRAINT unique_journal UNIQUE CLUSTERED (
 		journal_owner, discipline, journal_name
 	)
 );
 GO
+
+ALTER TABLE Journals
+ALTER COLUMN journal_name VARCHAR(15) NOT NULL
 
 DROP TABLE Journals
 GO
@@ -26,8 +34,8 @@ GO
 -- Procedures
 ALTER PROCEDURE JournalExists
 	@user VARCHAR(70),
-	@discipline VARCHAR(30),
-	@journal_name VARCHAR(20)
+	@discipline VARCHAR(20),
+	@journal_name VARCHAR(15)
 AS
 BEGIN
 	SELECT CAST(COUNT(1) AS BIT) AS journal_exists
@@ -64,7 +72,7 @@ GO
 ALTER PROCEDURE UpdateJournalOrder
 	@user VARCHAR(70),
 	@discipline VARCHAR(20),
-	@journal_name VARCHAR(20),
+	@journal_name VARCHAR(15),
 	@new_order INT
 AS
 BEGIN
@@ -79,7 +87,7 @@ GO
 ALTER PROCEDURE CreateJournal
 	@user VARCHAR(70),
 	@discipline VARCHAR(20),
-	@journal_name VARCHAR(20),
+	@journal_name VARCHAR(15),
 	@target INT,
 	@theme VARCHAR(9)
 AS
@@ -109,10 +117,10 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE GetJournalId
+ALTER PROCEDURE GetJournalId
 	@user VARCHAR(70),
 	@discipline VARCHAR(20),
-	@journal_name VARCHAR(20)
+	@journal_name VARCHAR(15)
 AS
 BEGIN
 	SELECT id
@@ -126,9 +134,3 @@ GO
 -- Exec
 SELECT * FROM Journals;
 DELETE FROM Journals
-
-UPDATE Journals
-SET sort_order = 2
-WHERE journal_owner = 'nivkor23@gmail.com'
-	AND discipline = 'Archery'
-	AND journal_name = 'Test other'

@@ -306,7 +306,7 @@
                 let formattedDate = Moment(date, 'DD - MM - YYYY').format('YYYY-MM-DD').toString();
                 let dateTime = formattedDate + ' ' + time;
                 let path = await this.$store.dispatch('generateRangeURL', {
-                    journalId: this.journal.id,
+                    journalName: `${this.journal.discipline}-${this.journal.name}`,
                     date: dateTime
                 });
                 

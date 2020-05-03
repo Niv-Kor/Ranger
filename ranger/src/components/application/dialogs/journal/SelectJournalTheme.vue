@@ -16,7 +16,7 @@
                 rounded
                 outlined
                 clearable
-                counter=20
+                counter=12
                 label='journal name'
                 :color='colors.neutral'
             />

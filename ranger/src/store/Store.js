@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import io from 'socket.io-client';
+import AppView from './modules/AppViewModule';
 import Auth from './modules/AuthenticationModule'
 import JournalCreation from './modules/JournalCreationModule';
 import RangeCreation from './modules/RangeCreationModule';
@@ -59,6 +60,7 @@ export const STORE = new Vuex.Store({
     },
     modules: {
         Auth,
+        AppView,
         JournalCreation,
         RangeCreation,
         Journals,

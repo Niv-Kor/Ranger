@@ -22,8 +22,7 @@ CREATE TABLE Targets (
 );
 GO
 
-DROP TABLE Targets
-
+-- insert default targets
 INSERT INTO Targets(target_owner,
 					discipline,
 					image_name,
@@ -38,6 +37,7 @@ VALUES
 ('default', 'Firearm', 'ISSF Air Pistol', '/db/targets/default/ISSF Air Pistol.png', 50, 50, 10, 10),
 ('default', 'Firearm', 'ISSF Air Rifle', '/db/targets/default/ISSF Air Rifle.png', 50, 50, 10, 10),
 ('default', 'Firearm', 'ISSF Rapid Fire', '/db/targets/default/ISSF Rapid Fire.png', 50, 50, 10, 10)
+GO
 
 -- Procedures
 ALTER PROCEDURE TargetExists
@@ -110,8 +110,8 @@ GO
 
 -- Exec
 SELECT * FROM Targets
+GO
 
 DELETE FROM Targets
 WHERE id > 12
-
 GO

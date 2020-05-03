@@ -8,11 +8,17 @@ CREATE TABLE Hits (
 	end_no INT NOT NULL,
 
 	PRIMARY KEY(id),
-	FOREIGN KEY(range_id) REFERENCES Ranges(id)
+
+	CONSTRAINT FK_Hits_Ranges_id
+	FOREIGN KEY(range_id) REFERENCES Ranges(id) ON DELETE CASCADE
 )
+GO
 
 -- Procedures
 
 -- Exec
 SELECT * FROM Hits
+GO
+
 DROP TABLE Hits
+GO

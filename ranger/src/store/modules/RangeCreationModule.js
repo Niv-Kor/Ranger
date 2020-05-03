@@ -110,8 +110,8 @@ const actions = {
 };
 
 export default {
-    state: state,
-    getters: getters,
-    mutations: mutations,
-    actions: actions
+    state,
+    getters,
+    mutations,
+    actions
 }
