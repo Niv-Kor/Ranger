@@ -26,10 +26,35 @@ const state = {
         }
     ],
     appTitles: [
+        { //home page
+            titleStatic: true,
+            title: '',
+            titlePrefix: {
+                string: '',
+                useLogo: true
+            },
+            prefixCondition: '/home',
+            suffixCondition: '',
+            additionalSlashes: 0
+        },
+        { //general settings
+            titleStatic: true,
+            title: 'settings',
+            titlePrefix: {
+                string: '',
+                useLogo: true
+            },
+            prefixCondition: '/home/',
+            suffixCondition: 'settings',
+            additionalSlashes: 0
+        },
         { //my journals
             titleStatic: true,
             title: 'Shooting Journals',
-            titlePrefix: '',
+            titlePrefix: {
+                string: '',
+                useLogo: false
+            },
             prefixCondition: '/home/journals',
             suffixCondition: '',
             additionalSlashes: 0
@@ -41,7 +66,10 @@ const state = {
                 splitBy: '-',
                 index: 1
             },
-            titlePrefix: 'journal',
+            titlePrefix: {
+                string: 'journal',
+                useLogo: false
+            },
             prefixCondition: '/home/journals/',
             suffixCondition: '',
             additionalSlashes: 0
@@ -53,7 +81,10 @@ const state = {
                 splitBy: '-',
                 index: 1
             },
-            titlePrefix: 'range',
+            titlePrefix: {
+                string: 'range',
+                useLogo: false
+            },
             prefixCondition: '/home/journals/',
             suffixCondition: '',
             additionalSlashes: 1
@@ -65,7 +96,10 @@ const state = {
                 splitBy: '-',
                 index: 1
             },
-            titlePrefix: 'edit journal',
+            titlePrefix: {
+                string: 'edit journal',
+                useLogo: false
+            },
             prefixCondition: '/home/journals/',
             suffixCondition: 'settings',
             additionalSlashes: 1
@@ -77,7 +111,10 @@ const state = {
                 splitBy: '-',
                 index: 1
             },
-            titlePrefix: 'edit range',
+            titlePrefix: {
+                string: 'edit range',
+                useLogo: false
+            },
             prefixCondition: '/home/journals/',
             suffixCondition: 'settings',
             additionalSlashes: 2
@@ -144,6 +181,7 @@ const getters = {
     getAppTitle: state => routerPath => {
         let title = '';
         let prefix = '';
+        let useLogo = true;
 
         let fileteredItems = state.appTitles.filter(x => {
             if (!routerPath.includes(x.prefixCondition)) return false;
@@ -163,8 +201,11 @@ const getters = {
         })
 
         if (fileteredItems.length) {
-            let finalCandidate = meetSuffix ? meetSuffix : fileteredItems[0];
-            prefix = finalCandidate.titlePrefix;
+            let finalCandidate;
+            if (meetSuffix) finalCandidate = meetSuffix;
+            else finalCandidate = fileteredItems.find(x => !x.suffixCondition);
+            prefix = finalCandidate.titlePrefix.string;
+            useLogo = finalCandidate.titlePrefix.useLogo;
 
             //static title
             if (finalCandidate.titleStatic) title = finalCandidate.title;
@@ -178,7 +219,7 @@ const getters = {
             }
         }
 
-        return { prefix, title };
+        return { useLogo, prefix, title };
     }
 }
 

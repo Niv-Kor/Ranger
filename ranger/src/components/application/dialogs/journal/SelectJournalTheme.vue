@@ -83,6 +83,14 @@
             }
         },
         methods: {
+            /**
+             * Create the appropriate style for a color icon.
+             * 
+             * @param {String} color - A hex representation of the selected color
+             * @returns {Object} {
+             *                      {String} borderColor - CSS attribute for border-color
+             *                   }
+             */
             createIconStyle(color) {
                 let borderAlpha = (this.selectedColor === color) ? 'bb' : '20';
                 return { borderColor: '#000000' + borderAlpha }

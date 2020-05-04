@@ -140,7 +140,7 @@
             decrementTarget: function() {
                 if (this.selectedTargetIndex > 0)
                     this.selectedTargetIndex--;
-            },
+            }
         }
     }
 </script>
@@ -165,12 +165,6 @@
         text-align: center;
     }
     .thumbnail {
-        margin: auto;
-    }
-    .thumbnail.custom {
-        max-width: 120px;
-        max-height: 120px;
-        background: #dddddd;
         margin: auto;
     }
 </style>

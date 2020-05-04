@@ -10,12 +10,9 @@
                 @click='drawer = !drawer'
             />
             <div class='d-flex align-center'>
-                <div v-if='appTitle.title' class='app-title'>
+                <div v-if='!appTitle.useLogo' class='app-title'>
                     <span :style='{ color: colors.secondary + "aa" }' class='app-title prefix'>
                         {{ appTitle.prefix }}
-                    </span>
-                    <span class='app-title suffix'>
-                        {{ appTitle.title }}
                     </span>
                 </div>
                 <div v-else class='d-flex align-center'>
@@ -27,11 +24,15 @@
                         width='40'
                     />
                     <v-img
+                        class='app-title prefix'
                         min-width='100'
                         src='../../assets/logos/name_white.png'
                         width='100'
                     />
                 </div>
+                    <span class='app-title suffix'>
+                        {{ appTitle.title }}
+                    </span>
                 <v-menu
                     offset-y
                     bottom
@@ -133,13 +134,12 @@
     .app-title {
         color: #ffffff;
     }
-    .app-title .prefix {
+    .app-title.prefix {
         font-size: 22px !important;
         margin-right: 15px;
     }
-    .app-title .suffix {
+    .app-title.suffix {
         font-size: 18px !important;
-        margin-left: -10px;
     }
     .settings-dots {
         position: absolute;
