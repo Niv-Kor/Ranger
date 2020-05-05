@@ -322,7 +322,7 @@
                     date: dateTime
                 });
                 
-                this.$router.push(path).catch(err => {console.log(err)});
+                this.$router.push(path).catch(() => {});
             },
             /**
              * Toggle the date picker window.

@@ -225,8 +225,9 @@
                 let show = this.currentTab === this.totalTabs - 1;
                 return show ? 'CREATE' : '';
             },
-            successDialogModel() {
-                return this.successDialog && this.$props.allowSuccessPopup;
+            successDialogModel: {
+                get() { return this.successDialog && this.$props.allowSuccessPopup; },
+                set(value) { this.successDialog = value; }
             }
         },
         watch: {

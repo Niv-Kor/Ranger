@@ -8,7 +8,10 @@ module.exports = {
     createJournal,
     journalExists,
     loadJournals,
-    updateJournalOrder
+    updateJournal,
+    updateJournalOrder,
+    clearJournalRanges,
+    deleteJournal
 };
 
 /**
@@ -215,6 +218,37 @@ async function loadJournals(user, ignoreTargetIds) {
 }
 
 /**
+ * Update a journal's data.
+ * 
+ * @param {Object} data - {
+ *                           {Number} id - Journal's ID,
+ *                           {String} name - Journal's new name (optional),
+ *                           {String discipline - Journal's new discipline (optional),
+ *                           {Number} targetId - Journal's new default target ID (optional),
+ *                           {String} colorTheme - Journal's new color theme (optional)
+ *                        }
+ * @returns {Boolean} True if the process was successful.
+ */
+function updateJournal(data) {
+    let params = [
+        { name: 'id', type: CONSTANTS.SQL.Int, value: data.id, options: {} },
+        { name: 'new_name', type: CONSTANTS.SQL.VarChar(15), value: data.name, options: {} },
+        { name: 'new_discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
+        { name: 'new_target_id', type: CONSTANTS.SQL.Int, value: data.targetId, options: {} },
+        { name: 'new_color', type: CONSTANTS.SQL.VarChar(9), value: data.colorTheme, options: {} }
+    ];
+
+    return new Promise(resolve => {
+        GENERAL_ACTIONS.runProcedure('UpdateJournal', params)
+        .then(() => resolve(true))
+        .catch(err => {
+            LOGGER.error(`Could not update journal #${data.id}`, err);
+            resolve(false);
+        });
+    });
+}
+
+/**
  * Update the order of a single journal.
  * 
  * @param {Object} data {
@@ -233,4 +267,46 @@ function updateJournalOrder(data) {
     ];
 
     GENERAL_ACTIONS.runProcedure('UpdateJournalOrder', params);
+}
+
+/**
+ * Delete all ranges of a particular journal.
+ * 
+ * @param {Number} journalId - The ID of the journal that contains the ranges to delete.
+ * @returns {Boolean} True if the journal's ranges have been deleted successfully.
+ */
+function clearJournalRanges(journalId) {
+    let params = [
+        { name: 'journal_id', type: CONSTANTS.SQL.Int, value: journalId, options: {} }
+    ];
+
+    return new Promise(resolve => {
+        GENERAL_ACTIONS.runProcedure('ClearJournalRanges', params)
+        .then(() => resolve(true))
+        .catch(err => {
+            LOGGER.error(`Could not clear the ranges from journal #${journalId}`, err);
+            resolve(false);
+        });
+    });
+}
+
+/**
+ * Delete a journal.
+ * 
+ * @param {Number} journalId - The ID of the journal to delete.
+ * @returns {Boolean} True if the journal has been deleted successfully.
+ */
+function deleteJournal(journalId) {
+    let params = [
+        { name: 'id', type: CONSTANTS.SQL.Int, value: journalId, options: {} }
+    ];
+
+    return new Promise(resolve => {
+        GENERAL_ACTIONS.runProcedure('DeleteJournal', params)
+        .then(() => resolve(true))
+        .catch(err => {
+            LOGGER.error(`Could not delete journal #${journalId}`, err);
+            resolve(false);
+        });
+    });
 }

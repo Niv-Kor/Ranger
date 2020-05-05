@@ -131,6 +131,41 @@ BEGIN
 END
 GO
 
+ALTER PROCEDURE UpdateJournal
+	@id INT,
+	@new_name VARCHAR(15),
+	@new_discipline VARCHAR(20),
+	@new_target_id INT,
+	@new_color VARCHAR(9)
+AS
+BEGIN
+	UPDATE Journals
+	SET journal_name = ISNULL(@new_name, journal_name),
+		discipline = ISNULL(@new_discipline, discipline),
+		target_id = ISNULL(@new_target_id, target_id),
+		theme_color = ISNULL(@new_color, theme_color)
+	WHERE id = @id
+END
+GO
+
+CREATE PROCEDURE ClearJournalRanges
+	@journal_id INT
+AS
+BEGIN
+	DELETE FROM Ranges
+	WHERE journal_id = @journal_id
+END
+GO
+
+CREATE PROCEDURE DeleteJournal
+	@id INT
+AS
+BEGIN
+	DELETE FROM Journals
+	WHERE id = @id
+END
+GO
+
 -- Exec
 SELECT * FROM Journals;
 DELETE FROM Journals

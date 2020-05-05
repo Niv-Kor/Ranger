@@ -55,7 +55,6 @@ const actions = {
      * @returns {Boolean} True if the range already exists.
      */
     checkRangeExists: async ({ rootState }, { journalId, date }) => {
-        console.log('check for date ', date);
         if (!date) return false;
 
         let data = {

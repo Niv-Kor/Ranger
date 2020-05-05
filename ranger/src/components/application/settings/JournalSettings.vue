@@ -5,14 +5,30 @@
                 <v-card
                     class='outer-card'
                     :width='windowDim.width * .93'
-                    :height='windowDim.height * .9'
-                    elevation=1
+                    elevation=0
                 >
                     <!-- name -->
-                    <h4>Name</h4>
+                    <hr class='horizontal-line first-line'>
+                    <p
+                        class='subtitle'
+                        align=center
+                        :style='headerStyle'
+                    >
+                        <span class='header-icon'>
+                            <v-icon
+                                :style='createSegmentStyle(0)'
+                                medium
+                                @click='revertSegment(0)'
+                            >
+                                <template v-if='!isSegmentChanged(0)'>mdi-checkbox-blank-circle-outline</template>
+                                <template v-else>mdi-chevron-right-circle</template>
+                            </v-icon>
+                        </span>
+                        Name
+                    </p>
                     <v-text-field
                         v-model='newName'
-                        class='name'
+                        class='name field'
                         height=30
                         dense
                         counter=15
@@ -20,20 +36,39 @@
                         :color='colors.neutral'
                     />
                     <!-- discipline -->
-                    <h4>Discipline</h4>
+                    <hr class='horizontal-line'>
+                    <p
+                        class='subtitle'
+                        align=center
+                        :style='headerStyle'
+                    >
+                        <span class='header-icon'>
+                            <v-icon
+                                :style='createSegmentStyle(1)'
+                                medium
+                                @click='revertSegment(1)'
+                            >
+                                <template v-if='!isSegmentChanged(1)'>mdi-checkbox-blank-circle-outline</template>
+                                <template v-else>mdi-chevron-right-circle</template>
+                            </v-icon>
+                        </span>
+                        Discipline
+                    </p>
                     <v-select
                         v-model='selectedDiscipline'
-                        class='discipline-selector'
+                        class='discipline-selector field'
+                        outlined
                         :items='allDisciplines'
                         :height='-30'
-                        label='Change Discipline'
-                        outlined
-                        :menu-props='{ top: false, offsetY: true }'
+                        :menu-props='{ top: false, offsetY: true, value: disciplineSelectOpen }'
+                        @mousedown='disciplineSelectOpen = !disciplineSelectOpen'
+                        @change='disciplineSelectOpen = !disciplineSelectOpen'
+                        @blur="disciplineSelectOpen = false"
                     />
                     <v-text-field
-                        v-if='selectedDiscipline === "Other"'
+                        v-if='selectedDiscipline === "Other:"'
                         v-model='newDiscipName'
-                        class='other-discipline'
+                        class='other-discipline field'
                         height=30
                         dense
                         counter=20
@@ -42,7 +77,24 @@
                         :color='colors.neutral'
                     />
                     <!-- default target -->
-                    <h4>Default Target</h4>
+                    <hr class='horizontal-line'>
+                    <p
+                        class='subtitle'
+                        align=center
+                        :style='headerStyle'
+                    >
+                        <span class='header-icon'>
+                            <v-icon
+                                :style='createSegmentStyle(2)'
+                                medium
+                                @click='revertSegment(2)'
+                            >
+                                <template v-if='!isSegmentChanged(2)'>mdi-checkbox-blank-circle-outline</template>
+                                <template v-else>mdi-chevron-right-circle</template>
+                            </v-icon>
+                        </span>
+                        Default Target
+                    </p>
                     <v-row no-gutters>
                         <v-icon
                             class='nav-arrow'
@@ -103,10 +155,26 @@
                         </span>
                     </p>
                     <!-- theme -->
-                    <h4>Color Theme</h4>
-                    <v-card
-                        elevation=0
+                    <hr class='horizontal-line'>
+                    <p
+                        class='subtitle'
+                        align=center
+                        justify=center
+                        :style='headerStyle'
                     >
+                        <span class='header-icon'>
+                            <v-icon
+                                :style='createSegmentStyle(3)'
+                                medium
+                                @click='revertSegment(3)'
+                            >
+                                <template v-if='!isSegmentChanged(3)'>mdi-checkbox-blank-circle-outline</template>
+                                <template v-else>mdi-chevron-right-circle</template>
+                            </v-icon>
+                        </span>
+                        Color Theme
+                    </p>
+                    <v-card elevation=0>
                         <ul class='color-list'>
                             <li
                                 class='color-list-item'
@@ -125,38 +193,196 @@
                         </ul>
                     </v-card>
                     <!-- dangerous options -->
-                    <v-btn>
-                        Clear
-                    </v-btn>
-                    <v-btn>
-                        Delete
-                    </v-btn>
+                    <hr class='horizontal-line'>
+                    <p
+                        class='subtitle'
+                        align=center
+                        :style='headerStyle'
+                    >
+                        Journal Options
+                    </p>
+                    <v-card
+                        class='option-card'
+                        elevation=0
+                    >
+                        <v-row>
+                            <v-col cols=4>
+                                <v-btn
+                                    class='btn delete elevation-2 white--text'
+                                    large
+                                    color='#d30000'
+                                    :width=100
+                                    @click='popWarning("Are you absolutely sure you want to delete this journal?", deleteJournal)'
+                                >
+                                    Delete<br>Journal
+                                </v-btn>
+                            </v-col>
+                            <v-col cols=7>
+                                <p class='btn-info'>
+                                    Permanently delete<br>the journal.
+                                </p>
+                            </v-col>
+                            <v-col cols=1>
+                                <v-icon
+                                    class='btn-icon'
+                                    color='#d30000'
+                                >
+                                    mdi-trash-can-outline
+                                </v-icon>
+                            </v-col>
+                        </v-row>
+                    </v-card>
+                    <v-card
+                        class='option-card'
+                        elevation=0
+                    >
+                        <v-row>
+                            <v-col cols=4>
+                                <v-btn
+                                    class='btn delete elevation-2 white--text'
+                                    large
+                                    :width=100
+                                    color='#d30000'
+                                    @click="popWarning('Are you absolutely sure you want to clear this journal\'s ranges?', clearRanges)"
+                                >
+                                    Clear<br>Ranges
+                                </v-btn>
+                            </v-col>
+                            <v-col cols=7>
+                                <p class='btn-info'>
+                                    Permanently delete all ranges and their score data entirely.
+                                </p>
+                            </v-col>
+                            <v-col cols=1>
+                                <v-icon
+                                    class='btn-icon'
+                                    color='#d30000'
+                                >
+                                    mdi-trash-can-outline
+                                </v-icon>
+                            </v-col>
+                        </v-row>
+                    </v-card>
                     <!-- save -->
+                    <hr class='horizontal-line last-line'>
                     <v-btn
-                        @click='revert'
+                        class='btn revert'
+                        outlined
+                        :color='colors.primary'
+                        @click='revertAll'
                     >
                         Revert
                     </v-btn>
-                    <v-btn>
+                    <v-btn
+                        class='btn save'
+                        outlined
+                        :color='colors.primary'
+                        @click='save'
+                    >
                         Save
                     </v-btn>
                 </v-card>
             </v-col>
         </v-row>
+        <v-dialog
+            v-model='warningModel'
+            :max-width=290
+        >
+            <v-card>
+                <v-card-title
+                    class='dialog-title'
+                    :color='colors.primary'
+                    :style="{ backgroundColor: colors.primary }"
+                >
+                    <p
+                        class='dialog-title-flex warning-dialog'
+                        align=center
+                    >
+                        <span>{{ warningMessage }}</span>
+                        <br><br>
+                        <span class='irreversible-warning'>This action is irreversible!</span>
+                        <br><br>
+                        <v-icon large :color='colors.secondary'>mdi-alert</v-icon>
+                    </p>
+                </v-card-title>
+                <v-card-actions>
+                    <v-btn
+                        class='dialog-btn cancel-btn warning-dialog'
+                        text
+                        :color='colors.primaryDark'
+                        @click='warningModel = false'
+                    >
+                        Cancel
+                    </v-btn>
+                    <v-btn
+                        class='dialog-btn ok-btn warning-dialog'
+                        outlined
+                        :color='colors.primaryDark'
+                        @click='warningCallback'
+                    >
+                        Accept
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+        <v-dialog
+            v-model='dialogModel'
+            :max-width=290
+        >
+            <v-card>
+                <v-card-title
+                    class='dialog-title'
+                    :style="{ backgroundColor: dialogColor }"
+                >
+                    <p
+                        class='dialog-title-flex success-dialog'
+                        align=center
+                    >
+                        {{ dialogMessage }}
+                    </p>
+                </v-card-title>
+                <v-card-actions>
+                    <v-btn
+                        class='dialog-btn ok-btn success-dialog'
+                        text
+                        block
+                        :color='colors.primaryDark'
+                        @click='reloadAppData'
+                    >
+                        Ok
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+        <loading :model='load' />
     </div>
 </template>
 
 <script>
     import { mapGetters } from 'vuex';
+    import Loading from '../../widgets/Loading';
+    import ColorsHandler from '../../../util/ColorsHandler';
 
     export default {
+        components: {
+            Loading
+        },
         data() {
             return {
                 windowDim: {
                     width: 0,
                     height: 0
                 },
+                journalDeleted: false,
+                load: false,
+                warningModel: false,
+                warningMessage: '',
+                warningCallback: null,
+                dialogModel: false,
+                dialogMessage: '',
+                dialogColor: '',
                 newName: '',
+                disciplineSelectOpen: false,
                 selectedDiscipline: '',
                 newDiscipName: '',
                 selectedColor: '',
@@ -179,7 +405,7 @@
                 return this.targets[this.selectedTargetIndex];
             },
             allDisciplines() {
-                let list = [];
+                let list = ['Archery', 'Firearm'];
 
                 for (let journal of this.journals) {
                     let discip = journal.discipline;
@@ -187,14 +413,22 @@
                 }
                 
                 list.sort();
-                list.push('Other');
+                list.push('Other:');
                 return list;
+            },
+            headerStyle() {
+                let color = ColorsHandler.darker(this.selectedColor, 40);
+                let gradient = `linear-gradient(to right, ${color}50, #00000000)`
+
+                return {
+                    backgroundImage: gradient,
+                }
             }
         },
         created() {
             window.addEventListener('resize', this.handleResize);
             this.handleResize();
-            this.revert();
+            this.revertAll();
         },
         destroyed() {
             window.removeEventListener('resize', this.handleResize);
@@ -235,21 +469,165 @@
                     this.selectedTargetIndex--;
             },
             /**
+             * Create a style for the little light bulb in every segment.
+             * 
+             * @param {Number} segment - Segment index:
+             *                           0 - name
+             *                           1 - discipline
+             *                           2 - default target
+             *                           3 - color theme
+             * @returns {Object} {
+             *                      {String} color - The color of the light bulb,
+             *                      {String} filter - CSS filter attribute (drop-shadow)
+             *                   }
+             */
+            createSegmentStyle: function(segment) {
+                let changed = this.isSegmentChanged(segment);
+                let color = changed ? this.colors.primary : this.colors.neutral;
+
+                return {
+                    color,
+                }
+            },
+            /**
+             * Check if a particular segment of the form has been changed.
+             * 
+             * @param {Number} segment - Segment index:
+             *                           0 - name
+             *                           1 - discipline
+             *                           2 - default target
+             *                           3 - color theme
+             * @returns {Boolean} True if the segment has been changed.
+             */
+            isSegmentChanged: function(segment) {
+                switch (segment) {
+                    case 0: return this.newName !== this.journal.name;
+                    case 1: return this.selectedDiscipline !== this.journal.discipline;
+                    case 2: return this.selectedTarget.id !== this.journal.target.id;
+                    case 3: return this.selectedColor !== this.journal.color;
+                    default: return false;
+                }
+            },
+            /**
+             * Return a particular segment's values to their default states.
+             * 
+             * @param {Number} segment - Segment index:
+             *                           0 - name
+             *                           1 - discipline
+             *                           2 - default target
+             *                           3 - color theme
+             */
+            revertSegment: function(segment) {
+                switch (segment) {
+                    case 0:
+                        this.newName = this.journal.name;
+                        break;
+                    case 1:
+                        this.selectedDiscipline = this.journal.discipline;
+                        break;
+                    case 2:
+                        this.targets = this.storeTargets;
+                        this.targets.sort(element => {
+                            if (element.id === this.journal.target.id) return -1;
+                            else return 0;
+                        })
+
+                        this.selectedTargetIndex = 0;
+                        break;
+                    case 3:
+                        this.selectedColor = this.journal.color;
+                        break;
+                }
+            },
+            /**
+             * Activate when clicking the 'clear ranges' button.
+             */
+            clearRanges: async function() {
+                this.load = true;
+                let success = await this.$store.dispatch('clearJournalRanges', this.journal.id);
+                this.load = false;
+                this.popDialog(success, 'Ranges deleted successfully.', 'Could not clear ranges. Please try again.');
+            },
+            /**
+             * Activate when clicking the 'delete journal' button.
+             */
+            deleteJournal: async function() {
+                this.load = true;
+                let success = await this.$store.dispatch('deleteJournal', this.journal.id);
+                this.load = false;
+                this.popDialog(success, 'Journal deleted successfully.', 'Could not delete the journal. Please try again.');
+                this.journalDeleted = success;
+            },
+            /**
              * Return all values in the form to their default states.
              */
-            revert() {
-                //sort targets and put the default one first
-                let defTargetId = this.journal.target.id;
-                this.targets = this.storeTargets;
-                this.targets.sort(element => {
-                    if (element.id === defTargetId) return -1;
-                    else return 0;
-                })
+            revertAll: function() {
+                for (let i = 0; i < 4; i++) this.revertSegment(i);
+            },
+            /**
+             * Save the changed data.
+             */
+            save: async function() {
+                let name = this.isSegmentChanged(0) ? this.newName : null;
+                let discipline = this.isSegmentChanged(1) ? this.selectedDiscipline : null;
+                let targetId = this.isSegmentChanged(2) ? this.selectedTarget.id : null;
+                let colorTheme = this.isSegmentChanged(3) ? this.selectedColor : null;
 
-                this.newName = this.journal.name;
-                this.selectedDiscipline = this.journal.discipline;
-                this.selectedTargetIndex = 0;
-                this.selectedColor = this.journal.color;
+                //other discipline's name
+                if (discipline === 'Other:') discipline = this.newDiscipName;
+
+                //nothing is changed
+                if (!name && !discipline && !targetId && !colorTheme) return;
+
+                let data = {
+                    id: this.journal.id,
+                    name,
+                    discipline,
+                    targetId,
+                    colorTheme
+                }
+
+                this.load = true;
+                let success = await this.$store.dispatch('updateJournal', data);
+                this.load = false;
+                this.popDialog(success, 'Journal updated successfully.', 'Could not save changes. Please try again.');
+            },
+            /**
+             * Pop a warning dialog on the screen.
+             * 
+             * @param {String} msg - The message to display
+             * @param {Function} agreementCallback - The function to call if the user click the ok button
+             */
+            popWarning: function(msg, agreementCallback) {
+                this.warningMessage = msg;
+                this.warningCallback = agreementCallback;
+                this.warningModel = true;
+            },
+            /**
+             * Pop a success/failute dialog on the screen.
+             * 
+             * @param {Boolean} isSuccessful - True if the process that triggered the dialog is successful
+             * @param {String} msg - The message to display
+             */
+            popDialog: function(isSuccessful, successMsg, failureMsg) {
+                this.dialogColor = isSuccessful ? this.colors.secondary : this.colors.primary;
+                this.dialogMessage = isSuccessful ? successMsg : failureMsg;
+                this.dialogModel = true;
+            },
+            /**
+             * Activate when clicking the dialog's 'ok' button.
+             * Reload all journals, ranges and targets data.
+             * If this journal no longer exists, go back to the shooting journals page.
+             */
+            reloadAppData: async function() {
+                if (this.journalDeleted) {
+                    this.journalDeleted = false;
+                    let journalsPage = '/home/journals';
+                    this.$router.push({ path: journalsPage }).catch(() => {});
+                }
+
+                this.$store.dispatch('reloadAllData');
+                this.dialogModel = false;
             }
         }
     }
@@ -260,8 +638,32 @@
         border-width: 1px;
         border-style: dashed none;
     }
-    .discipline-selector {
-        margin-top: 50px;
+    .subtitle {
+        height: 50px;
+        line-height: 50px;
+        font-size: 18px;
+        letter-spacing: 2.5px;
+    }
+    .header-icon {
+        position: absolute;
+        left: 10px;
+    }
+    .field {
+        width: 80%;
+        margin-left: 10%;
+    }
+    .horizontal-line {
+        margin: 20px 0 -1px 0;
+        border-style: inset;
+    }
+    .horizontal-line.first-line {
+        margin-top: 0;
+    }
+    .horizontal-line.last-line {
+        margin: 20px 0 10px 0;
+        border-width: .5px;
+        border-style: dashed;
+        border-color: #00000030;
     }
     .color-list {
         list-style-type: none;
@@ -284,5 +686,46 @@
     }
     .target-thumbnail {
         margin: auto;
+    }
+    .option-card {
+        width: 90%;
+        margin: auto;
+    }
+    .btn-icon {
+        margin: 0 8px 0 -13px;
+    }
+    .btn-info {
+        font-size: 14px;
+    }
+    .btn {
+        text-transform: none;
+    }
+    .btn.save {
+        position: absolute;
+        right: 0;
+    }
+    .dialog-title-flex {
+        word-break: normal;
+        color: #ffffff;
+        margin-top: 10px;
+    }
+    .dialog-title-flex.success-dialog {
+        font-weight: bold;
+        font-size: 24px;
+    }
+    .dialog-title-flex.warning-dialog {
+        font-size: 18px;
+    }
+    .irreversible-warning {
+        font-weight: bold;
+        font-size: 20px;
+        letter-spacing: 2px;
+    }
+    .dialog-btn {
+        text-transform: none;
+    }
+    .dialog-btn.ok-btn.warning-dialog {
+        position: absolute;
+        right: 8px;
     }
 </style>

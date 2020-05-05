@@ -51,8 +51,23 @@ CONSTANTS.FRONT_IO.on('connection', async socket => {
             socket.emit('journal_exists', exists);
         })
 
+        socket.on('update_journal', async data => {
+            let success = await ACTIONS.journals.updateJournal(data);
+            socket.emit('update_journal', success);
+        })
+
         socket.on('update_journal_order', async data => {
             ACTIONS.journals.updateJournalOrder(data);
+        })
+
+        socket.on('clear_journal_ranges', async data => {
+            let success = await ACTIONS.journals.clearJournalRanges(data);
+            socket.emit('clear_journal_ranges', success);
+        })
+
+        socket.on('delete_journal', async data => {
+            let success = await ACTIONS.journals.deleteJournal(data);
+            socket.emit('delete_journal', success);
         })
 
         /* Targets */
