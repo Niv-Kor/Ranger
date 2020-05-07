@@ -100,7 +100,7 @@ const actions = {
                 date: getters.getNewRangeFormattedDateTime
             }
 
-            rootState.socket.on('create_range', res => {
+            rootState.socket.once('create_range', res => {
                 dispatch('loadAllRanges');
                 resolve(res)
             });

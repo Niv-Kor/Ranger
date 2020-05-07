@@ -284,47 +284,14 @@
                 </v-card>
             </v-col>
         </v-row>
-        <v-dialog
-            v-model='warningModel'
-            :max-width=290
-        >
-            <v-card>
-                <v-card-title
-                    class='dialog-title'
-                    :color='colors.primary'
-                    :style="{ backgroundColor: colors.primary }"
-                >
-                    <p
-                        class='dialog-title-flex warning-dialog'
-                        align=center
-                    >
-                        <span>{{ warningMessage }}</span>
-                        <br><br>
-                        <span class='irreversible-warning'>This action is irreversible!</span>
-                        <br><br>
-                        <v-icon large :color='colors.secondary'>mdi-alert</v-icon>
-                    </p>
-                </v-card-title>
-                <v-card-actions>
-                    <v-btn
-                        class='dialog-btn cancel-btn warning-dialog'
-                        text
-                        :color='colors.primaryDark'
-                        @click='warningModel = false'
-                    >
-                        Cancel
-                    </v-btn>
-                    <v-btn
-                        class='dialog-btn ok-btn warning-dialog'
-                        outlined
-                        :color='colors.primaryDark'
-                        @click='warningCallback'
-                    >
-                        Accept
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+        <warning-dialog
+            :model='warningModel'
+            :message='warningMessage'
+            :callback='warningCallback'
+            async-wait
+            irreversible
+            @close='warningModel = false'
+        />
         <v-dialog
             v-model='dialogModel'
             :max-width=290
@@ -360,19 +327,21 @@
 
 <script>
     import { mapGetters } from 'vuex';
+    import { windowDimMixin } from '../../../util/Mixins'
     import Loading from '../../widgets/Loading';
     import ColorsHandler from '../../../util/ColorsHandler';
+    import WarningDialog from '../../widgets/WarningDialog';
 
     export default {
+        mixins: [
+            windowDimMixin
+        ],
         components: {
+            WarningDialog,
             Loading
         },
         data() {
             return {
-                windowDim: {
-                    width: 0,
-                    height: 0
-                },
                 journalDeleted: false,
                 load: false,
                 warningModel: false,
@@ -426,22 +395,9 @@
             }
         },
         created() {
-            window.addEventListener('resize', this.handleResize);
-            this.handleResize();
             this.revertAll();
         },
-        destroyed() {
-            window.removeEventListener('resize', this.handleResize);
-        },
         methods: {
-            /**
-             * Activate when the window's size is changing.
-             * Save the new size.
-             */
-            handleResize: function() {
-                this.windowDim.width = window.innerWidth;
-                this.windowDim.height = window.innerHeight;
-            },
             /**
              * Create the appropriate style for a color icon.
              * 
@@ -712,20 +668,5 @@
     .dialog-title-flex.success-dialog {
         font-weight: bold;
         font-size: 24px;
-    }
-    .dialog-title-flex.warning-dialog {
-        font-size: 18px;
-    }
-    .irreversible-warning {
-        font-weight: bold;
-        font-size: 20px;
-        letter-spacing: 2px;
-    }
-    .dialog-btn {
-        text-transform: none;
-    }
-    .dialog-btn.ok-btn.warning-dialog {
-        position: absolute;
-        right: 8px;
     }
 </style>

@@ -125,7 +125,7 @@ const mutations = {
     setNewJournalUploadedTargetRingsAmount: (state, value) => {
         state.newJournaluploadedTarget.rings = value;
     },
-    setNewJournalUploadedTargetRingsDiameter: (state, value) => {
+    setNewJournalUploadedTargetRingDiameter: (state, value) => {
         state.newJournaluploadedTarget.ringDiameter = value;
     },
     setNewJournalTargetResetFlag: (state, flag) => {
@@ -157,7 +157,7 @@ const actions = {
         commit('setNewJournalUploadedTargetName', '');
         commit('setNewJournalUploadedTargetCenter', null);
         commit('setNewJournalUploadedTargetRingsAmount', 1);
-        commit('setNewJournalUploadedTargetRingsDiameter', 20);
+        commit('setNewJournalUploadedTargetRingDiameter', 20);
     },
     /**
      * Check if a target alredy exists in the database.
@@ -175,7 +175,7 @@ const actions = {
 
         return new Promise((resolve) => {
             rootState.socket.emit('target_exists', data);
-            rootState.socket.on('target_exists', res => resolve(res));
+            rootState.socket.once('target_exists', res => resolve(res));
         });
     },
     /**
@@ -199,7 +199,7 @@ const actions = {
 
         return new Promise((resolve) => {
             rootState.socket.emit('journal_exists', data);
-            rootState.socket.on('journal_exists', res => resolve(res));
+            rootState.socket.once('journal_exists', res => resolve(res));
         });
     },
     /**
@@ -225,7 +225,7 @@ const actions = {
                 colorTheme: state.newJournalColorTheme
             });
 
-            rootState.socket.on('create_journal', res => {
+            rootState.socket.once('create_journal', res => {
                 dispatch('reloadAllData');
                 
                 if (res.exitCode) console.error(res.message);

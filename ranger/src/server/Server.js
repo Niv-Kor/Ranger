@@ -71,14 +71,29 @@ CONSTANTS.FRONT_IO.on('connection', async socket => {
         })
 
         /* Targets */
-        socket.on('get_targets', async (user, ignoreTargets) => {
-            let targets = await ACTIONS.targets.getTargets(user, ignoreTargets);
-            socket.emit('get_targets', targets);
+        socket.on('create_target', async data => {
+            let success = await ACTIONS.targets.createTarget(data);
+            socket.emit('create_target', success);
+        })
+
+        socket.on('get_targets', async (data) => {
+            let targets = await ACTIONS.targets.getTargets(data);
+            socket.emit(`get_targets_${data.user}`, targets);
         })
 
         socket.on('target_exists', async data => {
             let exists = await ACTIONS.targets.targetExists(data.user, data.targetName);
             socket.emit('target_exists', exists);
+        })
+
+        socket.on('update_target', async data => {
+            let success = await ACTIONS.targets.updateTarget(data);
+            socket.emit('update_target', success);
+        })
+
+        socket.on('delete_target', async data => {
+            let success = await ACTIONS.targets.deleteTarget(data);
+            socket.emit('delete_target', success);
         })
 
         /* Ranges */

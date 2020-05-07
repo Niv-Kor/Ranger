@@ -222,11 +222,12 @@
              */
             storeTime: function(time) {
                 let split = time.split(':');
+                let seconds = split[2] ? split[2] : 0;
 
                 this.$store.commit('setNewRangeTime', {
                     hours: split[0],
                     minutes: split[1],
-                    seconds: split[2]
+                    seconds: seconds
                 })
             },
             /**

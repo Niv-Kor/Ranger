@@ -17,6 +17,14 @@ const state = {
             additionalSlashes: 1
         },
         {
+            title: 'My Targets',
+            icon: '',
+            path: '/home/targets',
+            prefixCondition: '/home',
+            pathAbsolute: true,
+            additionalSlashes: Infinity
+        },
+        {
             title: 'Settings',
             icon: 'mdi-cog',
             path: '/home/settings',
@@ -35,6 +43,17 @@ const state = {
             },
             prefixCondition: '/home',
             suffixCondition: '',
+            additionalSlashes: 0
+        },
+        { //targets manager
+            titleStatic: true,
+            title: 'My Targets',
+            titlePrefix: {
+                string: '',
+                useLogo: false
+            },
+            prefixCondition: '/home/',
+            suffixCondition: 'targets',
             additionalSlashes: 0
         },
         { //general settings
@@ -204,18 +223,21 @@ const getters = {
             let finalCandidate;
             if (meetSuffix) finalCandidate = meetSuffix;
             else finalCandidate = fileteredItems.find(x => !x.suffixCondition);
-            prefix = finalCandidate.titlePrefix.string;
-            useLogo = finalCandidate.titlePrefix.useLogo;
 
-            //static title
-            if (finalCandidate.titleStatic) title = finalCandidate.title;
-            //dynamic title
-            else {
-                let pathDomains = routerPath.split('/');
-                let matchDomain = pathDomains[finalCandidate.title.domain + 1];
-                let domainSplit = matchDomain.split(finalCandidate.title.splitBy);
-                let rawTitle = domainSplit[finalCandidate.title.index];
-                title = rawTitle.replace('%20', ' ');
+            if (finalCandidate) {
+                prefix = finalCandidate.titlePrefix.string;
+                useLogo = finalCandidate.titlePrefix.useLogo;
+
+                //static title
+                if (finalCandidate.titleStatic) title = finalCandidate.title;
+                //dynamic title
+                else {
+                    let pathDomains = routerPath.split('/');
+                    let matchDomain = pathDomains[finalCandidate.title.domain + 1];
+                    let domainSplit = matchDomain.split(finalCandidate.title.splitBy);
+                    let rawTitle = domainSplit[finalCandidate.title.index];
+                    title = rawTitle.replace('%20', ' ');
+                }
             }
         }
 

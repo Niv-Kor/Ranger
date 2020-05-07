@@ -5,7 +5,9 @@ import AppView from './modules/AppViewModule';
 import Auth from './modules/AuthenticationModule'
 import JournalCreation from './modules/JournalCreationModule';
 import RangeCreation from './modules/RangeCreationModule';
+import TargetCreation from './modules/TargetCreationModule';
 import Journals from './modules/JournalModule';
+import Targets from './modules/TargetModule';
 import Ranges from './modules/RangeModule';
 import { DataManager } from '../db/DataManager';
 
@@ -34,6 +36,12 @@ export const STORE = new Vuex.Store({
         },
         getDataManager: state => {
             return state.data;
+        },
+        isAnyListLoading: (_state, _getters, _rootState, rootGetters) => {
+            let journals = rootGetters.isJournalsListLoading;
+            let targets = rootGetters.isTargetsListLoading;
+            let ranges = rootGetters.isRangesListLoading;
+            return journals || targets || ranges;
         }
     },
     actions: {
@@ -51,7 +59,7 @@ export const STORE = new Vuex.Store({
         connectServer: async ({ state }) => {
             return new Promise(resolve => {
                 state.socket = io(FRONT_SERVER_DOMAIN);
-                state.socket.on('connection', port => {
+                state.socket.once('connection', port => {
                     state.socket = io(`http://localhost:${port}`);
                     resolve();
                 })
@@ -63,7 +71,9 @@ export const STORE = new Vuex.Store({
         AppView,
         JournalCreation,
         RangeCreation,
+        TargetCreation,
         Journals,
+        Targets,
         Ranges
     }
 });

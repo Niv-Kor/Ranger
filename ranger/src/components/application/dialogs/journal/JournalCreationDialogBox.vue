@@ -35,26 +35,26 @@
                         flat
                     >
                         <div v-if='model'>
-                            <select-journal-discipline
+                            <journal-creation-discipline-page
                                 v-show='currentTab == 0'
                                 @loading='activateLoading'
                             />
-                            <select-journal-target
+                            <journal-creation-target-page
                                 v-show='currentTab == 1'
                                 @loading='activateLoading'
                             />
                             <div :key='currentTab + ",2"'> <!-- refresh component after close -->
-                                <select-journal-target-config
+                                <journal-creation-target-config-page
                                     v-show='currentTab == 2'
                                     @loading='activateLoading'
                                 />
                             </div>
-                            <select-journal-theme
+                            <journal-creation-theme-page
                                 v-show='currentTab == 3'
                                 @loading='activateLoading'
                             />
                             <div :key='currentTab + ",4"'> <!-- refresh component after close -->
-                                <new-journal-preview
+                                <journal-creation-preview
                                     v-show='currentTab == 4'
                                     @loading='activateLoading'
                                     @change-tab='setTab'
@@ -167,20 +167,20 @@
 
 <script>
     import { mapGetters } from 'vuex';
-    import SelectJournalTheme from './SelectJournalTheme';
-    import SelectJournalDiscipline from './SelectJournalDiscipline';
-    import SelectJournalTarget from './SelectJournalTarget';
-    import SelectJournalTargetConfig from './SelectJournalTargetConfig';
-    import NewJournalPreview from './NewJournalPreview';
+    import JournalCreationThemePage from './JournalCreationThemePage';
+    import JournalCreationDisciplinePage from './JournalCreationDisciplinePage';
+    import JournalCreationTargetPage from './JournalCreationTargetPage';
+    import JournalCreationTargetConfigPage from './JournalCreationTargetConfigPage';
+    import JournalCreationPreview from './JournalCreationPreview';
     import Loading from '../../../widgets/Loading';
 
     export default {
         components: {
-            SelectJournalTheme,
-            SelectJournalDiscipline,
-            SelectJournalTarget,
-            SelectJournalTargetConfig,
-            NewJournalPreview,
+            JournalCreationThemePage,
+            JournalCreationDisciplinePage,
+            JournalCreationTargetPage,
+            JournalCreationTargetConfigPage,
+            JournalCreationPreview,
             Loading
         },
         props: {
@@ -359,9 +359,7 @@
                                     else {
                                         this.$store.dispatch('checkTargetExists', name)
                                             .then(res => {
-                                                if (res) this.popError('A target for \'' + this.discipline + '\' ' +
-                                                                       'with that name already exists');
-
+                                                if (res) this.popError('A target with that name already exists');
                                                 resolve(!res);
                                             });
                                     }

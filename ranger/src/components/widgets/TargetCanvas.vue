@@ -99,10 +99,10 @@
             /**
              * The most valuable point in the target.
              * 
-             * @example Object {
-             *                    {Number} x - Hit's x coordinate (in percentage from 0),
-             *                    {Number} y - Hit's y coordinate (in percentage from 0)
-             *                 },
+             * @example {
+             *             {Number} x - Point's x coordinate (in percentage from 0),
+             *             {Number} y - Point's y coordinate (in percentage from 0)
+             *          },
              */
             bullseye: {
                 type: Object,
@@ -112,13 +112,13 @@
             /**
              * Pre-defined hits in the target.
              * 
-             * @example Array [
-             *                   Object {
-             *                             {Number} x - Hit's x coordinate (in percentage from 0),
-             *                             {Number} y - Hit's y coordinate (in percentage from 0)
-             *                          },
-             *                   ...
-             *                ]
+             * @example [
+             *             {
+             *                {Number} x - Hit's x coordinate (in percentage from 0),
+             *                {Number} y - Hit's y coordinate (in percentage from 0)
+             *             },
+             *             ...
+             *          ]
              */
             predefineHits: {
                 type: Array,
@@ -145,11 +145,11 @@
              * Display rings starting from the target's bullseye point,
              * that represent its distribution of values over the whole target.
              * 
-             * @example Object {
-             *                    {Number} rings - Amount of rings to show,
-             *                    {Number} diameter - The diameter of the center ring as
-             *                                        percentage of width (min=1, max=100)}
-             *                 },
+             * @example {
+             *             {Number} rings - Amount of rings to show,
+             *             {Number} diameter - The diameter of the center ring as
+             *                                 percentage of width (min=1, max=100)}
+             *          },
              */
             displayValueRings: {
                 type: Object,
@@ -180,6 +180,7 @@
                 targetImgId: 'targetImgId',
                 zoomImgId: 'zoomImgId',
                 imageData: this.calcImageData(),
+                emitRingsCapacity: false,
                 srcImage: null,
                 zoomUrl: null,
                 touchedHit: null,
@@ -189,15 +190,8 @@
                 touchPos: { x: 0, y: 0 },
                 thumbPos: { x: 0, y: 0 },
                 zoomImagePos: { x: 0, y: 0 },
+                domImage: null
             }
-        },
-        created() {
-            this.onCreated()
-
-            //update preview image size every time the window is resizing
-            window.addEventListener('resize', () => {
-                this.imageData = this.calcImageData();
-            });
         },
         computed: {
             ...mapGetters({
@@ -340,7 +334,7 @@
                 let x, y;
                 let predefinedBullseye = this.$props.bullseye;
 
-                if (predefinedBullseye) {
+                if (predefinedBullseye && predefinedBullseye !== Infinity) {
                     x = predefinedBullseye.x * this.imageData.width / 100;
                     y = predefinedBullseye.y * this.imageData.height / 100;
                 }
@@ -357,22 +351,21 @@
                 return { x, y };
             },
             displayRingsAmount() {
-                if (!this.imageLoaded || !this.$props.displayValueRings) return 0;
-
-                let actualCenter = { x: this.imageData.width / 2, y: this.imageData.height / 2 };
-                let xDist = Math.abs(actualCenter.x - this.center.x);
-                xDist = Math.abs(actualCenter.x - xDist);
-                let yDist = Math.abs(actualCenter.y - this.center.y);
-                yDist = Math.abs(actualCenter.y - yDist);
-                let edgeDistance = Math.min(xDist, yDist);
-                let boxSize = (this.imageData.width + this.imageData.height) / 2;
-                let distancePerc = edgeDistance / boxSize * 100;
                 let dispObj = this.$props.displayValueRings;
+                
+                if (!this.imageLoaded || !this.$props.displayValueRings || !this.imageData.width) return 0;
+                else if (dispObj) {
+                    let diameter = dispObj.diameter;
+                    let boxSize = (this.imageData.width + this.imageData.height) / 2;
+                    let blockingCircleWidth = Math.sqrt(2 * Math.pow(boxSize, 2));
+                    let bullseye = this.$props.bullseye;
+                    let halfDistFromCenter = Math.sqrt(Math.pow(bullseye.x, 2) + Math.pow(bullseye.y, 2)) / 2;
+                    let pumpedDiameter = diameter * (1 + halfDistFromCenter / 100);
+                    let maxRings = Math.ceil(blockingCircleWidth / pumpedDiameter);
 
-                if (dispObj) {
-                    let diamPerc = dispObj.diameter;
-                    let maxRings = parseInt(distancePerc * 2 / diamPerc);
-                    
+                    //emit an event with the maximum capacity of rings
+                    this.tryEmitRingCapacity(maxRings);
+
                     return Math.min(dispObj.rings, maxRings);
                 }
                 else return 1;
@@ -382,6 +375,28 @@
                     width: this.imageData.width * ZOOM_RATIO,
                     height: this.imageData.height * ZOOM_RATIO
                 }
+            }
+        },
+        created() {
+            this.onCreated()
+
+            //update preview image size every time the window is resizing
+            window.addEventListener('resize', () => {
+                this.imageData = this.calcImageData();
+            });
+
+            //emit the maximum value rings capacity when available (once)
+            if (this.$props.bullseye) this.emitRingsCapacity = true;
+        },
+        mounted() {
+            this.domImage = document.getElementById(this.targetImgId);
+        },
+        watch: {
+            bullseye(value) {
+                if (value) this.emitRingsCapacity = true;
+            },
+            displayValueRings() {
+                this.emitRingsCapacity = true;
             }
         },
         methods: {
@@ -471,13 +486,12 @@
                 let srcWidth = this.srcImage.width;
                 let srcHeight = this.srcImage.height;
                 let ratio = srcWidth / srcHeight;
-                let dom = document.getElementById(this.targetImgId);
                 let wider = ratio > 1;
-                let unstableAxis = wider ? dom.clientHeight : dom.clientWidth;
+                let unstableAxis = wider ? this.domImage.clientHeight : this.domImage.clientWidth;
                 let currentStable;
 
                 if (this.$props.size) currentStable = this.$props.size;
-                else currentStable = wider ? dom.clientWidth : dom.clientHeight;
+                else currentStable = wider ? this.domImage.clientWidth : this.domImage.clientHeight;
 
                 let currentUnstable = currentStable * ratio;
                 let squeeze = unstableAxis < currentUnstable;
@@ -492,10 +506,10 @@
                 let height = wider ? currentUnstable : currentStable;
 
                 //find image position
-                let rect = dom.getBoundingClientRect();
+                let rect = this.domImage.getBoundingClientRect();
                 let position = { x: rect.left, y: rect.top };
-                let offsetLeft = dom.offsetLeft;
-                let offsetTop = dom.offsetTop;
+                let offsetLeft = this.domImage.offsetLeft;
+                let offsetTop = this.domImage.offsetTop;
                 position.x += offsetLeft;
                 position.y += offsetTop;
 
@@ -608,6 +622,19 @@
                     height: diam * index + 'px',
                     fontSize: VALUE_LABEL_FONT_SIZE + 'px'
                 };
+            },
+            /**
+             * Emit the maximum value rings capacity to the parent.
+             * This function is executed only if the bullseye prop is defined.
+             * 
+             * @param {Number} maxRings - Maximum amount of value rings available
+             * @emits {Number} max-rings - Maximum amount of value rings available
+             */
+            tryEmitRingCapacity: function(maxRings) {
+                if (this.emitRingsCapacity) {
+                    this.$emit('max-rings', maxRings);
+                    this.emitRingsCapacity = false;
+                }
             },
             /**
              * Create a hit point on the image and emit an event to the parent.
@@ -732,7 +759,7 @@
              *                      {Number} distance - distance from the point to the center,
              *                      {Number} xDistance - x distance from the point to the center,
              *                      {Number} yDistance - y distance from the point to the center,
-             *                      {Number} quarter - quarter relative to the center as in a coordinate system (1/2/3/4)
+             *                      {Number} quarter - quarter relative to the center as in a coordinate system [1/2/3/4]
              *                   }
              */
             distanceFromCenter: function(point) {
@@ -879,9 +906,11 @@
 
 <style scoped>
     .magnifier-container {
+        overflow: hidden;
         position: relative;
     }
     .preview {
+        overflow: hidden;
         position: relative;
         background-repeat: no-repeat;
         display: block;
@@ -899,6 +928,7 @@
         background: #ffffff no-repeat;
     }
     .target {
+        overflow: hidden;
         margin-left: auto;
         margin-right: auto;
         left: 0;

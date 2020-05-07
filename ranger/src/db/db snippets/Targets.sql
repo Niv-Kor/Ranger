@@ -98,13 +98,58 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE GetTargets
-	@user VARCHAR(70)
+ALTER PROCEDURE GetTargets
+	@user VARCHAR(70),
+	@get_non_active TINYINT
 AS
 BEGIN
 	SELECT *
 	FROM Targets
 	WHERE target_owner = @user
+	  AND active + @get_non_active > 0
+END
+GO
+
+CREATE PROCEDURE UpdateTarget
+	@id INT,
+	@new_center_x DECIMAL(6,3),
+	@new_center_y DECIMAL(6,3),
+	@new_rings_amount INT,
+	@new_diameter INT
+AS
+BEGIN
+	UPDATE Targets
+	SET center_x = ISNULL(@new_center_x, center_x),
+		center_y = ISNULL(@new_center_y, center_y),
+		rings = ISNULL(@new_rings_amount, rings),
+		rings_diameter = ISNULL(@new_diameter, rings_diameter)
+	WHERE id = @id
+END
+GO
+
+CREATE PROCEDURE DeleteTarget
+	@user VARCHAR(70),
+	@id INT
+AS
+BEGIN
+	-- delete target if it's not contained in any journal nor ranges
+	DELETE FROM Targets
+	WHERE id = @id
+	  AND @id NOT IN (SELECT DISTINCT j0.target_id
+	  		      	  FROM Journals j0
+					  WHERE j0.journal_owner = @user
+				  	    AND j0.target_id = @id
+					  UNION
+					  SELECT DISTINCT r.target_id
+					  FROM Ranges r
+					  INNER JOIN Journals j1 ON j1.id = r.journal_id
+					  WHERE j1.journal_owner = @user
+					    AND r.target_id = @id)
+	
+	-- deactivate the target if it's being used
+	UPDATE Targets
+	SET active = 0
+	WHERE id = @id
 END
 GO
 

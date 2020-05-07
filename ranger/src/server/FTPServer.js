@@ -14,6 +14,7 @@ module.exports = {
  * @param {String} destName - Name of the saved file at the destination
  * @param {String} destDir - Directory of the destination
  * @param {Number} compression - Maximum size for both the width and the height of the image
+ * @returns {Boolean} True if the process is successful.
  */
 async function uploadImage(base64, destName, destDir, compression) {
     let rawData = base64.split(';base64,').pop();
@@ -22,15 +23,18 @@ async function uploadImage(base64, destName, destDir, compression) {
     let destPath = `${destDir}${destDirSuffix}${destName}.${fileType}`;
     let tempFile = CONSTANTS.TEMP(`.${fileType}`);
 
-    //convert from base64 to image
-    CONSTANTS.FILE_SYSTEM.writeFile(tempFile, rawData, {encoding: 'base64'}, () => {
-        //compress image
-        if (compression) UTILS.compressImage(tempFile, compression);
+    return new Promise(resolve => {
+        //convert from base64 to image
+        CONSTANTS.FILE_SYSTEM.writeFile(tempFile, rawData, {encoding: 'base64'}, () => {
+            //compress image
+            if (compression) UTILS.compressImage(tempFile, compression);
 
-        ///upload to FTP server
-        CONSTANTS.FTP_CLIENT.put(tempFile, destPath, () => {
-            //delete temp file
-            CONSTANTS.FILE_SYSTEM.unlink(tempFile, () => {});
+            ///upload to FTP server
+            CONSTANTS.FTP_CLIENT.put(tempFile, destPath, () => {
+                //delete temp file
+                CONSTANTS.FILE_SYSTEM.unlink(tempFile, () => {});
+                resolve(true);
+            });
         });
     });
 }

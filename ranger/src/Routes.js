@@ -1,6 +1,7 @@
 import AppCarousel from './components/widgets/AppCarousel';
 import LoginPage from './components/authentication/LoginPage';
 import SignUpPage from './components/authentication/SignUpPage';
+import TargetsManager from './components/application/settings/TargetsManager';
 import GeneralSettings from './components/application/settings/GeneralSettings';
 import JournalSettings from './components/application/settings/JournalSettings';
 import JournalsPage from './components/application/journals/JournalsPage';
@@ -15,6 +16,7 @@ export const ROUTES = [
 
     //settings
     { path: '/home/settings', component: GeneralSettings },
+    { path: '/home/targets', component: TargetsManager },
     { path: '/home/journals/:journalId/settings', component: JournalSettings },
     { path: '/home/journals/:journalId/:rangeId/settings', component: GeneralSettings },
 

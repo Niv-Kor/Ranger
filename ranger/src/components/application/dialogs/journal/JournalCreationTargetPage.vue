@@ -64,7 +64,7 @@
                                 class='how-upload-info'
                                 align='center'
                             >
-                                Tap the button below to upload an image
+                                <span style='color: #00000070;'>Tap the button below to upload an image</span>
                             </div>
                         </v-col>
                     </v-row>
@@ -144,7 +144,6 @@
             return {
                 selectedTargetIndex: 0,
                 customTargetName: '',
-                customTargetThumbnail: null,
                 targets: {
                     'Archery': [
                         {
@@ -209,7 +208,6 @@
 
             //reset target selection back to 0 if discipline changes
             if (this.targetResetFlag) {
-                this.customTargetThumbnail = null;
                 this.selectedTargetIndex = 0;
                 let firstTarget = discipProperty[this.selectedTargetIndex];
                 this.$store.commit('setNewJournalTargetName', firstTarget.name);
@@ -239,17 +237,6 @@
             }),
             selectedTarget() {
                 return this.disciplineProperty[this.selectedTargetIndex];
-            },
-            fileUploadPlaceholder() {
-                let defaultMsg = 'Upload a custom image';
-                let uploadedName = this.uploadedTarget.chosenName;
-
-                if (uploadedName) {
-                    let fileType = uploadedName.split('.')[1];
-                    uploadedName = uploadedName.substr(0, 15) + '...' + fileType;
-                    return uploadedName;
-                }
-                else return defaultMsg;
             },
             disciplineProperty() {
                 return this.targets['' + this.storedDiscipline];
@@ -319,7 +306,7 @@
                 let canvas = event.canvas;
                 let base64 = canvas.toDataURL('image/' + this.uploadedTargetFileType);
                 this.$store.commit('setNewJournalUploadedTargetData', base64);
-                this.$emit('loading', false) //start loading
+                this.$emit('loading', false) //finish loading
             }
         }
     }

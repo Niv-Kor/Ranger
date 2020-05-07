@@ -35,18 +35,14 @@
                                 Touch longer to cancel
                             </div>
                             <target-canvas
-                                v-if='customTarget.base64Data'
+                                v-if='base64Data'
                                 class='target-canvas'
-                                :src='customTarget.base64Data'
+                                :src='base64Data'
                                 :hits=1
                                 mark-center
-                                :bullseye='customTarget.center'
-                                :predefine-center='!!customTarget.center'
-                                :imageStyle="{
-                                    outlineWidth: 2 + 'px',
-                                    outlineStyle: 'dashed',
-                                    outlineColor: colors.neutral
-                                }"
+                                :bullseye='center'
+                                :predefine-center='!!center'
+                                :imageStyle='{ outlineColor: colors.neutral }'
                                 @hit='saveNewCenter'
                                 @delete='clearCenter'
                             />
@@ -67,9 +63,9 @@
                                 Select the distribution of values from the bullseye
                             </div>
                             <v-slider
-                                v-model='customTarget.rings'
+                                v-model='ringsAmount'
                                 :min=1
-                                :max=10
+                                :max='Math.min(maxValueRings, 10)'
                                 dense
                                 ticks
                                 thumb-label
@@ -82,7 +78,7 @@
                             </v-slider>
                             <v-slider
                                 class='diam-slider'
-                                v-model='customTarget.ringDiameter'
+                                v-model='ringDiameter'
                                 :min=8
                                 :max=100
                                 dense
@@ -95,21 +91,18 @@
                                 <template v-slot:thumb-label='{ value }'>{{ value }}%</template>
                             </v-slider>
                             <target-canvas
-                                v-if='customTarget.base64Data'
+                                v-if='base64Data'
                                 class='target-canvas'
-                                :src='customTarget.base64Data'
+                                :src='base64Data'
                                 :hits=1
                                 read-only
-                                :bullseye='customTarget.center'
-                                :display-value-rings="customTarget.center ? {
-                                    rings: customTarget.rings,
-                                    diameter: customTarget.ringDiameter
-                                } : null"
-                                :imageStyle="{
-                                    borderWidth: 2 + 'px',
-                                    borderStyle: 'dashed',
-                                    borderColor: colors.neutral
-                                }"
+                                :bullseye='center'
+                                :display-value-rings='center ? {
+                                    rings: ringsAmount,
+                                    diameter: ringDiameter
+                                } : null'
+                                :imageStyle='{ borderColor: colors.neutral }'
+                                @max-rings='setMaxValueRings'
                             />
                         </v-container>
                     </v-card>
@@ -121,24 +114,32 @@
 
 <script>
     import { mapGetters } from 'vuex';
-    import TargetCanvas from '../../../widgets/TargetCanvas';
+    import TargetCanvas from '../../../../widgets/TargetCanvas';
 
     export default {
         components: {
             TargetCanvas
         },
+        data() {
+            return {
+                maxValueRings: 10
+            }
+        },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
-                customTarget: 'getNewJournalUploadedTarget'
-            })
-        },
-        watch: {
-            ringsAmount(value) {
-                this.$store.commit('setNewJournalUploadedTargetRingsAmount', value);
+                base64Data: 'getNewTargetData',
+                center: 'getNewTargetCenter',
+                storedRingsAmount: 'getNewTargetRingsAmount',
+                storedRingDiameter: 'getNewTargetRingDiameter'
+            }),
+            ringsAmount: {
+                get() { return this.storedRingsAmount; },
+                set(value) { this.$store.commit('setNewTargetRingsAmount', value); }
             },
-            ringsDiameter(value) {
-                this.$store.commit('setNewJournalUploadedTargetRingsDiameter', value);
+            ringDiameter: {
+                get() { return this.storedRingDiameter; },
+                set(value) { this.$store.commit('setNewTargetRingDiameter', value); }
             }
         },
         methods: {
@@ -153,18 +154,26 @@
              *                            {Number} distance - distance from the point to the center,
              *                            {Number} xDistance - x distance from the point to the center,
              *                            {Number} yDistance - y distance from the point to the center,
-             *                            {Number} quarter - quarter relative to the center as in a coordinate system (1/2/3/4)
+             *                            {Number} quarter - quarter relative to the center as in a coordinate system [1/2/3/4]
              *                         }
              */
             saveNewCenter: function(value) {
                 let center = value.point;
-                this.$store.commit('setNewJournalUploadedTargetCenter', center);
+                this.$store.commit('setNewTargetCenter', center);
             },
             /**
              * Clear the previously saved center.
              */
             clearCenter: function() {
-                this.$store.commit('setNewJournalUploadedTargetCenter', null);
+                this.$store.commit('setNewTargetCenter', null);
+            },
+            /**
+             * Set a maximum amount of rings available in the rings slider.
+             * 
+             * @param {Number} value - Maximum amount of rings
+             */
+            setMaxValueRings: function(value) {
+                this.maxValueRings = value;
             }
         }
     }
@@ -191,5 +200,9 @@
     }
     .diam-slider {
         margin-top: -20px;
+    }
+    .target-canvas {
+        outline-width: 2px;
+        outline-style: dashed;
     }
 </style>

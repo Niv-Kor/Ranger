@@ -1,6 +1,5 @@
 const state = {
     journals: [],
-    targets: [],
     journalsListLoading: false,
     selectedJournal: 0
 }
@@ -8,9 +7,6 @@ const state = {
 const getters = {
     getAllJournals: state => {
         return state.journals;
-    },
-    getAllTargets: state => {
-        return state.targets;
     },
     isJournalsListLoading: state => {
         return state.journalsListLoading;
@@ -39,7 +35,7 @@ const actions = {
         let storedIDs = await dataManager.getTargetsIDs();
 
         return new Promise(resolve => {
-            rootState.socket.on('load_journals', async res => {
+            rootState.socket.once('load_journals', async res => {
                 state.journals = res;
 
                 for (let obj of res) {
@@ -67,48 +63,6 @@ const actions = {
 
             rootState.socket.emit('load_journals', rootState.Auth.authEmail, storedIDs);
         })
-    },
-    /**
-     * Load all of the user's targets.
-     */
-    loadAllTargets: async ({ state, rootState }) => {
-        let dataManager = rootState.data;
-        let storedIDs = await dataManager.getTargetsIDs();
-        state.targets = [];
-
-        rootState.socket.on('get_targets', async res => {
-            for (let target of res) {
-                //push target to indexedDB
-                if (target.base64Data) {
-                    dataManager.insertTarget({
-                        id: target.id,
-                        image: target.base64Data
-                    });
-                }
-                //pull target from indexedDB
-                else {
-                    let targetId = target.id;
-                    let imageData = await dataManager.fetchTarget(targetId);
-                    target.base64Data = imageData.image;
-                }
-
-                state.targets.push(target);
-            }
-
-            //sort array - defaults last
-            state.targets.sort((e1, e2) => {
-                let user1 = e1.user;
-                let user2 = e2.user;
-
-                if (user1 === 'default' && user2 === rootState.Auth.authEmail) return 1;
-                else if (user1 === rootState.Auth.authEmail && user2 === 'default') return -1;
-                else return 0;
-            })
-        });
-
-        //load both default and personal targets
-        let users = [rootState.Auth.authEmail, 'default'];
-        for (let user of users) rootState.socket.emit('get_targets', user, storedIDs);
     },
     /**
      * Update the order of a single journal card.
@@ -139,12 +93,9 @@ const actions = {
      *                        }
      * @returns {Boolean} True if the process was successful.
      */
-    updateJournal: async ({ dispatch, rootState }, data) => {
+    updateJournal: async ({ rootState }, data) => {
         return new Promise(resolve => {
-            rootState.socket.on('update_journal', res => {
-                if (res) dispatch('reloadAllData').then(resolve(true));
-                else resolve(false);
-            });
+            rootState.socket.once('update_journal', res => resolve(res));
             rootState.socket.emit('update_journal', data);
         })
     },
@@ -156,7 +107,7 @@ const actions = {
      */
     clearJournalRanges: async ({ rootState }, id) => {
         return new Promise(resolve => {
-            rootState.socket.on('clear_journal_ranges', res => resolve(res));
+            rootState.socket.once('clear_journal_ranges', res => resolve(res));
             rootState.socket.emit('clear_journal_ranges', id);
         })
     },
@@ -168,7 +119,7 @@ const actions = {
      */
     deleteJournal: async ({ rootState }, id) => {
         return new Promise(resolve => {
-            rootState.socket.on('delete_journal', res => resolve(res));
+            rootState.socket.once('delete_journal', res => resolve(res));
             rootState.socket.emit('delete_journal', id);
         })
     }

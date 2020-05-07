@@ -163,6 +163,7 @@
 
 <script>
     import { mapGetters } from 'vuex';
+    import { windowDimMixin } from '../../../util/Mixins';
     import Moment from 'moment';
     import Loading from '../../widgets/Loading';
     import PlusButton from '../../widgets/PlusButton';
@@ -175,6 +176,9 @@
     const THREE = require('three');
 
     export default {
+        mixins: [
+            windowDimMixin
+        ],
         components: {
             PlusButton,
             RangeDialogBox,
@@ -183,10 +187,6 @@
         },
         data() {
             return {
-                windowDim: {
-                    width: 0,
-                    height: 0
-                },
                 listFilter: {
                     from: -1,
                     to: -1,
@@ -289,25 +289,10 @@
                 return { score, total };
             }
         },
-        created() {
-            window.addEventListener('resize', this.handleResize);
-            this.handleResize();
-        },
         mounted() {
             this.clearFilter();
         },
-        destroyed() {
-            window.removeEventListener('resize', this.handleResize);
-        },
         methods: {
-            /**
-             * Activate when the window's size is changing.
-             * Save the new size.
-             */
-            handleResize: function() {
-                this.windowDim.width = window.innerWidth;
-                this.windowDim.height = window.innerHeight;
-            },
             /**
              * Go to a range's URL.
              * 

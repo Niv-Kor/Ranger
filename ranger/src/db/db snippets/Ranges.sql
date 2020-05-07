@@ -94,10 +94,10 @@ AS
 BEGIN
 	DECLARE
 		@scores TABLE(
-					    id INT NOT NULL,
-						score INT DEFAULT 0,
-						total INT DEFAULT 0
-					 )
+			id INT NOT NULL,
+			score INT DEFAULT 0,
+			total INT DEFAULT 0
+		)
 	
 	-- get scores and total for each range
 	INSERT INTO @scores(id, score, total)

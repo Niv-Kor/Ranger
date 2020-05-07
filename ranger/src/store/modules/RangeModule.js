@@ -25,7 +25,7 @@ const actions = {
     loadAllRanges: async ({ commit, state, rootState }) => {
         commit('setRangesListLoading', true);
 
-        rootState.socket.on('load_ranges', async res => {
+        rootState.socket.once('load_ranges', async res => {
             processes--;
             state.ranges[`journal #${res.journalId}`] = res.ranges;
 
@@ -64,7 +64,7 @@ const actions = {
 
         return new Promise((resolve) => {
             rootState.socket.emit('range_exists', data);
-            rootState.socket.on('range_exists', res => resolve(res));
+            rootState.socket.once('range_exists', res => resolve(res));
         });
     },
     /**

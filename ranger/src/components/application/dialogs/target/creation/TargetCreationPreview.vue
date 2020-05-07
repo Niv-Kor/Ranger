@@ -6,7 +6,7 @@
                 align=center
             >
                 Before we finish,<br>
-                let's preview your new journal
+                let's preview the target
             </p>
         </v-container>
         <v-container>
@@ -14,28 +14,7 @@
                 Name:<br>
             </span>
             <span :style="{ color: colors.primary }">
-                {{ journalName }}
-                <v-icon
-                    class='theme-color-preview'
-                    small
-                    :color='colorTheme'
-                >
-                    mdi-checkbox-blank
-                </v-icon>
-                <span
-                    class='change-btn'
-                    :style="{ color: colors.neutral + '!important' }"
-                    @click='change(3)'
-                >
-                    change
-                </span>
-            </span>
-            <br><br>
-            <span class='details-header'>
-                Discipline:<br>
-            </span>
-            <span :style="{ color: colors.primary }">
-                {{ discipline }}
+                {{ targetName }}
                 <span
                     class='change-btn'
                     :style="{ color: colors.neutral + '!important' }"
@@ -46,10 +25,11 @@
             </span>
             <br><br>
             <span class='details-header'>
-                Default Target:<br>
+                Bullseye point:<br>
             </span>
             <span :style="{ color: colors.primary }">
-                {{ defTarget }}
+                {{ centerPoint }}
+                <span class='fine-print'>from center</span>
                 <span
                     class='change-btn'
                     :style="{ color: colors.neutral + '!important' }"
@@ -58,11 +38,29 @@
                     change
                 </span>
             </span>
+            <br><br>
+            <span class='details-header'>
+                <span :style="{ color: colors.primary }">{{ ringsAmount }} </span>
+                <template v-if='ringsAmount === 1'>ring:</template>
+                <template v-else>rings:</template>
+                <br>
+            </span>
+            <span :style="{ color: colors.primary }">
+                <span class='fine-print'>with diameter of </span>{{ ringDiameter }}%
+                <span
+                    class='change-btn'
+                    :style="{ color: colors.neutral + '!important' }"
+                    @click='change(1)'
+                >
+                    change
+                </span>
+            </span>
+            <br><br>
             <v-img
-                v-if='targetThumbnail'
+                v-if='base64Data'
                 class='target-thumbnail'
-                :src='targetThumbnail'
-                :max-width=80
+                :src='base64Data'
+                :width=80
             />
         </v-container>
     </div>
@@ -75,26 +73,34 @@
         computed: {
             ...mapGetters({
                 colors: 'getColors',
-                journalName: 'getNewJournalName',
-                defaultDisciplineName: 'getNewJournalDiscipline',
-                customDisciplineName: 'getNewJournalCustomDiscipline',
-                predefTarget: 'getNewJournalTarget',
-                customTarget: 'getNewJournalUploadedTarget',
-                usingCustomDiscipline: 'useCustomDiscipline',
-                usingCustomTarget: 'useUploadedCustomTarget',
-                colorTheme: 'getNewJournalColorTheme'
+                targetName: 'getNewTargetName',
+                center: 'getNewTargetCenter',
+                base64Data: 'getNewTargetData',
+                ringsAmount: 'getNewTargetRingsAmount',
+                ringDiameter: 'getNewTargetRingDiameter'
             }),
-            discipline() {
-                let custom = this.usingCustomDiscipline;
-                return custom ? this.customDisciplineName : this.defaultDisciplineName;
-            },
-            defTarget() {
-                let custom = this.usingCustomTarget;
-                return custom ? this.customTarget.chosenName : this.predefTarget.name;
-            },
-            targetThumbnail() {
-                let custom = this.usingCustomTarget;
-                return custom ? this.customTarget.base64Data : this.predefTarget.base64Data;
+            centerPoint() {
+                if (this.center && this.center.x && this.center.y) {
+                    let x = this.center.x;
+                    let y = this.center.y;
+                    let xLarge = x > 50;
+                    let yLarge = y > 50;
+
+                    //find distance from center
+                    x = Math.abs(x - 50);
+                    y = Math.abs(y - 50);
+
+                    //find the correct sign
+                    x *= xLarge ? 1 : -1;
+                    y *= yLarge ? 1 : -1;
+
+                    //round to 2 decimal places
+                    x = (parseInt(x) === x) ? x : x.toFixed(1);
+                    y = (parseInt(y) === y) ? y : y.toFixed(1);
+
+                    return `(${x}%, ${y}%)`;
+                }
+                else return 'not defined';
             }
         },
         methods: {
@@ -114,6 +120,10 @@
         font-family: 'Comfortaa';
         margin-top: -20px;
     }
+    .fine-print {
+        font-size: 14px;
+        color: #000000bb;
+    }
     .details-header {
         font-weight: bold;
     }
@@ -122,17 +132,10 @@
         font-size: 13px;
     }
     .target-thumbnail {
-        margin: 5px;
+        position: absolute;
+        right: 15px;
         outline-width: 1px;
         outline-style: dashed;
         outline-color: #5e7075;
-    }
-    .theme-color-preview {
-        border-width: 1px;
-        border-color: #00000055;
-        border-style: solid;
-        border-radius: 15%;
-        margin-top: -3px;
-        margin-left: 5px;
     }
 </style>

@@ -53,7 +53,7 @@ async function createJournal(socket, data) {
         
         let customTargetParams = [
             { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
-            { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
+            { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: null, options: {} },
             { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: targetName, options: {} },
             { name: 'image_path', type: CONSTANTS.SQL.VarChar(256), value: uploadedTargetDestPath, options: {} },
             { name: 'cx', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.x.toFixed(3), options: {} },
@@ -65,7 +65,7 @@ async function createJournal(socket, data) {
         //add to db
         await GENERAL_ACTIONS.runProcedure('AddTarget', customTargetParams);
 
-        //store custom target photo in the server
+        //store custom target photo in the FTP server
         let compression = 400;
         await FTP_SERVER.uploadImage(base64, destName, dir, compression);
     }
@@ -77,7 +77,6 @@ async function createJournal(socket, data) {
     //create new journal
     let targetIdExtractionParams = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: targetUser, options: {} },
-        { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
         { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: targetName, options: {} }
     ];
 
@@ -145,7 +144,7 @@ async function journalExists(user, discipline, name) {
  *                                             {String} name - The default target's name,
  *                                             {String} base64Data - Target's base64 image data,
  *                                             {Number} rings - Amount of target rings,
- *                                             {Number} ringsDiameter - The diameter of each ring in the target,
+ *                                             {Number} ringDiameter - The diameter of each ring in the target,
  *                                             {Object} center - {
  *                                                                  {Number} x - x coordinates if the center (in percentages),
  *                                                                  {Number} y - y coordinates if the center (in percentages),
@@ -202,7 +201,7 @@ async function loadJournals(user, ignoreTargetIds) {
                             name: obj['target_name'],
                             base64Data: targetBase64,
                             rings: obj['target_rings'],
-                            ringsDiameter: obj['target_rings_diameter'],
+                            ringDiameter: obj['target_rings_diameter'],
                             center: {
                                 x: obj['target_center_x'],
                                 y: obj['target_center_y']

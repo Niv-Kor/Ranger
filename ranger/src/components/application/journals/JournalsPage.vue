@@ -113,7 +113,7 @@
             class='plus'
             @click='createJournalModel = true'
         />
-        <journal-dialog-box
+        <journal-creation-dialog-box
             :model='createJournalModel'
             :allow-success-popup='!isListLoading'
             @close='createJournalModel = false'
@@ -124,27 +124,27 @@
 
 <script>
     import { mapGetters } from 'vuex';
+    import { windowDimMixin } from '../../../util/Mixins';
     import Loading from '../../widgets/Loading';
     import PlusButton from '../../widgets/PlusButton';
-    import JournalDialogBox from '../dialogs/journal/JournalDialogBox';
+    import JournalCreationDialogBox from '../dialogs/journal/JournalCreationDialogBox';
 
     const JOURNAL_ASSETS = require.context('../../../assets/disciplines/journal card/', false, /\.png|\.jpg$/);
 
     export default {
+        mixins: [
+            windowDimMixin
+        ],
         components: {
             Loading,
             PlusButton,
-            JournalDialogBox
+            JournalCreationDialogBox
         },
         data() {
             return {
                 dragData: {},
                 sortFlag: false,
                 createJournalModel: false,
-                windowDim: {
-                    width: 0,
-                    height: 0
-                },
                 disciplines: [
                     {
                         name: 'Archery',
@@ -181,12 +181,7 @@
             }
         },
         created() {
-            window.addEventListener('resize', this.handleResize);
-            this.handleResize();
             this.updateOrder();
-        },
-        destroyed() {
-            window.removeEventListener('resize', this.handleResize);
         },
         methods: {
             /**
@@ -307,14 +302,6 @@
 
                 this.updateOrder();
                 this.sortFlag = false; //turn off
-            },
-            /**
-             * Activate when the window's size is changing.
-             * Save the new size.
-             */
-            handleResize: function() {
-                this.windowDim.width = window.innerWidth;
-                this.windowDim.height = window.innerHeight;
             },
             /**
              * Update the new order in the database,

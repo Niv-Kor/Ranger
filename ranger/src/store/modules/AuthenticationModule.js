@@ -72,7 +72,7 @@ const actions = {
     authenticateUser: async ({ state, rootState }) => {
         return new Promise((resolve) => {
             rootState.socket.emit('get_hash_password', state.authEmail);
-            rootState.socket.on('get_hash_password', hash => {
+            rootState.socket.once('get_hash_password', hash => {
                 let match = hash ? BCRYPT.compareSync(state.authPass, hash) : false;
                 let errorCode = match ? 0 : 1;
                 let errorMessage = match ? '' : 'Some of the information you entered is not valid. Please check again.'
@@ -101,7 +101,7 @@ const actions = {
                 password: hashPass
             });
 
-            rootState.socket.on('sign_user', res => {
+            rootState.socket.once('sign_user', res => {
                 resolve({
                     errorCode: res.errorCode,
                     errorMessage: res.message
