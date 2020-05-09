@@ -143,6 +143,13 @@ ALTER PROCEDURE ClearJournalRanges
 	@journal_id INT
 AS
 BEGIN
+	DECLARE 
+		@user VARCHAR(70)
+	SET
+		@user = (SELECT journal_owner
+						FROM Journals
+						WHERE id = @journal_id)
+
 	DELETE FROM Ranges
 	WHERE journal_id = @journal_id
 

@@ -1,6 +1,7 @@
 const BCRYPT = require('bcryptjs');
 
 const state = {
+    authUsername: '',
     authEmail: '',
     authPass: '',
     authErrorMessage: '',
@@ -9,21 +10,24 @@ const state = {
     authLoading: false,
     authRegex: {
         email: /^[0-9A-Za-z_-]{1,}@[0-9A-Za-z_-]{1,}\.[0-9A-Za-z.]{1,}$/,
-        password: /^[0-9A-Za-z]{8,25}$/
+        password: /^[0-9A-Za-z]{8,25}$/,
+        username: /^([0-9A-Za-z]+[0-9A-Za-z_-]*){2,20}$/
     },
 };
 
 const getters = {
     getUserData: (state) => {
         return {
+            username: state.authUsername,
             email: state.authEmail,
             password: state.authPass
         }
     },
     getInputValidation: state => {
+        let usernameValid = state.authRegex.username.test(state.authUsername);
         let emailValid = state.authRegex.email.test(state.authEmail);
         let passValid = state.authRegex.password.test(state.authPass);
-        return emailValid && passValid;
+        return usernameValid && emailValid && passValid;
     },
     isWrongAuthInput: state => {
         return state.authWrongInput;
@@ -43,6 +47,9 @@ const getters = {
 };
 
 const mutations = {
+    setAuthUsername: (state, value) => {
+        state.authUsername = value;
+    },
     setAuthEmail: (state, value) => {
         state.authEmail = value;
     },
@@ -97,6 +104,7 @@ const actions = {
 
         return new Promise((resolve) => {
             rootState.socket.emit('sign_user', {
+                username: state.authUsername,
                 email: state.authEmail,
                 password: hashPass
             });

@@ -12,14 +12,16 @@ module.exports = {
  * 
  * @param {SocketIO.Socket} socket - The socket used by the server.
  * @param {Object} user - {
- *                           {String} email - User data token,
+ *                           {String} username - User's name,
+ *                           {String} email - User email token,
  *                           {String} password - User's password
  *                        }
  */
 async function signUser(socket, user) {
     let params = [
         { name: 'email', type: CONSTANTS.SQL.VarChar(70), value: user.email, options: {} },
-        { name: 'hash', type: CONSTANTS.SQL.VarChar(512), value: user.password, options: {} }
+        { name: 'hash', type: CONSTANTS.SQL.VarChar(512), value: user.password, options: {} },
+        { name: 'username', type: CONSTANTS.SQL.VarChar(20), value: user.username, options: {} }
     ];
 
     //sign and let the client know if the procedure succeeded

@@ -44,7 +44,7 @@
                         <span class='no-targets keyword' :style='{ color: colors.primary }'>customize</span>
                         it, and use it in any of your ranges.
                     </p>
-                    <div class='no-targets header'>How to get started?</div>
+                    <div class='no-targets header'>How do I get started?</div>
                     <p class='no-targets msg'>
                         Tap the
                         '<span class='no-targets keyword' :style='{ color: colors.primary }'>Create Target</span>'

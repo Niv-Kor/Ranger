@@ -2,6 +2,18 @@
     <div>
         <v-text-field
             class='field'
+            label="Name"
+            v-model='username'
+            :rules='[inputRules.required, inputRules.validUsername]'
+            outlined
+            clearable
+            rounded
+            solo-inverted
+            color='#000000aa'
+            background-color='#ffffff90'
+        />
+        <v-text-field
+            class='field'
             label="Email"
             v-model='email'
             :rules='[inputRules.required, inputRules.validEmail]'
@@ -49,6 +61,7 @@
                 elevation=3
                 :disabled='!valid'
                 rounded
+                dense
                 x-large
                 @click='signUp'
             >
@@ -109,6 +122,7 @@
         },
         data() {
             return {
+                username: '',
                 email: '',
                 password: '',
                 repeatPassword: '',
@@ -118,7 +132,8 @@
                     required: value => !!value || 'Required.',
                     length: v => v && v.length >= 8 && v.length <= 25 || 'Between 8-25 characters',
                     match: value => value === this.password || 'Passwords don\'t match',
-                    validEmail: value => this.regex.email.test(value) || 'Not a valid email address'
+                    validEmail: value => this.regex.email.test(value) || 'Not a valid email address',
+                    validUsername: value => this.regex.username.test(value) || 'Not a valid username'
                 }
             }
         },
@@ -139,10 +154,13 @@
             enterButtonColor() { return this.colors.secondary + 'aa'; }
         },
         watch: {
-            email: function(value) {
+            username(value) {
+                this.$store.commit('setAuthUsername', value);
+            },
+            email(value) {
                 this.$store.commit('setAuthEmail', value);
             },
-            password: function(value) {
+            password(value) {
                 this.$store.commit('setAuthPassword', value);
             }
         },

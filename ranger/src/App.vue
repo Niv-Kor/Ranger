@@ -35,6 +35,7 @@ export default {
   },
   created() {
     let userData = this.fetchUserDataFromStorage();
+    this.$store.dispatch('connectServer');
     
     //let the user in if his data is already stored
     if (userData) {
@@ -52,7 +53,6 @@ export default {
     onUserAuthenticated: async function() {
       this.$store.commit('setAuthentication', true);
       this.$router.push({ path: '/home' }).catch(() => {});
-      await this.$store.dispatch('connectServer');
       this.$store.dispatch('reloadAllData');
     },
     /**
