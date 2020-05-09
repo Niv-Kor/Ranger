@@ -143,25 +143,10 @@ ALTER PROCEDURE ClearJournalRanges
 	@journal_id INT
 AS
 BEGIN
-	DECLARE 
-		@deleted_range_id INT
-	DECLARE id_cusror CURSOR READ_ONLY
-		    FOR
-		    SELECT r.id
-		    FROM Ranges r
-		    WHERE r.journal_id = @journal_id
+	DELETE FROM Ranges
+	WHERE journal_id = @journal_id
 
-	OPEN id_cusror
-	FETCH NEXT FROM id_cusror
-	INTO @deleted_range_id
-
-	-- delete all of the journal's ranges
-	WHILE @@FETCH_STATUS = 0
-	BEGIN
-		EXEC DeleteRange @deleted_range_id
-		FETCH NEXT FROM id_cusror
-		INTO @deleted_range_id
-	END
+	EXEC DeleteOrphinTargets @user
 END
 GO
 
