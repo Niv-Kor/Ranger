@@ -482,7 +482,7 @@
                         this.selectedDiscipline = this.journal.discipline;
                         break;
                     case 2:
-                        this.targets = this.storeTargets;
+                        this.targets = this.storeTargets.filter(x => x.active);
                         this.targets.sort(element => {
                             if (element.id === this.journal.target.id) return -1;
                             else return 0;

@@ -234,7 +234,7 @@
 
                 if (!success) {
                     this.load = false;
-                    this.popError(`Could not create the target '${this.props.target.name}'. ` +
+                    this.popError(`Could not create the target '${this.$props.target.name}'. ` +
                                   `Please try again later.`);
                 }
                 else {

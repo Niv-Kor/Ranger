@@ -1,3 +1,5 @@
+const MOMENT = require('moment');
+
 const state = {
     newJournalName: '',
     newJournalDiscipline: '',
@@ -213,6 +215,7 @@ const actions = {
         let customDiscipName = state.newJournalCustomDiscipline;
         let defDiscipName = state.newJournalDiscipline;
         let discipName = useCustomDiscip ? customDiscipName : defDiscipName;
+        let creationDate = MOMENT().format('YYYY-MM-DD HH:mm');
 
         return new Promise((resolve) => {
             rootState.socket.emit('create_journal', {
@@ -222,7 +225,8 @@ const actions = {
                 storedTarget: state.newJournalDefaultTarget.name,
                 customTarget: state.newJournaluploadedTarget,
                 isTargetCustom: state.useUploadedCustomTarget,
-                colorTheme: state.newJournalColorTheme
+                colorTheme: state.newJournalColorTheme,
+                date: creationDate
             });
 
             rootState.socket.once('create_journal', res => {

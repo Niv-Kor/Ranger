@@ -43,18 +43,18 @@
                     >
                         <v-col v-if='!selectedTarget.custom'>
                             <v-img
-                                v-if='selectedTarget && selectedTarget.src'
+                                v-if='selectedTarget && selectedTarget.base64Data'
                                 class='thumbnail'
-                                :src='selectedTarget.src'
+                                :src='selectedTarget.base64Data'
                                 max-width=120
                                 max-height=120
                             />
                         </v-col>
                         <v-col v-else>
                             <cropper
-                                v-if='selectedTarget.src'
+                                v-if='selectedTarget.base64Data'
                                 class='thumbnail custom'
-                                :src='selectedTarget.src'
+                                :src='selectedTarget.base64Data'
                                 :stencilProps="{ aspectRatio: 1 }"
                                 @change='onCustomTargetChange'
                                 @ready='$emit("loading", false)'
@@ -74,7 +74,7 @@
                 class='nav-arrow'
                 size=64
                 :color='colors.primary'
-                :disabled='selectedTargetIndex >= disciplineProperty.length - 1'
+                :disabled='selectedTargetIndex >= targets.length - 1'
                 @click='incrementTarget'
             >
                 mdi-menu-right
@@ -104,7 +104,7 @@
                         outlined
                         counter=20
                         clearable
-                        :disabled='!selectedTarget.src'
+                        :disabled='!selectedTarget.base64Data'
                         :placeholder='selectedTarget.name'
                         :color='colors.neutral'
                      />
@@ -118,7 +118,7 @@
                             fab
                             medium
                             elevation=3
-                            :color='selectedTarget.src ? colors.neutral : colors.primary'
+                            :color='selectedTarget.base64Data ? colors.neutral : colors.primary'
                         >
                             <v-icon color='white'>mdi-paperclip</v-icon>
                         </v-btn>
@@ -132,10 +132,8 @@
 <script>
     import { mapGetters } from 'vuex';
     import { Cropper } from 'vue-advanced-cropper';
+    import Moment from 'moment';
     
-    const ARCHERY_CONTEXT = require.context('../../../../assets/targets/small/archery', false, /\.png$/);
-    const FIREARM_CONTEXT = require.context('../../../../assets/targets/small/firearm', false, /\.png$/);
-
     export default {
         components: {
             Cropper
@@ -144,54 +142,6 @@
             return {
                 selectedTargetIndex: 0,
                 customTargetName: '',
-                targets: {
-                    'Archery': [
-                        {
-                            name: 'FITA',
-                            src: ARCHERY_CONTEXT('./FITA.png'),
-                            custom: false
-                        },
-                        {
-                            name: 'FITA Field',
-                            src: ARCHERY_CONTEXT('./FITA Field.png'),
-                            custom: false
-                        },
-                        {
-                            name: 'Enter target name',
-                            src: null,
-                            custom: true
-                        }
-                    ],
-                    'Firearm': [
-                        {
-                            name: 'ISSF Air Pistol',
-                            src: FIREARM_CONTEXT('./ISSF Air Pistol.png'),
-                            custom: false
-                        },
-                        {
-                            name: 'ISSF Rapid Fire',
-                            src: FIREARM_CONTEXT('./ISSF Rapid Fire.png'),
-                            custom: false
-                        },
-                        {
-                            name: 'ISSF Air Rifle',
-                            src: FIREARM_CONTEXT('./ISSF Air Rifle.png'),
-                            custom: false
-                        },
-                        {
-                            name: 'Enter target name',
-                            src: null,
-                            custom: true
-                        }
-                    ],
-                    'Other': [
-                        {
-                            name: 'Enter target name',
-                            src: null,
-                            custom: true
-                        }
-                    ],
-                }
             }
         },
         created() {
@@ -204,12 +154,10 @@
             }
         },
         updated() {
-            let discipProperty = this.disciplineProperty;
-
             //reset target selection back to 0 if discipline changes
             if (this.targetResetFlag) {
                 this.selectedTargetIndex = 0;
-                let firstTarget = discipProperty[this.selectedTargetIndex];
+                let firstTarget = this.targets[this.selectedTargetIndex];
                 this.$store.commit('setNewJournalTargetName', firstTarget.name);
                 this.$store.commit('setNewJournalTargetData', firstTarget.src);
                 this.$store.commit('setNewJournalTargetResetFlag', false);
@@ -217,18 +165,17 @@
                 this.$store.commit('setNewJournalUploadedTargetName', '');
                 
                 //remove irrelevant thumbnails
-                for (let [, discipVal] of Object.entries(this.targets))
-                    for (let [, targetVal] of Object.entries(discipVal))
-                        if (targetVal.custom) targetVal.src = null;
+                this.targets.find(x => x.custom).base64Data = null;
             }
 
             //determine the use of a custom target
-            let useCustom = discipProperty[this.selectedTargetIndex].custom;
+            let useCustom = this.selectedTarget.custom;
             this.$store.commit('setUseUploadedCustomTarget', useCustom);
         },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
+                allTargets: 'getAllTargets',
                 storedDiscipline: 'getNewJournalDiscipline',
                 storedTarget: 'getNewJournalTarget',
                 uploadedTarget: 'getNewJournalUploadedTarget',
@@ -236,21 +183,49 @@
                 targetResetFlag: 'getNewJournalTargetResetFlag'
             }),
             selectedTarget() {
-                return this.disciplineProperty[this.selectedTargetIndex];
+                return this.targets[this.selectedTargetIndex];
             },
-            disciplineProperty() {
-                return this.targets['' + this.storedDiscipline];
+            targets() {
+                let list = this.allTargets.filter(x => {
+                    let active = x.active;
+                    let discipMatch = !x.discipline || x.discipline === this.storedDiscipline;
+                    return active && discipMatch;
+                });
+                
+                //mark all as non-customable target
+                for (let target of list) target.custom = false;
+
+                //sort personal targets first
+                list.sort((el1, el2) => {
+                    if (!el1.discipline && el2.discipline) return -1;
+                    else if (el1.discipline === el2.discipline) {
+                        //both personal targets
+                        if (!el1.discipline) {
+                            let creationDate1 = Moment(el1.creationDate, 'YYYY-MM-DD HH:mm:ss');
+                            let creationDate2 = Moment(el2.creationDate, 'YYYY-MM-DD HH:mm:ss');
+                            return creationDate1.isAfter(creationDate2) ? -1 : 1;
+                        }
+                        //both common targets
+                        else return 0;
+                    }
+                    else return 1;
+                });
+
+                //add the once customable target
+                list.push({
+                    name: 'Enter target name',
+                    base64Data: null,
+                    custom: true
+                });
+
+                return list;
             }
         },
         watch: {
             selectedTargetIndex(value) {
-                let property = this.disciplineProperty;
-
-                if (property) {
-                    let target = property[value];
-                    this.$store.commit('setNewJournalTargetName', target.name);
-                    this.$store.commit('setNewJournalTargetData', target.src);
-                }
+                let target = this.targets[value];
+                this.$store.commit('setNewJournalTargetName', target.name);
+                this.$store.commit('setNewJournalTargetData', target.base64Data);
             },
             customTargetName(value) {
                 this.$store.commit('setNewJournalUploadedTargetName', value);
@@ -261,7 +236,7 @@
              * Move to the next target in line.
              */
             incrementTarget: function() {
-                if (this.selectedTargetIndex < this.disciplineProperty.length - 1)
+                if (this.selectedTargetIndex < this.targets.length - 1)
                     this.selectedTargetIndex++;
             },
             /**

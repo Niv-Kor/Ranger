@@ -85,6 +85,7 @@
 
 <script>
     import { mapGetters } from 'vuex';
+    import Moment from 'moment';
     
     export default {
         data() {
@@ -111,10 +112,17 @@
         created() {
             //sort targets and put the default one first
             let defTargetId = this.journal.target.id;
-            this.targets = this.storeTargets;
-            this.targets.sort(element => {
-                if (element.id === defTargetId) return -1;
-                else return 0;
+            this.targets = this.storeTargets.filter(x => x.active);
+            this.targets.sort((el1, el2) => {
+                if (el1.id === defTargetId) return -1;
+                else {
+                    if (el1.discipline === el2.discipline && !el1.discipline) {
+                        let creationDate1 = Moment(el1.creationDate, 'YYYY-MM-DD HH:mm:ss');
+                        let creationDate2 = Moment(el2.creationDate, 'YYYY-MM-DD HH:mm:ss');
+                        return creationDate1.isAfter(creationDate2) ? -1 : 1;
+                    }
+                    return 0;
+                }
             })
 
             //set range target as default to begin with

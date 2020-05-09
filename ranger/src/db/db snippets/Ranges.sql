@@ -3,7 +3,7 @@ CREATE TABLE Ranges (
 	id INT IDENTITY(1,1),
 	journal_id INT NOT NULL,
 	shooting_date VARCHAR(19) NOT NULL,
-	target_id INT NOT NULL,
+	target_id INT DEFAULT NULL,
 	ends INT DEFAULT 1,
 	is_training TINYINT DEFAULT 0,
 
@@ -12,15 +12,25 @@ CREATE TABLE Ranges (
 	CONSTRAINT FK_Ranges_Journals_id
 	FOREIGN KEY(journal_id) REFERENCES Journals(id) ON DELETE CASCADE,
 
-	--target must never be deleted if it appears in Ranges
 	CONSTRAINT FK_Ranges_Targets_id
-	FOREIGN KEY(target_id) REFERENCES Targets(id),
+	FOREIGN KEY(target_id) REFERENCES Targets(id) ON DELETE NO ACTION,
 
 	CONSTRAINT unique_range UNIQUE CLUSTERED (
 		journal_id, shooting_date
 	)
 )
 GO
+
+ALTER TABLE Ranges
+ALTER COLUMN target_id INT
+
+ALTER TABLE Ranges
+DROP CONSTRAINT FK_Ranges_Targets_id
+
+ALTER TABLE Ranges
+ADD CONSTRAINT FK_Ranges_Targets_id
+FOREIGN KEY(target_id) REFERENCES Targets(id) ON DELETE NO ACTION
+
 
 -- Procedures
 ALTER PROCEDURE CreateRange
@@ -87,6 +97,26 @@ BEGIN
 END
 GO
 
+ALTER PROCEDURE DeleteRange
+	@id INT
+AS
+BEGIN
+	DECLARE
+		@user VARCHAR(70)
+	SET
+		@user = (SELECT t.target_owner
+				 FROM Targets t
+				 INNER JOIN Ranges r ON r.target_id = t.id
+				 WHERE r.target_id = @id)
+
+	DELETE FROM Ranges
+	WHERE id = @id
+
+	-- delete targets that are left orphins after the range deletion
+	EXEC DeleteOrphinTargets @user;
+END
+GO
+
 ALTER PROCEDURE LoadRanges
 	@shooter VARCHAR(70),
 	@journal_id INT
@@ -140,3 +170,13 @@ GO
 
 DROP TABLE Ranges
 GO
+
+DELETE FROM Targets t
+	WHERE t.id IN (SELECT t1.id
+				   FROM Targets t1
+				   WHERE t1.active = 0
+					 AND t1.id NOT IN (SELECT r.target_id
+				  					   FROM Ranges r
+									   INNER JOIN Journals j ON j.id = r.journal_id
+									   WHERE j.journal_owner = @user
+									   AND r.id != @id))

@@ -171,7 +171,7 @@
                 colors: 'getColors',
                 colorPalette: 'getNewJournalColorPalette',
                 list: 'getAllJournals',
-                isListLoading: 'isJournalsListLoading'
+                isListLoading: 'isAnyListLoading'
             }),
             tabSize() {
                 return {

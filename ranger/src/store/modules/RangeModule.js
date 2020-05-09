@@ -25,26 +25,32 @@ const actions = {
     loadAllRanges: async ({ commit, state, rootState }) => {
         commit('setRangesListLoading', true);
 
-        rootState.socket.once('load_ranges', async res => {
-            processes--;
-            state.ranges[`journal #${res.journalId}`] = res.ranges;
-
-            //finish
-            if (processes === 0) commit('setRangesListLoading', false);
-        });
-
         let journalKeys = [];
         let userJournals = rootState.Journals.journals;
         let processes = userJournals.length;
-        for (let journal of userJournals) journalKeys.push(journal.id);
 
-        for (let id of journalKeys) {
-            let data = {
-                user: rootState.Auth.authEmail,
-                journalId: id
+        if (processes === 0) {
+            commit('setRangesListLoading', false);
+            return;
+        }
+        else {
+            for (let journal of userJournals) journalKeys.push(journal.id);
+            for (let id of journalKeys) {
+                let data = {
+                    user: rootState.Auth.authEmail,
+                    journalId: id
+                }
+
+                rootState.socket.once('load_ranges', async res => {
+                    processes--;
+                    state.ranges[`journal #${res.journalId}`] = res.ranges;
+                    
+                    //finish
+                    if (processes === 0) commit('setRangesListLoading', false);
+                });
+
+                rootState.socket.emit('load_ranges', data);
             }
-
-            rootState.socket.emit('load_ranges', data);
         }
     },
     /**

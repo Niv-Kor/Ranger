@@ -39,7 +39,7 @@ async function createTarget(data) {
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: null, options: {} },
-        { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: data.name, options: {} },
+        { name: 'image_name', type: CONSTANTS.SQL.VarChar(21), value: data.name, options: {} },
         { name: 'image_path', type: CONSTANTS.SQL.VarChar(256), value: destPath, options: {} },
         { name: 'cx', type: CONSTANTS.SQL.Decimal(6, 3), value: data.center.x.toFixed(3), options: {} },
         { name: 'cy', type: CONSTANTS.SQL.Decimal(6, 3), value: data.center.y.toFixed(3), options: {} },
@@ -79,7 +79,7 @@ async function createTarget(data) {
 async function targetExists(user, name) {
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: user, options: {} },
-        { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: name, options: {} }
+        { name: 'image_name', type: CONSTANTS.SQL.VarChar(21), value: name, options: {} }
     ];
 
     let query = await GENERAL_ACTIONS.runProcedure('TargetExists', params);

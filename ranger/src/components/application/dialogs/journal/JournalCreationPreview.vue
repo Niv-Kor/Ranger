@@ -122,7 +122,8 @@
         font-size: 13px;
     }
     .target-thumbnail {
-        margin: 5px;
+        position: absolute;
+        right: 15px;
         outline-width: 1px;
         outline-style: dashed;
         outline-color: #5e7075;

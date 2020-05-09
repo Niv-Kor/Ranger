@@ -22,15 +22,6 @@ CREATE TABLE Journals (
 );
 GO
 
-ALTER TABLE Journals
-ALTER COLUMN journal_name VARCHAR(15) NOT NULL
-
-DROP TABLE Journals
-GO
-
-SELECT * FROM Journals
-GO
-
 -- Procedures
 ALTER PROCEDURE JournalExists
 	@user VARCHAR(70),
@@ -148,21 +139,47 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE ClearJournalRanges
+ALTER PROCEDURE ClearJournalRanges
 	@journal_id INT
 AS
 BEGIN
-	DELETE FROM Ranges
-	WHERE journal_id = @journal_id
+	DECLARE 
+		@deleted_range_id INT
+	DECLARE id_cusror CURSOR READ_ONLY
+		    FOR
+		    SELECT r.id
+		    FROM Ranges r
+		    WHERE r.journal_id = @journal_id
+
+	OPEN id_cusror
+	FETCH NEXT FROM id_cusror
+	INTO @deleted_range_id
+
+	-- delete all of the journal's ranges
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		EXEC DeleteRange @deleted_range_id
+		FETCH NEXT FROM id_cusror
+		INTO @deleted_range_id
+	END
 END
 GO
 
-CREATE PROCEDURE DeleteJournal
+ALTER PROCEDURE DeleteJournal
 	@id INT
 AS
 BEGIN
+	DECLARE
+		@user VARCHAR(70)
+	SET
+		@user = (SELECT journal_owner
+				 FROM Journals
+				 WHERE id = @id)
+
 	DELETE FROM Journals
 	WHERE id = @id
+
+	EXEC DeleteOrphinTargets @user
 END
 GO
 

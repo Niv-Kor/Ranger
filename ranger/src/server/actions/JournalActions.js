@@ -34,7 +34,8 @@ module.exports = {
  *                                                      {Number} ringDiameter - Diameter of inner ring (in integer percentages)
  *                                                   },
  *                           {Boolean} isTargetCustom - True if the target is customized,
- *                           {String} colorTheme = A hexadecimal representation of the journal's color theme
+ *                           {String} colorTheme - A hexadecimal representation of the journal's color theme
+ *                           {String} date - creation date [YYYY-MM-DD HH:mm]
  *                        }
  */
 async function createJournal(socket, data) {
@@ -54,12 +55,13 @@ async function createJournal(socket, data) {
         let customTargetParams = [
             { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
             { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: null, options: {} },
-            { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: targetName, options: {} },
+            { name: 'image_name', type: CONSTANTS.SQL.VarChar(21), value: targetName, options: {} },
             { name: 'image_path', type: CONSTANTS.SQL.VarChar(256), value: uploadedTargetDestPath, options: {} },
             { name: 'cx', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.x.toFixed(3), options: {} },
             { name: 'cy', type: CONSTANTS.SQL.Decimal(6, 3), value: data.customTarget.center.y.toFixed(3), options: {} },
             { name: 'rings', type: CONSTANTS.SQL.Int, value: data.customTarget.rings, options: {} },
-            { name: 'diam', type: CONSTANTS.SQL.Int, value: data.customTarget.ringDiameter, options: {} }
+            { name: 'diam', type: CONSTANTS.SQL.Int, value: data.customTarget.ringDiameter, options: {} },
+            { name: 'date', type: CONSTANTS.SQL.VarChar(19), value: data.date, options: {} }
         ];
 
         //add to db
@@ -77,7 +79,7 @@ async function createJournal(socket, data) {
     //create new journal
     let targetIdExtractionParams = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: targetUser, options: {} },
-        { name: 'image_name', type: CONSTANTS.SQL.VarChar(20), value: targetName, options: {} }
+        { name: 'image_name', type: CONSTANTS.SQL.VarChar(21), value: targetName, options: {} }
     ];
 
     let targetIdQuery = await GENERAL_ACTIONS.runProcedure('GetTargetId', targetIdExtractionParams);
