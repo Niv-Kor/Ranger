@@ -7,7 +7,7 @@
                 :width=300
                 src='../../assets/logos/logo.png'
                 aspect-ratio="1.5"
-            ></v-img>
+            />
         </v-flex>
         <transition name='fade' mode='out-in'>
             <router-view

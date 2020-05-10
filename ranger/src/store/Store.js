@@ -25,6 +25,7 @@ export const STORE = new Vuex.Store({
             gradient: GRADIENT_CONTEXT('./gradient.png')
         },
         socket: null,
+        isConnected: false,
         data: new DataManager()
     },
     getters: {
@@ -42,13 +43,30 @@ export const STORE = new Vuex.Store({
             let targets = rootGetters.isTargetsListLoading;
             let ranges = rootGetters.isRangesListLoading;
             return journals || targets || ranges;
+        },
+        isConnectedToServer: state => {
+            return state.isConnected;
+        }
+    },
+    mutations: {
+        setConnectionFlag: (state, flag) => {
+            state.isConnected = flag;
         }
     },
     actions: {
         /**
          * Reload all journals, targets and ranges from the data base.
          */
-        reloadAllData: async ({ dispatch }) => {
+        reloadAllData: async ({ dispatch, getters }) => {
+            //try again after 10 seconds
+            setTimeout(() =>{
+                if (getters.isAnyListLoading) {
+                    dispatch('connectServer');
+                    dispatch('reloadAllData');
+                    console.log('Timeout. Reconnecting again...');
+                }
+            }, 10000);
+
             await dispatch('loadAllJournals');
             await dispatch('loadAllTargets');
             dispatch('loadAllRanges');
@@ -56,11 +74,12 @@ export const STORE = new Vuex.Store({
         /**
          * Request a client handler from the front server.
          */
-        connectServer: async ({ state }) => {
+        connectServer: async ({ state, commit }) => {
             return new Promise(resolve => {
                 state.socket = io(FRONT_SERVER_DOMAIN);
                 state.socket.once('connection', port => {
                     state.socket = io(`http://localhost:${port}`);
+                    commit('setConnectionFlag', true);
                     resolve();
                 })
             })
