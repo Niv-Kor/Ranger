@@ -5,13 +5,14 @@ const state = {
     authEmail: '',
     authPass: '',
     authErrorMessage: '',
+    authDataLoading: false,
     authWrongInput: false,
     authenticated: false,
     authLoading: false,
     authRegex: {
         email: /^[0-9A-Za-z_-]{1,}@[0-9A-Za-z_-]{1,}\.[0-9A-Za-z.]{1,}$/,
         password: /^[0-9A-Za-z]{8,25}$/,
-        username: /^([0-9A-Za-z]+[0-9A-Za-z_-]*){2,20}$/
+        username: /^([0-9A-Za-z]+([0-9A-Za-z_-\w\s]*[0-9A-Za-z])*){2,20}$/
     },
 };
 
@@ -43,6 +44,9 @@ const getters = {
     },
     getAuthErrorMessage: state => {
         return state.authErrorMessage;
+    },
+    isAuthDataLoading: state => {
+        return state.authDataLoading;
     }
 };
 
@@ -67,10 +71,28 @@ const mutations = {
     },
     setAuthErrorMessage: (state, msg) => {
         state.authErrorMessage = msg;
+    },
+    setAuthDataLoading: (state, flag) => {
+        state.authDataLoading = flag;
     }
 };
 
 const actions = {
+    /**
+     * Load all account data for app use.
+     */
+    loadAccountData: async ({ commit, state, rootState }) => {
+        commit('setAuthDataLoading', true);
+
+        return new Promise(resolve => {
+            rootState.socket.once('load_account_data', res => {
+                state.authUsername = res.username;
+                commit('setAuthDataLoading', false);
+                resolve(true);
+            });
+            rootState.socket.emit('load_account_data', rootState.Auth.authEmail);
+        });
+    },
     /**
      * Check if the data entered by the user is authenticated with the server.
      * 
@@ -78,7 +100,6 @@ const actions = {
      */
     authenticateUser: async ({ state, rootState }) => {
         return new Promise((resolve) => {
-            rootState.socket.emit('get_hash_password', state.authEmail);
             rootState.socket.once('get_hash_password', hash => {
                 let match = hash ? BCRYPT.compareSync(state.authPass, hash) : false;
                 let errorCode = match ? 0 : 1;
@@ -89,6 +110,7 @@ const actions = {
                     errorMessage
                 })
             });
+            rootState.socket.emit('get_hash_password', state.authEmail);
         });
     },
     /**

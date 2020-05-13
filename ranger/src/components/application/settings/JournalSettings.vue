@@ -7,261 +7,268 @@
                     :width='windowDim.width * .93'
                     elevation=0
                 >
-                    <!-- name -->
-                    <hr class='horizontal-line first-line'>
-                    <p
-                        class='subtitle'
-                        align=center
-                        :style='headerStyle'
+                    <v-card
+                        class='inner-card'
+                        :width='windowDim.width * .93'
+                        :min-height='windowDim.height - 187'
+                        elevation=0
                     >
-                        <span class='header-icon'>
-                            <v-icon
-                                :style='createSegmentStyle(0)'
-                                medium
-                                @click='revertSegment(0)'
-                            >
-                                <template v-if='!isSegmentChanged(0)'>mdi-checkbox-blank-circle-outline</template>
-                                <template v-else>mdi-chevron-right-circle</template>
-                            </v-icon>
-                        </span>
-                        Name
-                    </p>
-                    <v-text-field
-                        v-model='newName'
-                        class='name field'
-                        height=30
-                        dense
-                        counter=15
-                        clearable
-                        :color='colors.neutral'
-                    />
-                    <!-- discipline -->
-                    <hr class='horizontal-line'>
-                    <p
-                        class='subtitle'
-                        align=center
-                        :style='headerStyle'
-                    >
-                        <span class='header-icon'>
-                            <v-icon
-                                :style='createSegmentStyle(1)'
-                                medium
-                                @click='revertSegment(1)'
-                            >
-                                <template v-if='!isSegmentChanged(1)'>mdi-checkbox-blank-circle-outline</template>
-                                <template v-else>mdi-chevron-right-circle</template>
-                            </v-icon>
-                        </span>
-                        Discipline
-                    </p>
-                    <v-select
-                        v-model='selectedDiscipline'
-                        class='discipline-selector field'
-                        outlined
-                        :items='allDisciplines'
-                        :height='-30'
-                        :menu-props='{ top: false, offsetY: true, value: disciplineSelectOpen }'
-                        @mousedown='disciplineSelectOpen = !disciplineSelectOpen'
-                        @change='disciplineSelectOpen = !disciplineSelectOpen'
-                        @blur="disciplineSelectOpen = false"
-                    />
-                    <v-text-field
-                        v-if='selectedDiscipline === "Other:"'
-                        v-model='newDiscipName'
-                        class='other-discipline field'
-                        height=30
-                        dense
-                        counter=20
-                        clearable
-                        placeholder='Enter a discipline name'
-                        :color='colors.neutral'
-                    />
-                    <!-- default target -->
-                    <hr class='horizontal-line'>
-                    <p
-                        class='subtitle'
-                        align=center
-                        :style='headerStyle'
-                    >
-                        <span class='header-icon'>
-                            <v-icon
-                                :style='createSegmentStyle(2)'
-                                medium
-                                @click='revertSegment(2)'
-                            >
-                                <template v-if='!isSegmentChanged(2)'>mdi-checkbox-blank-circle-outline</template>
-                                <template v-else>mdi-chevron-right-circle</template>
-                            </v-icon>
-                        </span>
-                        Default Target
-                    </p>
-                    <v-row no-gutters>
-                        <v-icon
-                            class='nav-arrow'
-                            size=64
-                            :color='colors.primary'
-                            :disabled='selectedTargetIndex == 0'
-                            @click='decrementTarget'
+                        <!-- name -->
+                        <hr class='horizontal-line first-line'>
+                        <p
+                            class='subtitle'
+                            align=center
+                            :style='headerStyle'
                         >
-                            mdi-menu-left
-                        </v-icon>
-                        <v-card
-                            class='targets-card'
-                            :width=160
-                            :height=160
+                            <span class='header-icon'>
+                                <v-icon
+                                    :style='createSegmentStyle(0)'
+                                    medium
+                                    @click='revertSegment(0)'
+                                >
+                                    <template v-if='!isSegmentChanged(0)'>mdi-checkbox-blank-circle-outline</template>
+                                    <template v-else>mdi-chevron-right-circle</template>
+                                </v-icon>
+                            </span>
+                            Name
+                        </p>
+                        <v-text-field
+                            v-model='newName'
+                            class='name field'
+                            height=30
+                            dense
+                            counter=15
+                            clearable
+                            :color='colors.neutral'
+                        />
+                        <!-- discipline -->
+                        <hr class='horizontal-line'>
+                        <p
+                            class='subtitle'
+                            align=center
+                            :style='headerStyle'
+                        >
+                            <span class='header-icon'>
+                                <v-icon
+                                    :style='createSegmentStyle(1)'
+                                    medium
+                                    @click='revertSegment(1)'
+                                >
+                                    <template v-if='!isSegmentChanged(1)'>mdi-checkbox-blank-circle-outline</template>
+                                    <template v-else>mdi-chevron-right-circle</template>
+                                </v-icon>
+                            </span>
+                            Discipline
+                        </p>
+                        <v-select
+                            v-model='selectedDiscipline'
+                            class='discipline-selector field'
                             outlined
-                            shaped
-                            color='blue-grey lighten-5'
+                            :items='allDisciplines'
+                            :height='-30'
+                            :menu-props='{ top: false, offsetY: true, value: disciplineSelectOpen }'
+                            @mousedown='disciplineSelectOpen = !disciplineSelectOpen'
+                            @change='disciplineSelectOpen = !disciplineSelectOpen'
+                            @blur="disciplineSelectOpen = false"
+                        />
+                        <v-text-field
+                            v-if='selectedDiscipline === "Other:"'
+                            v-model='newDiscipName'
+                            class='other-discipline field'
+                            height=30
+                            dense
+                            counter=20
+                            clearable
+                            placeholder='Enter a discipline name'
+                            :color='colors.neutral'
+                        />
+                        <!-- default target -->
+                        <hr class='horizontal-line'>
+                        <p
+                            class='subtitle'
+                            align=center
+                            :style='headerStyle'
                         >
-                            <v-container
-                                fill-height
-                                fluid
-                            >
-                                <v-row
-                                    align='center'
-                                    justify='center'
+                            <span class='header-icon'>
+                                <v-icon
+                                    :style='createSegmentStyle(2)'
+                                    medium
+                                    @click='revertSegment(2)'
                                 >
-                                    <v-col>
-                                        <v-img
-                                            class='target-thumbnail'
-                                            :src='selectedTarget.base64Data'
-                                            max-width=120
-                                            max-height=120
-                                        />
-                                    </v-col>
-                                </v-row>
-                            </v-container>
-                        </v-card>
-                        <v-icon
-                            class='nav-arrow'
-                            size=64
-                            :color='colors.primary'
-                            :disabled='selectedTargetIndex >= targets.length - 1'
-                            @click='incrementTarget'
-                        >
-                            mdi-menu-right
-                        </v-icon>
-                    </v-row>
-                    <p
-                        class='target-label'
-                        align='center'
-                    >
-                        <span>{{ selectedTarget.name }}</span>
-                        <span
-                            class='default-label'
-                            :style='{ color: colors.primary }'
-                        >
-                            as default
-                        </span>
-                    </p>
-                    <!-- theme -->
-                    <hr class='horizontal-line'>
-                    <p
-                        class='subtitle'
-                        align=center
-                        justify=center
-                        :style='headerStyle'
-                    >
-                        <span class='header-icon'>
+                                    <template v-if='!isSegmentChanged(2)'>mdi-checkbox-blank-circle-outline</template>
+                                    <template v-else>mdi-chevron-right-circle</template>
+                                </v-icon>
+                            </span>
+                            Default Target
+                        </p>
+                        <v-row no-gutters>
                             <v-icon
-                                :style='createSegmentStyle(3)'
-                                medium
-                                @click='revertSegment(3)'
+                                class='nav-arrow'
+                                size=64
+                                :color='colors.primary'
+                                :disabled='selectedTargetIndex == 0'
+                                @click='decrementTarget'
                             >
-                                <template v-if='!isSegmentChanged(3)'>mdi-checkbox-blank-circle-outline</template>
-                                <template v-else>mdi-chevron-right-circle</template>
+                                mdi-menu-left
                             </v-icon>
-                        </span>
-                        Color Theme
-                    </p>
-                    <v-card elevation=0>
-                        <ul class='color-list'>
-                            <li
-                                class='color-list-item'
-                                v-for='color in palette'
-                                :key='color'
+                            <v-card
+                                class='targets-card'
+                                :width=160
+                                :height=160
+                                outlined
+                                shaped
+                                color='blue-grey lighten-5'
                             >
-                                <v-icon
-                                    class='color-icon'
-                                    :color='color'
-                                    :style='createIconStyle(color)'
-                                    @click='selectedColor = color'
+                                <v-container
+                                    fill-height
+                                    fluid
                                 >
-                                    mdi-checkbox-blank
-                                </v-icon>
-                            </li>
-                        </ul>
-                    </v-card>
-                    <!-- dangerous options -->
-                    <hr class='horizontal-line'>
-                    <p
-                        class='subtitle'
-                        align=center
-                        :style='headerStyle'
-                    >
-                        Journal Options
-                    </p>
-                    <v-card
-                        class='option-card'
-                        elevation=0
-                    >
-                        <v-row>
-                            <v-col cols=4>
-                                <v-btn
-                                    class='btn delete elevation-2 white--text'
-                                    large
-                                    color='#d30000'
-                                    :width=100
-                                    @click='popWarning("Are you absolutely sure you want to delete this journal?", deleteJournal)'
-                                >
-                                    Delete<br>Journal
-                                </v-btn>
-                            </v-col>
-                            <v-col cols=7>
-                                <p class='btn-info'>
-                                    Permanently delete<br>the journal.
-                                </p>
-                            </v-col>
-                            <v-col cols=1>
-                                <v-icon
-                                    class='btn-icon'
-                                    color='#d30000'
-                                >
-                                    mdi-trash-can-outline
-                                </v-icon>
-                            </v-col>
+                                    <v-row
+                                        align='center'
+                                        justify='center'
+                                    >
+                                        <v-col>
+                                            <v-img
+                                                class='target-thumbnail'
+                                                :src='selectedTarget.base64Data'
+                                                max-width=120
+                                                max-height=120
+                                            />
+                                        </v-col>
+                                    </v-row>
+                                </v-container>
+                            </v-card>
+                            <v-icon
+                                class='nav-arrow'
+                                size=64
+                                :color='colors.primary'
+                                :disabled='selectedTargetIndex >= targets.length - 1'
+                                @click='incrementTarget'
+                            >
+                                mdi-menu-right
+                            </v-icon>
                         </v-row>
-                    </v-card>
-                    <v-card
-                        class='option-card'
-                        elevation=0
-                    >
-                        <v-row>
-                            <v-col cols=4>
-                                <v-btn
-                                    class='btn delete elevation-2 white--text'
-                                    large
-                                    :width=100
-                                    color='#d30000'
-                                    @click="popWarning('Are you absolutely sure you want to clear this journal\'s ranges?', clearRanges)"
-                                >
-                                    Clear<br>Ranges
-                                </v-btn>
-                            </v-col>
-                            <v-col cols=7>
-                                <p class='btn-info'>
-                                    Permanently delete all ranges and their score data entirely.
-                                </p>
-                            </v-col>
-                            <v-col cols=1>
+                        <p
+                            class='target-label'
+                            align='center'
+                        >
+                            <span>{{ selectedTarget.name }}</span>
+                            <span
+                                class='default-label'
+                                :style='{ color: colors.primary }'
+                            >
+                                as default
+                            </span>
+                        </p>
+                        <!-- theme -->
+                        <hr class='horizontal-line'>
+                        <p
+                            class='subtitle'
+                            align=center
+                            justify=center
+                            :style='headerStyle'
+                        >
+                            <span class='header-icon'>
                                 <v-icon
-                                    class='btn-icon'
-                                    color='#d30000'
+                                    :style='createSegmentStyle(3)'
+                                    medium
+                                    @click='revertSegment(3)'
                                 >
-                                    mdi-trash-can-outline
+                                    <template v-if='!isSegmentChanged(3)'>mdi-checkbox-blank-circle-outline</template>
+                                    <template v-else>mdi-chevron-right-circle</template>
                                 </v-icon>
-                            </v-col>
-                        </v-row>
+                            </span>
+                            Color Theme
+                        </p>
+                        <v-card elevation=0>
+                            <ul class='color-list'>
+                                <li
+                                    class='color-list-item'
+                                    v-for='color in palette'
+                                    :key='color'
+                                >
+                                    <v-icon
+                                        class='color-icon'
+                                        :color='color'
+                                        :style='createColorIconStyle(color)'
+                                        @click='selectedColor = color'
+                                    >
+                                        mdi-checkbox-blank
+                                    </v-icon>
+                                </li>
+                            </ul>
+                        </v-card>
+                        <!-- dangerous options -->
+                        <hr class='horizontal-line'>
+                        <p
+                            class='subtitle'
+                            align=center
+                            :style='headerStyle'
+                        >
+                            Journal Options
+                        </p>
+                        <v-card
+                            class='option-card'
+                            elevation=0
+                        >
+                            <v-row>
+                                <v-col cols=4>
+                                    <v-btn
+                                        class='btn delete elevation-2 white--text'
+                                        large
+                                        color='#d30000'
+                                        :width=100
+                                        @click='popWarning("Are you absolutely sure you want to delete this journal?", deleteJournal)'
+                                    >
+                                        Delete<br>Journal
+                                    </v-btn>
+                                </v-col>
+                                <v-col cols=7>
+                                    <p class='btn-info'>
+                                        Permanently delete<br>the journal.
+                                    </p>
+                                </v-col>
+                                <v-col cols=1>
+                                    <v-icon
+                                        class='btn-icon'
+                                        color='#d30000'
+                                    >
+                                        mdi-trash-can-outline
+                                    </v-icon>
+                                </v-col>
+                            </v-row>
+                        </v-card>
+                        <v-card
+                            class='option-card'
+                            elevation=0
+                        >
+                            <v-row>
+                                <v-col cols=4>
+                                    <v-btn
+                                        class='btn delete elevation-2 white--text'
+                                        large
+                                        :width=100
+                                        color='#d30000'
+                                        @click="popWarning('Are you absolutely sure you want to clear this journal\'s ranges?', clearRanges)"
+                                    >
+                                        Clear<br>Ranges
+                                    </v-btn>
+                                </v-col>
+                                <v-col cols=7>
+                                    <p class='btn-info'>
+                                        Permanently delete all ranges and their score data entirely.
+                                    </p>
+                                </v-col>
+                                <v-col cols=1>
+                                    <v-icon
+                                        class='btn-icon'
+                                        color='#d30000'
+                                    >
+                                        mdi-trash-can-outline
+                                    </v-icon>
+                                </v-col>
+                            </v-row>
+                        </v-card>
                     </v-card>
                     <!-- save -->
                     <hr class='horizontal-line last-line'>
@@ -314,7 +321,7 @@
                         text
                         block
                         :color='colors.primaryDark'
-                        @click='reloadAppData'
+                        @click='onDialogClick'
                     >
                         Ok
                     </v-btn>
@@ -350,6 +357,7 @@
                 dialogModel: false,
                 dialogMessage: '',
                 dialogColor: '',
+                dialogSuccessful: false,
                 newName: '',
                 disciplineSelectOpen: false,
                 selectedDiscipline: '',
@@ -389,9 +397,7 @@
                 let color = ColorsHandler.darker(this.selectedColor, 40);
                 let gradient = `linear-gradient(to right, ${color}50, #00000000)`
 
-                return {
-                    backgroundImage: gradient,
-                }
+                return { backgroundImage: gradient };
             }
         },
         created() {
@@ -406,7 +412,7 @@
              *                      {String} borderColor - CSS attribute for border-color
              *                   }
              */
-            createIconStyle(color) {
+            createColorIconStyle(color) {
                 let borderAlpha = (this.selectedColor === color) ? 'bb' : '20';
                 return { borderColor: '#000000' + borderAlpha }
             },
@@ -441,9 +447,7 @@
                 let changed = this.isSegmentChanged(segment);
                 let color = changed ? this.colors.primary : this.colors.neutral;
 
-                return {
-                    color,
-                }
+                return { color };
             },
             /**
              * Check if a particular segment of the form has been changed.
@@ -568,7 +572,26 @@
             popDialog: function(isSuccessful, successMsg, failureMsg) {
                 this.dialogColor = isSuccessful ? this.colors.secondary : this.colors.primary;
                 this.dialogMessage = isSuccessful ? successMsg : failureMsg;
+                this.dialogSuccessful = isSuccessful;
                 this.dialogModel = true;
+            },
+            /**
+             * Activate when clicking the dialog's 'ok' button.
+             * If the dialog shows a successful message, reload all app data.
+             * If this journal no longer exists, go back to the shooting journals page.
+             */
+            onDialogClick: function() {
+                if (this.dialogSuccessful) {
+                    if (this.journalDeleted) {
+                        this.journalDeleted = false;
+                        let journalsPage = '/home/journals';
+                        this.$router.push({ path: journalsPage }).catch(() => {});
+                    }
+
+                    this.$store.dispatch('reloadAllData');
+                }
+
+                this.dialogModel = false;
             },
             /**
              * Activate when clicking the dialog's 'ok' button.
@@ -593,6 +616,9 @@
     .outer-card {
         border-width: 1px;
         border-style: dashed none;
+    }
+    .inner-card {
+        top: -40px;
     }
     .subtitle {
         height: 50px;

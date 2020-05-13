@@ -67,6 +67,32 @@ VALUES(
 	SiHUD',
 	'default'
 )
+GO
+
+CREATE PROCEDURE GetAccountData
+	@email VARCHAR(70)
+AS
+BEGIN
+	SELECT username
+	FROM Users
+	WHERE email = @email
+END
+GO
+
+CREATE PROCEDURE UpdateAccountData
+	@old_email VARCHAR(70),
+	@new_email VARCHAR(70),
+	@new_hash_pass VARCHAR(512),
+	@new_username VARCHAR(20)
+AS
+BEGIN
+	UPDATE Users
+	SET email = ISNULL(@new_email, email),
+		hashPass = ISNULL(@new_hash_pass, hashPass),
+		username = ISNULL(@new_username, username)
+	WHERE email = @old_email
+END
+GO
 
 -- Exec
 SELECT * FROM Users

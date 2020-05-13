@@ -6,6 +6,7 @@ import Auth from './modules/AuthenticationModule'
 import JournalCreation from './modules/JournalCreationModule';
 import RangeCreation from './modules/RangeCreationModule';
 import TargetCreation from './modules/TargetCreationModule';
+import Account from './modules/AccountModule';
 import Journals from './modules/JournalModule';
 import Targets from './modules/TargetModule';
 import Ranges from './modules/RangeModule';
@@ -39,10 +40,11 @@ export const STORE = new Vuex.Store({
             return state.data;
         },
         isAnyListLoading: (_state, _getters, _rootState, rootGetters) => {
+            let account = rootGetters.isAuthDataLoading;
             let journals = rootGetters.isJournalsListLoading;
             let targets = rootGetters.isTargetsListLoading;
             let ranges = rootGetters.isRangesListLoading;
-            return journals || targets || ranges;
+            return account || journals || targets || ranges;
         },
         isConnectedToServer: state => {
             return state.isConnected;
@@ -58,18 +60,22 @@ export const STORE = new Vuex.Store({
          * Reload all journals, targets and ranges from the data base.
          */
         reloadAllData: async ({ dispatch, getters }) => {
-            //try again after 10 seconds
-            setTimeout(() =>{
-                if (getters.isAnyListLoading) {
-                    dispatch('connectServer');
-                    dispatch('reloadAllData');
-                    console.log('Timeout. Reconnecting again...');
-                }
-            }, 10000);
-
-            await dispatch('loadAllJournals');
-            await dispatch('loadAllTargets');
-            dispatch('loadAllRanges');
+            if (!getters.isConnectedToServer) {
+                //try again after 10 seconds
+                setTimeout(async () => {
+                    if (getters.isAnyListLoading) {
+                        console.log('Timeout! Reconnecting server...');
+                        await dispatch('connectServer');
+                        dispatch('reloadAllData');
+                    }
+                }, 10000);
+            }
+            else {
+                await dispatch('loadAccountData');
+                await dispatch('loadAllJournals');
+                await dispatch('loadAllTargets');
+                dispatch('loadAllRanges');
+            }
         },
         /**
          * Request a client handler from the front server.
@@ -91,6 +97,7 @@ export const STORE = new Vuex.Store({
         JournalCreation,
         RangeCreation,
         TargetCreation,
+        Account,
         Journals,
         Targets,
         Ranges

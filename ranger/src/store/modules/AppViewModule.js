@@ -5,6 +5,7 @@ const state = {
             icon: '',
             path: '/settings',
             prefixCondition: '/home/journals/',
+            forbiddenSuffix: 'settings',
             pathAbsolute: false,
             additionalSlashes: 0
         },
@@ -13,6 +14,7 @@ const state = {
             icon: '',
             path: '/settings',
             prefixCondition: '/home/journals/',
+            forbiddenSuffix: 'settings',
             pathAbsolute: false,
             additionalSlashes: 1
         },
@@ -21,6 +23,7 @@ const state = {
             icon: '',
             path: '/home/targets',
             prefixCondition: '/home',
+            forbiddenSuffix: '',
             pathAbsolute: true,
             additionalSlashes: Infinity
         },
@@ -29,6 +32,7 @@ const state = {
             icon: 'mdi-cog',
             path: '/home/settings',
             prefixCondition: '/home',
+            forbiddenSuffix: '',
             pathAbsolute: true,
             additionalSlashes: Infinity
         }
@@ -177,9 +181,13 @@ const getters = {
                     let prefixLen = item.prefixCondition.length;
                     let suffixLen = routerPath.length - prefixLen;
                     let suffix = routerPath.substr(prefixLen, suffixLen);
-                    let slashCount = suffix.split('/').length - 1;
-
-                    if (item.additionalSlashes === slashCount) pushItem(item);
+                    let suffixSplit = suffix.split('/');
+                    let slashCount = suffixSplit.length - 1;
+                    let finalSuffix = suffixSplit[slashCount];
+                    let matchSlashes = item.additionalSlashes === slashCount;
+                    let notForbidden = item.forbiddenSuffix !== finalSuffix;
+                    
+                    if (matchSlashes && notForbidden) pushItem(item);
                 }
                 else pushItem(item);
             }

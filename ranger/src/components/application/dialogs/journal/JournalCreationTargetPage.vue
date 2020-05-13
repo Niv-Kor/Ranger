@@ -50,7 +50,7 @@
                                 max-height=120
                             />
                         </v-col>
-                        <v-col v-else>
+                        <v-col v-else :key='croppedImageRefresher'>
                             <cropper
                                 v-if='selectedTarget.base64Data'
                                 class='thumbnail custom'
@@ -142,6 +142,7 @@
             return {
                 selectedTargetIndex: 0,
                 customTargetName: '',
+                croppedImageRefresher: false
             }
         },
         created() {
@@ -214,7 +215,7 @@
                 //add the once customable target
                 list.push({
                     name: 'Enter target name',
-                    base64Data: null,
+                    base64Data: '',
                     custom: true
                 });
 
@@ -261,13 +262,14 @@
                     let imageData = ev.target.result;
 
                     //check if this new image is the one that's already loaded
-                    if (imageData === this.selectedTarget.src) {
+                    if (imageData === this.selectedTarget.base64Data) {
                         this.$emit('loading', false) //finish loading
                         return;
                     }
 
-                    this.selectedTarget.src = imageData;
                     this.$store.commit('setNewJournalUploadedTargetData', imageData);
+                    this.selectedTarget.base64Data = imageData;
+                    this.croppedImageRefresher = !this.croppedImageRefresher;
                 };
 
                 await reader.readAsDataURL(file);

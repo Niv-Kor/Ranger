@@ -28,17 +28,30 @@ CONSTANTS.FRONT_IO.on('connection', async socket => {
     //handle client's requests to the server
     personalIO.on('connection', socket => {
         /* Authentication */
-        socket.on('sign_user', user => {
-            ACTIONS.auth.signUser(socket, user)
+        socket.on('sign_user', async user => {
+            let res = await ACTIONS.auth.signUser(user);
+            socket.emit('sign_user', res);
         });
 
-        socket.on('get_hash_password', user => {
-            ACTIONS.auth.gerHashedPassword(socket, user);
+        socket.on('get_hash_password', async user => {
+            let res = await ACTIONS.auth.getHashedPassword(user);
+            socket.emit('get_hash_password', res);
+        });
+
+        socket.on('load_account_data', async user => {
+            let res = await ACTIONS.auth.loadAccountData(user);
+            socket.emit('load_account_data', res);
+        });
+
+        socket.on('update_account', async user => {
+            let res = await ACTIONS.auth.updateAccountData(user);
+            socket.emit('update_account', res);
         });
 
         /* Journals */
-        socket.on('create_journal', data => {
-            ACTIONS.journals.createJournal(socket, data);
+        socket.on('create_journal', async data => {
+            let res = await ACTIONS.journals.createJournal(data);
+            socket.emit('create_journal', res);
         });
 
         socket.on('load_journals', async (user, ignoreTargets) => {

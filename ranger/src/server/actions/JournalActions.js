@@ -17,7 +17,6 @@ module.exports = {
 /**
  * Create a new shooting journal for a user.
  * 
- * @param {SocketIO.Socket} socket - The socket used by the server.
  * @param {Object} data - {
  *                           {String} user - User's email address,
  *                           {String} discipline - Journal discipline,
@@ -38,7 +37,7 @@ module.exports = {
  *                           {String} date - creation date [YYYY-MM-DD HH:mm]
  *                        }
  */
-async function createJournal(socket, data) {
+async function createJournal(data) {
     let uploadedTargetDestPath = '';
     let targetName, targetUser;
     
@@ -92,19 +91,21 @@ async function createJournal(socket, data) {
         { name: 'theme', type: CONSTANTS.SQL.VarChar(9), value: data.colorTheme, options: {} },
     ];
 
-    GENERAL_ACTIONS.runProcedure('CreateJournal', journalParams)
+    return new Promise(resolve => {
+        GENERAL_ACTIONS.runProcedure('CreateJournal', journalParams)
         .then(() => {
-            socket.emit('create_journal', {
+            resolve({
                 exitCode: 0,
                 message: 'Journal created successfully.'
             });
         })
         .catch(err => {
-            socket.emit('create_journal', {
+            resolve({
                 exitCode: 1,
                 message: err
             });
         })
+    })
 }
 
 /**

@@ -133,7 +133,7 @@
                     length: v => v && v.length >= 8 && v.length <= 25 || 'Between 8-25 characters',
                     match: value => value === this.password || 'Passwords don\'t match',
                     validEmail: value => this.regex.email.test(value) || 'Not a valid email address',
-                    validUsername: value => this.regex.username.test(value) || 'Not a valid username'
+                    validUsername: value => this.regex.username.test(value) || 'Not a valid name'
                 }
             }
         },
