@@ -1,21 +1,21 @@
 <template>
     <div class='background-div'>
         <v-img
-            class='logo animate__animated animate__fadeInDown animate__delay-2s animate__slow'
+            class='logo icon'
             contain
             :width=200
-            aspect-ratio="1.5"
+            aspect-ratio='1.5'
             src='../../assets/logos/icon.png'
         />
         <v-img
-            class='logo animate__animated animate__fadeIn animate__delay-1s animate__slow'
+            class='logo name'
             contain
             :width=300
-            aspect-ratio="1.5"
+            aspect-ratio='1.5'
             src='../../assets/logos/name_white.png'
         />
         <p
-            class='credit animate__animated animate__fadeInUp animate__delay-2s animate__slow'
+            class='credit'
             align=center
         >
             By Niv Kor Ⓒ 2020
@@ -56,7 +56,24 @@
         margin: auto;
         padding: 24px;
         width: 100%;
-        --animate-delay: 1s;
+    }
+    .logo.icon {
+        animation: fade-down-rotate;
+        animation-duration: 2s;
+        animation-delay: 2s;
+        animation-fill-mode: both;
+    }
+    .logo.name {
+        animation: fadeIn;
+        animation-duration: 2s;
+        animation-delay: 1s;
+        animation-fill-mode: both;
+    }
+    .rotator {
+        animation: rotate;
+        animation-duration: 2s;
+        animation-delay: 0s;
+        animation-fill-mode: both;
     }
     .credit {
         position: absolute;
@@ -65,5 +82,19 @@
         left: 0;
         right: 0;
         bottom: 10px;
+        animation: fadeInUp;
+        animation-duration: 2s;
+        animation-delay: 2s;
+        animation-fill-mode: both;
+    }
+    @keyframes fade-down-rotate {
+        from {
+            opacity: 0;
+            transform: translate3d(0, -100px, 0) rotate(0deg);
+        }
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) rotate(20deg);
+        }
     }
 </style>
