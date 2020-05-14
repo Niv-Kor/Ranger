@@ -1,9 +1,12 @@
 module.exports = {
     hexToRGB,
     RGBHexToHSL,
+    HSLToRGBHex,
     transistHSLDifference,
-    darker,
-    brighter
+    darken,
+    brighten,
+    lighten,
+    unlighten
 };
 
 /**
@@ -47,7 +50,7 @@ function hexToRGB(hex) {
  *                   }
  */
 function RGBHexToHSL(hex) {
-    let rgb = this.hexToRGB(hex);
+    let rgb = hexToRGB(hex);
 
     //make r, g, and b fractions of 1
     let r = rgb.r / 255;
@@ -82,6 +85,60 @@ function RGBHexToHSL(hex) {
     l = +(l * 100).toFixed(1);
 
     return { h, s, l };
+}
+
+/**
+ * Convert an HSL color value to RGB.
+ *
+ * @param {Object} hsl {
+ *                     {Number} h - hue [°],
+ *                     {Number} s - saturation [%],
+ *                     {Number} l - lightness [%]
+ *                  }
+ * @return {Object} {
+ *                     {Number} r - red,
+ *                     {Number} g - green,
+ *                     {Number} b - blue
+ *                  }
+ */
+function HSLToRGBHex(hsl) {
+    let r, g, b;
+    let h = hsl.h / 360;
+    let s = hsl.s / 100;
+    let l = hsl.l / 100;
+
+    if (s === 0) r = g = b = l;
+    else {
+        let hueToRGB = function hueToRGB(p, q, t) {
+            if (t < 0) t++;
+            else if (t > 1) t--;
+            else if (t < 1 / 6) return p + (q - p) * 6 * t;
+            else if (t < 1 / 2) return q;
+            else if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        }
+
+        let q = (l < .5) ? l * (1 + s) : (l + s) - l * s;
+        let p = 2 * l - q;
+        r = hueToRGB(p, q, h + 1 / 3);
+        g = hueToRGB(p, q, h);
+        b = hueToRGB(p, q, h - 1 / 3);
+    }
+
+    let padZeros = (num, pad) => {
+        let numLen = ('' + num).length;
+        
+        for (let i = 0; i < pad - numLen; i++)
+            num = 0 + num;
+
+        return num;
+    }
+
+    r = padZeros(Math.round(r * 255).toString(16), 2);
+    g = padZeros(Math.round(g * 255).toString(16), 2);
+    b = padZeros(Math.round(b * 255).toString(16), 2);
+
+    return `#${r}${g}${b}`;
 }
 
 /**
@@ -146,14 +203,29 @@ function shadeColor(color, percent) {
 }
 
 /**
+ * lighten or unlighten a color.
+ * 
+ * @param {String} color - RBG hex color [#ffffff]
+ * @param {Number} percent - A positive number to brighten the color,
+ *                           or negative to darken it [%].
+ * @returns {String} The color with a modified shader [#ffffff]
+ */
+function lightColor(color, percent) {
+    let hsl = RGBHexToHSL(color);
+    hsl.l += hsl.l * percent / 100;
+    let hex = HSLToRGBHex(hsl);
+    return hex;
+}
+
+/**
  * Darken a color.
  * 
  * @param {String} color - RBG hex color [#ffffff]
  * @param {Number} percent - How darker should the color become [%]
  * @returns {String} The color with a modified darkness [#ffffff]
  */
-function darker(color, percent) {
-    return shadeColor(color, -percent)
+function darken(color, percent) {
+    return shadeColor(color, -clampPercent(percent))
 }
 
 /**
@@ -163,6 +235,40 @@ function darker(color, percent) {
  * @param {Number} percent - How brighter should the color become [%]
  * @returns {String} The color with a modified brightness [#ffffff]
  */
-function brighter(color, percent) {
-    return shadeColor(color, percent)
+function brighten(color, percent) {
+    return shadeColor(color, clampPercent(percent))
+}
+
+/**
+ * Lighten a color.
+ * 
+ * @param {String} color - RBG hex color [#ffffff]
+ * @param {Number} percent - How lighter should the color become [%]
+ * @returns {String} The color with a modified lightness [#ffffff]
+ */
+function lighten(color, percent) {
+    let light = lightColor(color, clampPercent(percent));
+    return brighten(light, percent);
+}
+
+/**
+ * Unlighten a color.
+ * 
+ * @param {String} color - RBG hex color [#ffffff]
+ * @param {Number} percent - How darker should the color become [%]
+ * @returns {String} The color with a modified darkness [#ffffff]
+ */
+function unlighten(color, percent) {
+    let light = lightColor(color, clampPercent(percent));
+    return darken(light, percent);
+}
+
+/**
+ * Clamp a percentage value between 0 and 100.
+ * 
+ * @param {Number} perc - The value to clamp
+ * @returns {Number} A value in [0, 100].
+ */
+function clampPercent(perc) {
+    return Math.min(Math.max(perc, 0), 100);
 }

@@ -243,7 +243,7 @@
                 changeEmail: false,
                 changeUsername: false,
                 changePassword: false,
-                templateColor: ColorsHandler.darker('#fafafa', 40),
+                templateColor: ColorsHandler.darken('#fafafa', 40),
                 inputRules: {
                     validUsername: value => this.regex.username.test(value) || 'Not a valid name',
                     validEmail: value => this.regex.email.test(value) || 'Not a valid email address',

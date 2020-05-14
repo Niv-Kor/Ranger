@@ -66,7 +66,7 @@
                                     :index='index'
                                     :style='createItemStyle(item.time)'
                                     :selectable=false
-                                    @click='gotoRange(item.date, item.rawTime)'
+                                    @click='gotoRange(index, item.date, item.rawTime)'
                                 >
                                     <v-list-item-content>
                                         <v-card-title
@@ -299,7 +299,7 @@
              * @param {String} date - A range's date [DD - MM - YYYY]
              * @param {String} time - A range's time [HH:mm:ss]
              */
-            gotoRange: async function(date, time) {
+            gotoRange: async function(index, date, time) {
                 let formattedDate = Moment(date, 'DD - MM - YYYY').format('YYYY-MM-DD').toString();
                 let dateTime = formattedDate + ' ' + time;
                 let path = await this.$store.dispatch('generateRangeURL', {
@@ -307,6 +307,7 @@
                     date: dateTime
                 });
                 
+                this.$store.commit('setRangeIndex', index);
                 this.$router.push(path).catch(() => {});
             },
             /**

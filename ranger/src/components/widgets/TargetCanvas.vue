@@ -228,7 +228,7 @@
                 let srcUrl = 'url(' + this.$props.src + ')';
                 let chosenSize = this.$props.size;
                 let bgSize = chosenSize ? chosenSize + 'px' : 'contain';
-                let containerSize = (chosenSize && chosenSize < maxSize) ? chosenSize : maxSize;
+                let containerSize = chosenSize ? chosenSize : maxSize;
                 let publicStyle = this.$props.imageStyle;
                 let privateStyle = {
                     backgroundImage: srcUrl,
@@ -640,12 +640,12 @@
              * Create a hit point on the image and emit an event to the parent.
              * 
              * @param {Object} point - {
-             *                            {Number} x - x coordinate
+             *                            {Number} x - x coordinate,
              *                            {Number} y - y coordinate
              *                         }
              * @emits {Object} hit - {
              *                          {Object} point - {
-             *                                              {Number} x - x coordinate
+             *                                              {Number} x - x coordinate,
              *                                              {Number} y - y coordinate
              *                                           }
              *                          {Object} bullseyeData - {
@@ -996,14 +996,15 @@
     }
     .hit.opaque {
         transition: opacity .6s;
+        filter: invert(100%) drop-shadow(0px 0px 3px #20d82f);
     }
     .hit.transparent {
-        opacity: .1;
+        opacity: .3;
     }
     .hit.highlight {
         filter: invert(100%) drop-shadow(0px 0px 3px #e90d0d);
     }
     .hit.tint {
-        filter: invert(100%) drop-shadow(0px 0px 3px #20d82f);
+        filter: invert(100%) drop-shadow(0px 0px 8px #ff00d4);
     }
 </style>

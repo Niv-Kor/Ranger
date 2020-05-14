@@ -394,7 +394,7 @@
                 return list;
             },
             headerStyle() {
-                let color = ColorsHandler.darker(this.selectedColor, 40);
+                let color = ColorsHandler.darken(this.selectedColor, 40);
                 let gradient = `linear-gradient(to right, ${color}50, #00000000)`
 
                 return { backgroundImage: gradient };

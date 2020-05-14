@@ -1,6 +1,7 @@
 const state = {
     ranges: [],
-    RangesListLoading: false
+    RangesListLoading: false,
+    rangeIndex: 0
 }
 
 const getters = {
@@ -9,12 +10,18 @@ const getters = {
     },
     isRangesListLoading: state => {
         return state.RangesListLoading;
+    },
+    getRangeIndex: state => {
+        return state.rangeIndex;
     }
 };
 
 const mutations = {
     setRangesListLoading: (state, value) => {
         state.RangesListLoading = value;
+    },
+    setRangeIndex: (state, value) => {
+        state.rangeIndex = value;
     }
 };
 
