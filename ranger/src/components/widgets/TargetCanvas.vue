@@ -8,7 +8,7 @@
             v-touch:start='onTouch'
             v-touch:end='() => { createHit(touchPos) }'
         >
-            <div v-show='magnify && $props.hits !== 0 && !$props.readOnly'>
+            <div v-show='magnify && $props.maxHits !== 0 && !$props.readOnly'>
                 <v-img
                     class='magnifying-glass'
                     :style='magnifyingGlassStyle'
@@ -48,14 +48,14 @@
             </li>
         </ul>
         <ul>
-            <li v-for='i in points.length' :key='i'>
+            <li v-for='hit in relevantHits' :key='hit.index'>
                 <v-img
-                    :class='findHitClass(points[i - 1])'
+                    :class='findHitClass(hit)'
                     :src='hitIcon'
-                    :style='createHitStyle(points[i - 1])'
-                    v-longclick='() => { if (!$props.readOnly) deleteHit(points[i - 1]); }'
-                    v-touch:start=' () => { if (!$props.readOnly) touchedHit = points[i - 1]; }'
-                    v-touch:end=' () => { if (!$props.readOnly) touchedHit = null; }'
+                    :style='createHitStyle(hit)'
+                    v-longclick='() => { if (!$props.readOnly) deleteHit(hit); }'
+                    v-touch:start='() => { if (!$props.readOnly) touchedHit = hit; }'
+                    v-touch:end='() => { if (!$props.readOnly) touchedHit = null; }'
                 />
             </li>
         </ul>
@@ -83,7 +83,7 @@
             /**
              * Maximum number of available hits.
              */
-            hits: {
+            maxHits: {
                 type: Number,
                 required: false,
                 default: undefined
@@ -120,7 +120,7 @@
              *             ...
              *          ]
              */
-            predefineHits: {
+            predefHits: {
                 type: Array,
                 required: false,
                 default: undefined
@@ -129,6 +129,15 @@
              * Use the center point as a pre-defined hit.
              */
             predefineCenter: {
+                type: Boolean,
+                required: false,
+                default: false
+            },
+            /**
+             * Only mark pre-defined hits on the target,
+             * and not the newly and spontaneously created ones.
+             */
+            predefOnly: {
                 type: Boolean,
                 required: false,
                 default: false
@@ -173,6 +182,16 @@
                 type: Object,
                 required: false,
                 default: null
+            },
+            /**
+             * An array that's used as a trigger to delete a set of hits from the target.
+             * Whenever this array is assigned with indices,
+             * it triggers a deletion of similar hits with the said indices.
+             */
+            deleteTrigger: {
+                type: Array,
+                required: false,
+                default: null
             }
         },
         data() {
@@ -186,11 +205,12 @@
                 touchedHit: null,
                 magnify: false,
                 imageLoaded: false,
-                points: [],
+                allHits: [],
                 touchPos: { x: 0, y: 0 },
                 thumbPos: { x: 0, y: 0 },
                 zoomImagePos: { x: 0, y: 0 },
-                domImage: null
+                domImage: null,
+                indexAssigner: 0
             }
         },
         computed: {
@@ -327,8 +347,8 @@
                 };
             },
             hitsFull() {
-                let hits = this.$props.hits;
-                return hits && this.points.length >= hits;
+                let maxHits = this.$props.maxHits;
+                return maxHits && this.allHits.length >= maxHits;
             },
             center() {
                 let x, y;
@@ -375,6 +395,9 @@
                     width: this.imageData.width * ZOOM_RATIO,
                     height: this.imageData.height * ZOOM_RATIO
                 }
+            },
+            relevantHits() {
+                return this.$props.predefOnly ? this.$props.predefHits : this.allHits;
             }
         },
         created() {
@@ -397,6 +420,15 @@
             },
             displayValueRings() {
                 this.emitRingsCapacity = true;
+            },
+            predefHits(values) {
+                for (let hit of values)
+                    if (!this.allHits.find(x => x.index === hit.index))
+                        this.allHits.push(hit);
+            },
+            deleteTrigger(values) {
+                //only keep the hits that aren't contained in the array
+                this.allHits = this.allHits.filter(x => !values.includes(x.index));
             }
         },
         methods: {
@@ -414,12 +446,12 @@
              */
             createPredefinedHits: function() {
                 //create pre-defined hits
-                let predefinedPoints = this.$props.predefineHits;
+                let predefHits = this.$props.predefHits;
 
-                if (predefinedPoints) {
-                    for (let point of predefinedPoints) {
-                        let x = point.x * this.imageData.width / 100;
-                        let y = point.y * this.imageData.height / 100;
+                if (predefHits) {
+                    for (let hit of predefHits) {
+                        let x = hit.point.x * this.imageData.width / 100;
+                        let y = hit.point.y * this.imageData.height / 100;
 
                         if (x && y) this.createHit({x, y});
                     }
@@ -644,9 +676,10 @@
              *                            {Number} y - y coordinate
              *                         }
              * @emits {Object} hit - {
+             *                          {Number} index - The index of the hit (chronological order),
              *                          {Object} point - {
-             *                                              {Number} x - x coordinate,
-             *                                              {Number} y - y coordinate
+             *                                              {Number} x - x coordinates [%],
+             *                                              {Number} y - y coordinates [%]
              *                                           }
              *                          {Object} bullseyeData - {
              *                                                     {Number} distance - distance from the point to the center,
@@ -661,15 +694,23 @@
                 this.magnify = false;
 
                 if (!this.hitsFull || this.$props.readOnly) {
+                    let index = this.indexAssigner++;
                     let hit = this.distanceFromCenter(point);
                     let xPerc = point.x / this.imageData.width * 100;
                     let yPerc = point.y / this.imageData.height * 100;
                     
-                    this.points.push(point);
+                    this.allHits.push({
+                        index,
+                        point: {
+                            x: xPerc,
+                            y: yPerc
+                        }
+                    });
 
                     //emit an object to the parent
                     if (xPerc && yPerc) {
                         this.$emit('hit', {
+                            index,
                             point: { x: xPerc, y: yPerc },
                             bullseyeData: hit
                         });
@@ -679,43 +720,51 @@
             /**
              * Delete a hit point from the image.
              * 
-             * @param {Object} point - {
-             *                            {Number} x - x coordinate
-             *                            {Number} y - y coordinate
-             *                         }
+             * @param {Object} hit - {
+             *                          {Number} index - The hit's index (chronological order),
+             *                          {Object} point - {
+             *                                              {Number} x - x coordinates [%],
+             *                                              {Number} y - y coordinates [%]
+             *                                           }
+             *                       }
              * @emits {Object} delete - {
              *                             {Number} x - x coordinate
              *                             {Number} y - y coordinate
              *                          }
              */
-            deleteHit: function(point) {
-                for (let i in this.points) {
-                    let p = this.points[i];
+            deleteHit: function(hit) {
+                for (let i in this.allHits) {
+                    let p = this.allHits[i].point;
 
-                    if (p.x === point.x && p.y === point.y) {
-                        this.points.splice(i, 1);
+                    if (p.x === hit.point.x && p.y === hit.point.y) {
+                        this.allHits.splice(i, 1);
 
                         //emit the deleted point to the parent
-                        this.$emit('delete', point)
+                        this.$emit('delete', hit)
                     }
                 }
             },
             /**
              * Generate an inline style object for a hit point.
              * 
-             * @param {Object} point - {
-             *                            {Number} x - x coordinate
-             *                            {Number} y - y coordinate
-             *                         }
+             * @param {Object} hit - {
+             *                          {Number} index - The hit's index (chronological order),
+             *                          {Object} point - {
+             *                                              {Number} x - x coordinates [%],
+             *                                              {Number} y - y coordinates [%]
+             *                                           }
+             *                       }
              * @returns {Object} {
              *                      {String} position - css position,
              *                      {String} left - css left attribute in px,
              *                      {String} top - css top attribute in px
              *                   }
              */
-            createHitStyle: function(point) {
-                let x = this.imageData.offsetLeft + point.x - HIT_ICON_SIZE / 2;
-                let y = this.imageData.offsetTop + point.y - HIT_ICON_SIZE / 2;
+            createHitStyle: function(hit) {
+                let xPx = hit.point.x * this.imageData.width / 100;
+                let yPx = hit.point.y * this.imageData.height / 100;
+                let x = this.imageData.offsetLeft + xPx - HIT_ICON_SIZE / 2;
+                let y = this.imageData.offsetTop + yPx - HIT_ICON_SIZE / 2;
 
                 return {
                     position: 'absolute',
@@ -726,15 +775,18 @@
             /**
              * Find the proper class for a hit.
              * 
-             * @param {Object} point - {
-             *                            {Number} x - x coordinate
-             *                            {Number} y - y coordinate
-             *                         }
+             * @param {Object} hit - {
+             *                          {Number} index - The hit's index (chronological order),
+             *                          {Object} point - {
+             *                                              {Number} x - x coordinates [%],
+             *                                              {Number} y - y coordinates [%]
+             *                                           }
+             *                       }
              * @returns {String} The proper class name for the hit (for css purposes).
              */
-            findHitClass: function(point) {
+            findHitClass: function(hit) {
                 let cssClass = 'hit ';
-                let pointTouched = point == this.touchedHit;
+                let pointTouched = this.touchedHit && hit.index == this.touchedHit.index;
                 let reachedMaxHits = this.hitsFull;
 
                 if (this.magnify) cssClass += reachedMaxHits ? 'highlight' : 'transparent'

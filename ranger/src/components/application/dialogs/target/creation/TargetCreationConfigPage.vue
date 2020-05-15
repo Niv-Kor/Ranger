@@ -38,7 +38,7 @@
                                 v-if='base64Data'
                                 class='target-canvas'
                                 :src='base64Data'
-                                :hits=1
+                                :max-hits=1
                                 mark-center
                                 :bullseye='center'
                                 :predefine-center='!!center'
@@ -94,7 +94,7 @@
                                 v-if='base64Data'
                                 class='target-canvas'
                                 :src='base64Data'
-                                :hits=1
+                                :max-hits=1
                                 read-only
                                 :bullseye='center'
                                 :display-value-rings='center ? {

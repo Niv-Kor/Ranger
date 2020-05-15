@@ -6,18 +6,27 @@
         >
             <v-card>
                 <v-card-title
-                    class='dialog-title'
                     :color='colors.primary'
                     :style="{ backgroundColor: colors.primary }"
                 >
                     <p
+                        v-if='$props.title'
+                        class='dialog-title'
+                        align=center
+                    >
+                        {{ $props.title }}
+                        <br><br>
+                    </p>
+                    <p
                         class='dialog-title-flex warning-dialog'
                         align=center
                     >
-                        <span>{{ message }}</span>
+                        <span v-html='message'>{{ message }}</span>
                         <br><br>
-                        <span class='irreversible-warning'>This action is irreversible!</span>
-                        <br><br>
+                        <span v-if='irreversible'>
+                            <span class='irreversible-warning'>This action is irreversible!</span>
+                            <br><br>
+                        </span>
                         <v-icon large :color='colors.secondary'>mdi-alert</v-icon>
                     </p>
                 </v-card-title>
@@ -60,6 +69,11 @@
             model: {
                 type: Boolean,
                 required: true
+            },
+            title: {
+                type: String,
+                required: false,
+                default: ''
             },
             /**
              * The function to call when the 'Accept' button is clicked.
@@ -135,6 +149,12 @@
 </script>
 
 <style scoped>
+    .dialog-title {
+        color: #ffffff;
+        margin: auto;
+        font-weight: bold;
+        font-size: 25px;
+    }
     .dialog-title-flex {
         word-break: normal;
         color: #ffffff;
