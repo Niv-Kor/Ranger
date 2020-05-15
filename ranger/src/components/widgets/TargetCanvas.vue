@@ -54,7 +54,7 @@
                     :src='hitIcon'
                     :style='createHitStyle(hit)'
                     v-longclick='() => { if (!$props.readOnly) deleteHit(hit); }'
-                    v-touch:start='() => { if (!$props.readOnly) touchedHit = hit; }'
+                    v-touch:start='() => { if (!$props.readOnly) onHitTouch(hit); }'
                     v-touch:end='() => { if (!$props.readOnly) touchedHit = null; }'
                 />
             </li>
@@ -182,6 +182,15 @@
                 type: Object,
                 required: false,
                 default: null
+            },
+            /**
+             * The index of the hit that the user wants selected.
+             * When set to -1, nothing is selected.
+             */
+            selectHit: {
+                type: Number,
+                required: false,
+                default: -1
             },
             /**
              * An array that's used as a trigger to delete a set of hits from the target.
@@ -786,10 +795,12 @@
              */
             findHitClass: function(hit) {
                 let cssClass = 'hit ';
-                let pointTouched = this.touchedHit && hit.index == this.touchedHit.index;
+                let pointTouched = this.touchedHit && hit.index === this.touchedHit.index;
+                let pointSelected = this.$props.selectHit >= 0 && hit.index === this.$props.selectHit;
                 let reachedMaxHits = this.hitsFull;
 
-                if (this.magnify) cssClass += reachedMaxHits ? 'highlight' : 'transparent'
+                if (this.magnify) cssClass += reachedMaxHits ? 'highlight' : 'transparent';
+                else if (pointSelected) cssClass += 'highlight';
                 else cssClass += pointTouched ? 'tint' : 'opaque';
 
                 return cssClass;
@@ -800,13 +811,13 @@
              * the center is by default the actual image's center.
              * 
              * @param {Object} point - {
-             *                            {Number} x - x coordinate
-             *                            {Number} y - y coordinate
+             *                            {Number} x - x coordinates,
+             *                            {Number} y - y coordinates
              *                         }
              * @returns {Object} {
              *                      {Object} center - {
-             *                                           {Number} x - x coordinate
-             *                                           {Number} y - y coordinate
+             *                                           {Number} x - x coordinates,
+             *                                           {Number} y - y coordinates
              *                                        }
              *                      {Number} distance - distance from the point to the center,
              *                      {Number} xDistance - x distance from the point to the center,
@@ -839,8 +850,8 @@
              * 
              * @param {Event} event - Touch event
              * @returns {Object} point - {
-             *                              {Number} x - x coordinate
-             *                              {Number} y - y coordinate
+             *                              {Number} x - x coordinates,
+             *                              {Number} y - y coordinates
              *                           }
              */
             getZoomCursorPosition: function(event) {
@@ -860,8 +871,8 @@
              * Get the offset position of the magnifier.
              * 
              * @returns {Object} point - {
-             *                              {Number} x - x coordinate
-             *                              {Number} y - y coordinate
+             *                              {Number} x - x coordinates,
+             *                              {Number} y - y coordinates
              *                           }
              */
             getThumbPosition: function() {
@@ -887,6 +898,22 @@
                 }
 
                 return { x: xPos, y: yPos };
+            },
+            /**
+             * Activate when a hit on the target is touched by the user.
+             * 
+             * @emits {Number} touch - The index of the touched hit
+             * @param {Object} hit - {
+             *                          {Number} index - The hit's index (chronological order),
+             *                          {Object} point - {
+             *                                              {Number} x - x coordinates [%],
+             *                                              {Number} y - y coordinates [%]
+             *                                           }
+             *                       }
+             */
+            onHitTouch: function(hit) {
+                this.touchedHit = hit;
+                this.$emit('touch', hit.index);
             },
             /**
              * Get the current position of the zoom image, according to the cursor.
@@ -1048,7 +1075,7 @@
     }
     .hit.opaque {
         transition: opacity .6s;
-        filter: invert(100%) drop-shadow(0px 0px 3px #20d82f);
+        filter: drop-shadow(0px 0px 3px #ffffff);
     }
     .hit.transparent {
         opacity: .3;
@@ -1057,6 +1084,6 @@
         filter: invert(100%) drop-shadow(0px 0px 3px #e90d0d);
     }
     .hit.tint {
-        filter: invert(100%) drop-shadow(0px 0px 8px #ff00d4);
+        filter: invert(100%) drop-shadow(0px 0px 8px #2bff00);
     }
 </style>

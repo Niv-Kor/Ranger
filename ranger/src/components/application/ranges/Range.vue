@@ -19,6 +19,29 @@
                         <i class='fas fa-eraser fa-lg' />
                     </v-btn>
                     <v-btn
+                        v-if='scoreboard[selectedRound][selectedRecord]'
+                        class='meta-btn remove elevation-0'
+                        fab
+                        small
+                        :color='colors.secondary'
+                        @click='deleteHit(scoreboard[selectedRound][selectedRecord].hitData)'
+                    >
+                        <i class='fas fa-times fa-2x' />
+                    </v-btn>
+                </v-col>
+                <v-col cols=8 class='end-details det-block'>
+                    <p class='end-details det-title' align=center>
+                        Round
+                        <span :style='{ color: colors.primary, fontSize: 23 + "px" }'>
+                            {{ selectedRound + 1 }}
+                        </span>
+                    </p>
+                    <p class='end-details det-hits' align=center>
+                        Hits : {{ scoreboard[selectedRound].length }}
+                    </p>
+                </v-col>
+                <v-col cols=2>
+                    <v-btn
                         class='meta-btn delete elevation-0'
                         fab
                         small
@@ -29,17 +52,6 @@
                     >
                         <i class='fas fa-trash fa-lg' />
                     </v-btn>
-                </v-col>
-                <v-col cols=10 class='end-details det-block'>
-                    <p class='end-details det-title' align=center>
-                        Round
-                        <span :style='{ color: colors.primary, fontSize: 23 + "px" }'>
-                            {{ selectedRound + 1 }}
-                        </span>
-                    </p>
-                    <p class='end-details det-hits' align=center>
-                        Hits : {{ scoreboard[selectedRound].length }}
-                    </p>
                 </v-col>
             </v-row>
         </v-card>
@@ -56,8 +68,10 @@
                 :size='targetSize'
                 :predef-hits='roundHits'
                 :delete-trigger='deleteTrigger'
+                :select-hit='selectedHitIndex'
                 @hit='recordHit'
                 @delete='deleteHit'
+                @touch='onHitTouch'
             />
         </v-card>
         <v-card
@@ -78,12 +92,18 @@
                         elevation=0
                         outlined
                         :color='record.color'
-                        :style='recordItemStyle'
+                        :style='createRecordItemStyle(index)'
+                        @click='selectedRecord = index'
                     >
                         <p class='record-index' align=center>
+                            {{ selectedRecord }}
                             {{ index + 1 }}
                         </p>
-                        <p class='record-text' align=center>
+                        <p
+                            class='record-text'
+                            align=center
+                            :style='createRecordScoreStyle(index)'
+                        >
                             {{ record.score }}
                         </p>
                     </v-card>
@@ -166,7 +186,7 @@
     import WarningDialog from '../../widgets/WarningDialog';
 
     const MISS_LABEL = 'm';
-    const RANGER_GRADIENT = require.context('../../../assets/', false, /\.png$/);
+    const ASSETS_CONTEXT = require.context('../../../assets/', true, /\.png$/);
 
     export default {
         mixins: [
@@ -180,8 +200,9 @@
             return {
                 scoreboard: [[]],
                 deleteTrigger: [],
-                touchedRecord: null,
+                selectedRecord: 0,
                 selectedRound: 0,
+                recordAdded: false,
                 warningModel: false,
                 warningTitle: '',
                 warningMessage: '',
@@ -235,12 +256,17 @@
                 for (let record of records) hits.push(record.hitData);
                 return hits;
             },
+            selectedHitIndex() {
+                let scores = this.scoreboard[this.selectedRound];
+                let record = scores[this.selectedRecord];
+                return record ? record.hitData.index : -1;
+            },
             nextButtonStyle() {
                 let lastRound = this.selectedRound === this.scoreboard.length - 1;
                 let roundNotEmpty = this.scoreboard[this.selectedRound].length > 0;
 
                 if (lastRound && roundNotEmpty) {
-                    let img = RANGER_GRADIENT('./gradient.png');
+                    let img = ASSETS_CONTEXT('./gradient.png');
                     return {
                         backgroundImage: 'url(' + img + ')',
                         backgroundSize: '150px 100px',
@@ -269,10 +295,11 @@
         },
         updated() {
             //scroll scorboard to bottom
-            if (this.$refs.scoreboard) {
+            if (this.recordAdded && this.$refs.scoreboard) {
                 let scoreboard = this.$refs.scoreboard.$refs.link;
                 let scrollHeight = scoreboard.scrollHeight;
                 scoreboard.scrollTop = scrollHeight;
+                this.recordAdded = false;
             }
         },
         methods: {
@@ -296,6 +323,7 @@
             recordHit: function(hit) {
                 let score = this.calculateScore(hit.bullseyeData.distance);
                 let color = this.findScoreColor(score, this.colors.secondary);
+                this.selectedRecord = this.scoreboard[this.selectedRound].length;
 
                 //add hit to scoreboard
                 this.scoreboard[this.selectedRound].push({
@@ -303,6 +331,9 @@
                     color,
                     hitData: hit
                 });
+
+                //activate a trigger so the scoreboard will scroll all the way down
+                this.recordAdded = true;
             },
             /**
              * Delete a hit from the scoreboard.
@@ -323,11 +354,8 @@
              *                       }
              */
             deleteHit: function(hit) {
-                console.log('here in delete for', hit.index)
                 let scores = this.scoreboard[this.selectedRound];
                 let recordIndex = -1;
-
-                console.log('before records', scores);
 
                 for (let i in scores) {
                     let record = scores[i];
@@ -337,9 +365,10 @@
                     }
                 }
 
-                if (recordIndex !== -1) scores.splice(recordIndex, 1);
-
-                console.log('after records', scores, '\n');
+                if (recordIndex !== -1) {
+                    scores.splice(recordIndex, 1);
+                    this.selectedRecord = scores.length - 1;
+                }
             },
             /**
              * Calculate the score of a single hit.
@@ -372,6 +401,66 @@
             findScoreColor: function(score, highestScoreColor) {
                 if (score == MISS_LABEL) return '#ffffff';
                 else return ColorsHandler.lighten(highestScoreColor, (10 - score) * 5);
+            },
+            /**
+             * Create the appropriate style for a record item.
+             * 
+             * @param {Number} index - The index of the record
+             * @returns {Object} {
+             *                      {String} width - CSS width attribute,
+             *                      {String} height - CSS height attribute,
+             *                      {String} borderColor - CSS border-color attribute,
+             *                      {String} borderStyle - CSS border-style attribute,
+             *                      {String} color - CSS color attribute
+             *                   }
+             */
+            createRecordItemStyle(index) {
+                let isSelected = this.selectedRecord === index;
+                let borderColor = isSelected ? this.colors.primary : '#00000020';
+                let borderStyle = isSelected ? 'dashed' : 'solid';
+                let fontColor = isSelected ? '#ffffff' : '#000000';
+                
+                return {
+                    width: '50px',
+                    height: '48px',
+                    borderColor,
+                    borderStyle,
+                    color: fontColor,
+                };
+            },
+            /**
+             * Create the appropriate style for a record's score text.
+             * 
+             * @param {Number} index - The index of the record
+             * @returns {Object} {
+             *                      {String} backgroundImage - CSS background-image attribute,
+             *                      {String} backgroundPosition - CSS background-position attribute,
+             *                      {String} backgroundSize - CSS background-size attribute,
+             *                      {String} fontWeight - CSS font-weight attribute,
+             *                      {String} textShadow - CSS text-shadow attribute
+             *                   }
+             */
+            createRecordScoreStyle(index) {
+                if (this.selectedRecord === index) {
+                    let image = ASSETS_CONTEXT('./ranges/ribbon.png');
+                    let backgroundImage = `url(${image})`;
+                    let backgroundPosition = 'left top';
+                    let backgroundSize = 'auto auto'
+                    let fontWeight = 'bold';
+                    let textShadow = '-1px -1px 0 #000000, ' +
+                                     '1px -1px 0 #000000, ' +
+                                     '-1px 1px 0 #000000, ' +
+                                     '1px 1px 0 #000000';
+
+                    return {
+                        backgroundImage,
+                        backgroundPosition,
+                        backgroundSize,
+                        fontWeight,
+                        textShadow
+                    };
+                }
+                return null;
             },
             /**
              * Go to the previous round.
@@ -420,16 +509,20 @@
                 this.clearRound();
                 this.scoreboard.splice(this.selectedRound--, 1);
             },
-            f: function(record) {
-                console.log('f:', record.hitData.index)
-            },
-            deleteHit1: function(hit) {
-                let vm = this;
-                let hit1 = hit;
+            /**
+             * Activate when a hit on the target is touched.
+             * 
+             * @param {Number} index - The index of the hit
+             */
+            onHitTouch: function(index) {
+                let scores = this.scoreboard[this.selectedRound];
 
-                return function() {
-                    console.log('fdfd');
-                    vm.deleteHit(hit1);
+                for (let i in scores) {
+                    let record = scores[i];
+                    if (record.hitData.index === index) {
+                        this.selectedRecord = +i;
+                        return;
+                    }
                 }
             }
         }
@@ -437,9 +530,6 @@
 </script>
 
 <style scoped>
-    .end-details.det-block {
-        margin-left: -8%;
-    }
     .end-details.det-title {
         font-size: 20px;
     }
@@ -451,7 +541,7 @@
         margin: 20px 0 0 5%;
     }
     .scoreboard-card {
-        overflow-x: auto;
+        overflow: auto;
         margin-top: 20px;
     }
     .record-list {
@@ -462,7 +552,6 @@
         display: inline-block;
         margin: 3px;
         border-width: 1px;
-        border-style: solid;
         border-color: #00000060;
         border-radius: 10%;
     }
@@ -499,6 +588,10 @@
         margin-top: -10px;
     }
     .meta-btn.delete {
+        position: absolute;
+        right: 5px;
+    }
+    .meta-btn.remove {
         margin-top: 10px;
     }
 </style>
