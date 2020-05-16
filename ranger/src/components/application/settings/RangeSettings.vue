@@ -38,7 +38,12 @@
                                     <v-row no-gutters>
                                         <v-col cols=4>Date</v-col>
                                         <v-col cols=4 class='text--secondary'>
-                                            <span>20/05/20</span>
+                                            <span
+                                                :style='(datePickerModel !== originDate) ?
+                                                        { color: colors.primary } : null'
+                                            >
+                                                {{ datePickerModel | dateLabelFormat }}
+                                            </span>
                                         </v-col>
                                     </v-row>
                                 </v-expansion-panel-header>
@@ -59,14 +64,19 @@
                                     <v-row no-gutters>
                                         <v-col cols=4>Time</v-col>
                                         <v-col cols=4 class='text--secondary'>
-                                            <span>10:51</span>
+                                            <span
+                                                :style='(timePickerModel !== originTime) ?
+                                                        { color: colors.primary } : null'
+                                            >
+                                                {{ timePickerModel | timeLabelFormat }}
+                                            </span>
                                         </v-col>
                                     </v-row>
                                 </v-expansion-panel-header>
                                 <v-expansion-panel-content>
                                     <v-time-picker
                                         class='date-label time-picker elevation-0'
-                                        v-model='timePickerModel' 
+                                        v-model='timePickerModel'
                                         full-width
                                         scrollable
                                         ampm-in-title
@@ -76,6 +86,15 @@
                                 </v-expansion-panel-content>
                             </v-expansion-panel>
                         </v-expansion-panels>
+                        <v-btn
+                            class='current-date-time'
+                            outlined
+                            block
+                            :color='colors.neutral'
+                            @click='toCurrentDateTime'
+                        >
+                            Change to Current
+                        </v-btn>
                         <!-- options -->
                         <hr class='horizontal-line'>
                         <p
@@ -85,11 +104,11 @@
                         >
                             <span class='header-icon'>
                                 <v-icon
-                                    :style='createSegmentStyle(0)'
+                                    :style='createSegmentStyle(1)'
                                     medium
-                                    @click='revertSegment(0)'
+                                    @click='revertSegment(1)'
                                 >
-                                    <template v-if='!isSegmentChanged(0)'>mdi-checkbox-blank-circle-outline</template>
+                                    <template v-if='!isSegmentChanged(1)'>mdi-checkbox-blank-circle-outline</template>
                                     <template v-else>mdi-chevron-right-circle</template>
                                 </v-icon>
                             </span>
@@ -103,13 +122,13 @@
                                 <v-col cols=4>
                                     <v-switch
                                         class='protocol-switch'
-                                        v-model='protocoledRange'
+                                        v-model='protocoledRangeModel'
                                         inset
                                         :color='colors.secondary'
                                     />
                                 </v-col>
                                 <v-col cols=7>
-                                    <p v-if='protocoledRange' class='btn-info'>
+                                    <p v-if='protocoledRangeModel' class='btn-info'>
                                         Save performance data.
                                     </p>
                                     <p v-else class='btn-info'>
@@ -264,7 +283,6 @@
         },
         data() {
             return {
-                journalDeleted: false,
                 load: false,
                 warningModel: false,
                 warningMessage: '',
@@ -273,98 +291,61 @@
                 dialogMessage: '',
                 dialogColor: '',
                 dialogSuccessful: false,
-                newName: '',
-                disciplineSelectOpen: false,
-                selectedDiscipline: '',
-                newDiscipName: '',
-                selectedColor: '',
-                selectedTargetIndex: 0,
-                targets: [],
-
-                protocoledRange: true,
+                protocoledRangeModel: false,
+                rangeDeleted: false,
                 datePicker: true,
                 timePicker: false,
-                datePickerModel: this.getNowDate(),
-                timePickerModel: this.getNowTime()
+                datePickerModel: null,
+                timePickerModel: null,
+                segmentColor: ColorsHandler.darken("#fafafa", 40)
             }
         },
         computed: {
             ...mapGetters({
                 colors: 'getColors',
+                ranges: 'getAllRanges',
+                rangeIndex: 'getRangeIndex',
                 journals: 'getAllJournals',
-                storeTargets: 'getAllTargets',
-                selectedIndex: 'getSelectedJournalIndex',
-                palette: 'getNewJournalColorPalette'
+                journalIndex: 'getSelectedJournalIndex'
             }),
             journal() {
-                return this.journals[this.selectedIndex];
+                return this.journals[this.journalIndex];
             },
-            selectedTarget() {
-                return this.targets[this.selectedTargetIndex];
+            range() {
+                console.log('all ranges', this.ranges)
+                return this.ranges[`journal #${this.journal.id}`][this.rangeIndex];
             },
-            allDisciplines() {
-                let list = ['Archery', 'Firearm'];
-
-                for (let journal of this.journals) {
-                    let discip = journal.discipline;
-                    if (!list.includes(discip)) list.push(discip);
-                }
-                
-                list.sort();
-                list.push('Other:');
-                return list;
+            isRangeProtocoled() {
+                return this.range.protocoled;
+            },
+            originDateTime() {
+                return Moment(this.range.date, 'YYYY-MM-DD HH:mm:ss');
+            },
+            originDate() {
+                let date = this.originDateTime.format('YYYY-MM-DD');
+                return date.toString();
+            },
+            originTime() {
+                let time = this.originDateTime.format('hh:mm:ss');
+                return time.toString();
             },
             headerStyle() {
-                let color = ColorsHandler.darken(this.selectedColor, 40);
-                let gradient = `linear-gradient(to right, ${color}50, #00000000)`
-
+                let gradient = `linear-gradient(to right, ${this.segmentColor}50, #00000000)`
                 return { backgroundImage: gradient };
+            }
+        },
+        filters: {
+            dateLabelFormat(date) {
+                return Moment(date, 'YYYY-MM-DD').format('DD-MM-YYYY').toString();
+            },
+            timeLabelFormat(date) {
+                return Moment(date, 'hh:mm').format('HH:mm').toString();
             }
         },
         created() {
             this.revertAll();
         },
         methods: {
-            /**
-             * @returns {String} The date right now in YYYY-MM-DD format.
-             */
-            getNowDate: function() { return Moment().format('YYYY-MM-DD'); },
-            /**
-             * @returns {String} The time right now in hh:mm 24 hours format.
-             */
-            getNowTime: function() { return Moment().format('HH:mm:ss'); },
-
-
-
-
-
-
-            /**
-             * Create the appropriate style for a color icon.
-             * 
-             * @param {String} color - A hex representation of the selected color
-             * @returns {Object} {
-             *                      {String} borderColor - CSS attribute for border-color
-             *                   }
-             */
-            createColorIconStyle(color) {
-                let borderAlpha = (this.selectedColor === color) ? 'bb' : '20';
-                return { borderColor: '#000000' + borderAlpha }
-            },
-            /**
-             * Move to the next target in line.
-             */
-            incrementTarget: function() {
-                if (this.selectedTargetIndex < this.targets.length - 1)
-                    this.selectedTargetIndex++;
-            },
-            /**
-             * Return to the previous viewed target.
-             */
-            decrementTarget: function() {
-                if (this.selectedTargetIndex > 0)
-                    this.selectedTargetIndex--;
-            },
             /**
              * Create a style for the little light bulb in every segment.
              * 
@@ -381,7 +362,6 @@
             createSegmentStyle: function(segment) {
                 let changed = this.isSegmentChanged(segment);
                 let color = changed ? this.colors.primary : this.colors.neutral;
-
                 return { color };
             },
             /**
@@ -396,10 +376,12 @@
              */
             isSegmentChanged: function(segment) {
                 switch (segment) {
-                    case 0: return this.newName !== this.journal.name;
-                    case 1: return this.selectedDiscipline !== this.journal.discipline;
-                    case 2: return this.selectedTarget.id !== this.journal.target.id;
-                    case 3: return this.selectedColor !== this.journal.color;
+                    case 0: {
+                        let dateChanged = this.datePickerModel !== this.originDate;
+                        let timeChanged = this.timePickerModel !== this.originTime;
+                        return dateChanged || timeChanged;
+                    }
+                    case 1: return this.protocoledRangeModel !== this.isRangeProtocoled;
                     default: return false;
                 }
             },
@@ -415,43 +397,51 @@
             revertSegment: function(segment) {
                 switch (segment) {
                     case 0:
-                        this.newName = this.journal.name;
+                        this.datePickerModel = this.originDate;
+                        this.timePickerModel = this.originTime;
                         break;
                     case 1:
-                        this.selectedDiscipline = this.journal.discipline;
-                        break;
-                    case 2:
-                        this.targets = this.storeTargets.filter(x => x.active);
-                        this.targets.sort(element => {
-                            if (element.id === this.journal.target.id) return -1;
-                            else return 0;
-                        })
-
-                        this.selectedTargetIndex = 0;
-                        break;
-                    case 3:
-                        this.selectedColor = this.journal.color;
+                        this.protocoledRangeModel = this.isRangeProtocoled;
                         break;
                 }
             },
             /**
-             * Activate when clicking the 'clear ranges' button.
+             * @returns {String} The date right now in YYYY-MM-DD format.
              */
-            clearRanges: async function() {
-                this.load = true;
-                let success = await this.$store.dispatch('clearJournalRanges', this.journal.id);
-                this.load = false;
-                this.popDialog(success, 'Ranges deleted successfully.', 'Could not clear ranges. Please try again.');
+            getNowDate: function() { return Moment().format('YYYY-MM-DD'); },
+            /**
+             * @returns {String} The time right now in hh:mm 24 hours format.
+             */
+            getNowTime: function() { return Moment().format('HH:mm:ss'); },
+            /**
+             * Activate when the 'Change to Current' button is pressed.
+             * Change the date and time to current date time values.
+             */
+            toCurrentDateTime: function() {
+                this.datePickerModel = this.getNowDate();
+                this.timePickerModel = this.getNowTime();
             },
             /**
-             * Activate when clicking the 'delete journal' button.
+             * Activate when clicking the 'clear range' button.
              */
-            deleteJournal: async function() {
+            clearRange: async function() {
                 this.load = true;
-                let success = await this.$store.dispatch('deleteJournal', this.journal.id);
+                let success = await this.$store.dispatch('clearRange', { rangeId: this.range.id });
                 this.load = false;
-                this.popDialog(success, 'Journal deleted successfully.', 'Could not delete the journal. Please try again.');
-                this.journalDeleted = success;
+                this.popDialog(success, 'Range cleared successfully.',
+                              'Could not clear range at this moment. Please try again later.');
+            },
+            /**
+             * Activate when clicking the 'delete range' button.
+             */
+            deleteRange: async function() {
+                this.load = true;
+                let success = await this.$store.dispatch('deleteRange', { rangeId: this.range.id });
+                this.load = false;
+                this.popDialog(success, 'Range deleted successfully.',
+                               'Could not delete the range at this moment. Please try again later.');
+
+                this.rangeDeleted = success;
             },
             /**
              * Return all values in the form to their default states.
@@ -463,29 +453,30 @@
              * Save the changed data.
              */
             save: async function() {
-                let name = this.isSegmentChanged(0) ? this.newName : null;
-                let discipline = this.isSegmentChanged(1) ? this.selectedDiscipline : null;
-                let targetId = this.isSegmentChanged(2) ? this.selectedTarget.id : null;
-                let colorTheme = this.isSegmentChanged(3) ? this.selectedColor : null;
-
-                //other discipline's name
-                if (discipline === 'Other:') discipline = this.newDiscipName;
+                let concatDateTime = this.datePickerModel + ' ' + this.timePickerModel;
+                let date = this.isSegmentChanged(0) ? concatDateTime : null;
+                let protocoled = this.isSegmentChanged(1) ? this.protocoledRangeModel : null;
 
                 //nothing is changed
-                if (!name && !discipline && !targetId && !colorTheme) return;
+                if (!date && protocoled === null) return;
 
                 let data = {
-                    id: this.journal.id,
-                    name,
-                    discipline,
-                    targetId,
-                    colorTheme
+                    rangeId: this.range.id,
+                    date,
+                    protocoled
                 }
 
                 this.load = true;
-                let success = await this.$store.dispatch('updateJournal', data);
+                let success = await this.$store.dispatch('updateRange', data);
+
+                if (success) {
+                    await this.$store.dispatch('loadAllRanges');
+                    this.revertAll();
+                }
+
                 this.load = false;
-                this.popDialog(success, 'Journal updated successfully.', 'Could not save changes. Please try again.');
+                this.popDialog(success, 'Range updated successfully.',
+                              'Could not save changes at the moment. Please try again later.');
             },
             /**
              * Pop a warning dialog on the screen.
@@ -515,32 +506,29 @@
              * If the dialog shows a successful message, reload all app data.
              * If this journal no longer exists, go back to the shooting journals page.
              */
-            onDialogClick: function() {
+            onDialogClick: async function() {
                 if (this.dialogSuccessful) {
-                    if (this.journalDeleted) {
-                        this.journalDeleted = false;
-                        let journalsPage = '/home/journals';
-                        this.$router.push({ path: journalsPage }).catch(() => {});
+                    //deleted the range
+                    if (this.rangeDeleted) {
+                        this.rangeDeleted = false;
+                        this.load = true;
+                        await this.$store.dispatch('reloadAllData');
+                        this.load = false;
+
+                        let journalName = `${this.journal.discipline}-${this.journal.name}`
+                        let journalPage = `/home/journals/${journalName}/`;
+                        this.$router.push({ path: journalPage }).catch(() => {});
                     }
-
-                    this.$store.dispatch('reloadAllData');
+                    //cleared the range
+                    else {
+                        this.$store.dispatch('reloadRangeHits', {
+                            rangeId: this.range.id,
+                            rangeIndex: this.rangeIndex,
+                            journalId: this.journal.id
+                        });
+                    }
                 }
 
-                this.dialogModel = false;
-            },
-            /**
-             * Activate when clicking the dialog's 'ok' button.
-             * Reload all journals, ranges and targets data.
-             * If this journal no longer exists, go back to the shooting journals page.
-             */
-            reloadAppData: async function() {
-                if (this.journalDeleted) {
-                    this.journalDeleted = false;
-                    let journalsPage = '/home/journals';
-                    this.$router.push({ path: journalsPage }).catch(() => {});
-                }
-
-                this.$store.dispatch('reloadAllData');
                 this.dialogModel = false;
             }
         }
@@ -577,6 +565,10 @@
         border-width: .5px;
         border-style: dashed;
         border-color: #00000030;
+    }
+    .current-date-time {
+        text-transform: none;
+        margin-top: 10px;
     }
     .protocol-switch {
         margin: 5px 0 5px 5px;

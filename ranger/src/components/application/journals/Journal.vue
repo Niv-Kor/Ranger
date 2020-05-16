@@ -214,7 +214,7 @@
                 journals: 'getAllJournals',
                 allTargets: 'getAllTargets',
                 allRanges: 'getAllRanges',
-                isListLoading: 'isRangesListLoading'
+                isListLoading: 'isAnyListLoading'
             }),
             list() {
                 if (this.isListLoading) return [];
@@ -222,15 +222,9 @@
 
                 let list = [];
                 for (let obj of journalRanges) {
-                    //extract date
-                    let DD = obj.date.substr(8, 2);
-                    let MM = obj.date.substr(5, 2);
-                    let YYYY = obj.date.substr(2, 2);
-                    let HH = obj.date.substr(11, 2);
-                    let mm = obj.date.substr(14, 2);
-                    let ss = obj.date.substr(17, 2);
-                    let date = `${DD} - ${MM} - ${YYYY}`;
-                    let time = `${HH}:${mm}:${ss}`
+                    //extract date and time
+                    let date = Moment(obj.date, 'YYYY-MM-DD HH:mm:ss').format('DD - MM - YYYY').toString();
+                    let time = Moment(obj.date, 'YYYY-MM-DD HH:mm:ss').format('HH:mm:ss').toString();
 
                     //extract target data
                     let target = this.allTargets.find(x => x.id === obj.targetId);
@@ -352,15 +346,15 @@
                 //find the ranges that took place before the selected date
                 let prev = this.list.filter(x => {
                     let xDate = Moment(x.date, 'DD - MM - YYYY');
-                    let difference = xDate.from(selectedDate);
-                    return difference.includes('ago');
+                    let difference = xDate.diff(selectedDate, 'days');
+                    return difference < 0;
                 })
 
                 //find the ranges that take place after the selected date
                 let next = this.list.filter(x => {
                     let xDate = Moment(x.date, 'DD - MM - YYYY');
-                    let difference = xDate.from(selectedDate);
-                    return difference.includes('in');
+                    let difference = xDate.diff(selectedDate, 'days');
+                    return difference > 0;
                 })
 
                 //find the correct amounts from before the selected date and after it
@@ -374,7 +368,7 @@
 
                 //filter the list (more recent ranges are in the beginning)
                 let listLen = this.list.length;
-                this.listFilter.to = listLen - before + beforeItems;
+                this.listFilter.to = listLen - before + beforeItems; 
                 this.listFilter.from = after - afterItems;
             },
             /**

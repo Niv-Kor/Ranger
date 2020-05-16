@@ -86,6 +86,11 @@ const actions = {
     },
     /**
      * Create a new range in the data base.
+     * 
+     * @returns {Object} {
+     *                      {Boolean} success - True if the process is successful,
+     *                      {Number} id - The ID of the newly created range
+     *                   }
      */
     createRange: async ({ dispatch, state, rootState, getters, rootGetters }) => {
         return new Promise(resolve => {
@@ -101,7 +106,18 @@ const actions = {
             }
 
             rootState.socket.once('create_range', res => {
-                dispatch('loadAllRanges').then(resolve(res));
+                dispatch('loadAllRanges').then(() => {
+                    resolve({
+                        success: true,
+                        id: res.id
+                    });
+                })
+                .catch(() =>
+                    resolve({
+                        success: false,
+                        id: NaN
+                    })
+                );
             });
             rootState.socket.emit('create_range', data);
         });

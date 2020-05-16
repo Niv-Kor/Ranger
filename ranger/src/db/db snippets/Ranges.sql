@@ -4,8 +4,7 @@ CREATE TABLE Ranges (
 	journal_id INT NOT NULL,
 	shooting_date VARCHAR(19) NOT NULL,
 	target_id INT DEFAULT NULL,
-	ends INT DEFAULT 1,
-	is_training TINYINT DEFAULT 0,
+	is_protocoled TINYINT DEFAULT 1,
 
 	PRIMARY KEY(id),
 
@@ -21,19 +20,6 @@ CREATE TABLE Ranges (
 )
 GO
 
-EXEC sp_msforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all'
-
-ALTER TABLE Ranges
-ALTER COLUMN target_id INT
-
-ALTER TABLE Ranges
-DROP CONSTRAINT FK_Ranges_Targets_id
-
-ALTER TABLE Ranges
-ADD CONSTRAINT FK_Ranges_Targets_id
-FOREIGN KEY(target_id) REFERENCES Targets(id) ON DELETE NO ACTION
-
-
 -- Procedures
 ALTER PROCEDURE CreateRange
 	@journal_id INT,
@@ -41,6 +27,13 @@ ALTER PROCEDURE CreateRange
 	@target INT
 AS
 BEGIN
+	DECLARE
+		@user VARCHAR(70)
+	SET
+		@user = (SELECT journal_owner
+				 FROM Journals
+				 WHERE id = @journal_id)
+
 	INSERT INTO Ranges(journal_id,
 					   shooting_date,
 					   target_id)
@@ -49,6 +42,12 @@ BEGIN
 		@date,
 		@target
 	)
+	
+	-- find the newly created range's ID
+	SELECT MAX(r.id) AS 'new_id'
+	FROM Ranges r
+	INNER JOIN Journals j ON j.id = r.journal_id
+	WHERE j.journal_owner = @user
 END
 GO
 
@@ -73,49 +72,6 @@ BEGIN
 	FROM Ranges
 	WHERE journal_id = @journal_id
 	  AND shooting_date = @date
-END
-GO
-
-ALTER PROCEDURE AddRangeEnd
-	@id INT,
-	@amount INT
-AS
-BEGIN
-	UPDATE Ranges
-	SET ends = ends + @amount
-	WHERE id = @id
-END
-GO
-
-ALTER PROCEDURE RemoveRangeEnd
-	@id INT,
-	@amount INT
-AS
-BEGIN
-	UPDATE Ranges
-	SET ends = ends - @amount
-	WHERE id = @id
-	  AND ends > @amount
-END
-GO
-
-ALTER PROCEDURE DeleteRange
-	@id INT
-AS
-BEGIN
-	DECLARE
-		@user VARCHAR(70)
-	SET
-		@user = (SELECT t.target_owner
-				 FROM Targets t
-				 INNER JOIN Ranges r ON r.target_id = t.id
-				 WHERE r.target_id = @id)
-
-	DELETE FROM Ranges
-	WHERE id = @id
-
-	-- delete targets that are left orphins after the range deletion
-	EXEC DeleteOrphinTargets @user;
 END
 GO
 
@@ -144,8 +100,8 @@ BEGIN
 	-- pull all ranges of a single journal
 	SELECT r.id,
 		   r.shooting_date AS 'date',
+		   r.is_protocoled,
 		   r.target_id,
-		   r.ends,
 		   ISNULL(s.score, 0) AS 'score',
 		   ISNULL(s.total, 0) AS 'total'
 	FROM Ranges r
@@ -155,11 +111,42 @@ BEGIN
 	  AND j.id = @journal_id
 	GROUP BY r.id,
 			 r.shooting_date,
+			 r.is_protocoled,
 			 r.target_id,
-			 r.ends,
 			 s.score,
 			 s.total
 	ORDER BY CONVERT(DATETIME, r.shooting_date, 120) DESC
+END
+GO
+
+CREATE PROCEDURE ClearRange
+	@range_id INT
+AS
+BEGIN
+	DELETE FROM Hits
+	WHERE range_id = @range_id
+END
+GO
+
+CREATE PROCEDURE DeleteRange
+	@range_id INT
+AS
+BEGIN
+	DELETE FROM Ranges
+	WHERE id = @range_id
+END
+GO
+
+CREATE PROCEDURE UpdateRange
+	@range_id INT,
+	@date VARCHAR(19),
+	@protocoled TINYINT
+AS
+BEGIN
+	UPDATE Ranges
+	SET shooting_date = ISNULL(@date, shooting_date),
+		is_protocoled = ISNULL(@protocoled, is_protocoled)
+	WHERE id = @range_id
 END
 GO
 

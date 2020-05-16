@@ -156,6 +156,7 @@
             ...mapGetters({
                 colors: 'getColors',
                 journals: 'getAllJournals',
+                ranges: 'getAllRanges',
                 journalIndex: 'getSelectedJournalIndex',
                 formattedDateTime: 'getNewRangeFormattedDateTime'
             }),
@@ -263,17 +264,37 @@
              */
             createRange: async function() {
                 this.load = true;
+                let dateTime = this.formattedDateTime
                 let res = await this.$store.dispatch('createRange');
                 this.load = false;
                 this.close();
 
-                //jump to range pange
-                if (res) {
+                //go to to range page
+                if (res.success) {
+                    this.load = true;
+                    await this.$store.dispatch('reloadAllData');
+                    this.load = false;
+
+                    //find the index of the newly created range
+                    let rangeId = res.id;
+                    let rangeIndex = 0;
+                    let journalRanges = this.ranges[`journal #${this.journal.id}`]
+
+                    for (let i in journalRanges) {
+                        let range = journalRanges[i];
+
+                        if (range.id === rangeId) {
+                            rangeIndex = +i;
+                            break;
+                        }
+                    }
+
                     let path = await this.$store.dispatch('generateRangeURL', {
                         journalName: `${this.journal.discipline}-${this.journal.name}`,
-                        date: this.formattedDateTime
+                        date: dateTime
                     });
-
+                    
+                    this.$store.commit('setRangeIndex', rangeIndex);
                     this.$router.push(path).catch(() => {});
                 }
             },

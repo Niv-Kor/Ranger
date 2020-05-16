@@ -84,8 +84,9 @@ const actions = {
     /**
      * Reload a single range.
      * 
-     * @param {Number} rangeId - The ID of the range to load.
-     * @param {Number} journalId - The ID of the journal to which the range belongs.
+     * @param {Number} rangeId - The ID of the range to load
+     * @param {Number} rangeIndex - The index of the range within its journal
+     * @param {Number} journalId - The ID of the journal to which the range belongs
      */
     reloadRangeHits: async ({ commit, state, rootState }, { rangeId, rangeIndex, journalId }) => {
         commit('setRangesListLoading', true);
@@ -98,6 +99,44 @@ const actions = {
             commit('setRangesListLoading', false);
         });
         rootState.socket.emit('load_hits', rangeId);
+    },
+    /**
+     * Clear a range from hits entirely.
+     * 
+     * @param {Number} rangeId - The ID of the range to clear
+     * @returns {Boolean} True if the process is succesfull.
+     */
+    clearRange: async ({ commit, rootState }, { rangeId }) => {
+        commit('setRangesListLoading', true);
+
+        return new Promise(resolve => {
+            rootState.socket.once('clear_range', res => {
+                resolve(res);
+    
+                //finish loading
+                commit('setRangesListLoading', false);
+            });
+            rootState.socket.emit('clear_range', rangeId);
+        });
+    },
+    /**
+     * Delete a range permanently.
+     * 
+     * @param {Number} rangeId - The ID of the range to delete
+     * @returns {Boolean} True if the process is succesfull.
+     */
+    deleteRange: async ({ commit, rootState }, { rangeId }) => {
+        commit('setRangesListLoading', true);
+
+        return new Promise(resolve => {
+            rootState.socket.once('delete_range', res => {
+                resolve(res);
+    
+                //finish loading
+                commit('setRangesListLoading', false);
+            });
+            rootState.socket.emit('delete_range', rangeId);
+        });
     },
     /**
      * Check if a range alredy exists in the data base.
@@ -126,21 +165,21 @@ const actions = {
      * 
      * @param {Number} journalName - The discipline of the range's journal,
      *                               followed by the journa's name, and separated by a dash.
-     * @param {String} date - The date at which the range took place ('DD-MM-YYYY' format)
+     * @param {String} date - The date at which the range took place [DD-MM-YYYY]
      * @returns {String} The appropriate URL path for the range.
      */
     generateRangeURL: (_, { journalName, date }) => {
         return new Promise(resolve => {
-            let rangeId = 0;
+            let rangeHash = 0;
 
             for (let i = 0; i < date.length; i++) {
                 let ch = date.charCodeAt(i);
-                rangeId = ((rangeId << 5) - rangeId) + ch;
-                rangeId |= 0;
+                rangeHash = ((rangeHash << 5) - rangeHash) + ch;
+                rangeHash |= 0;
             }
 
-            let path = `/home/journals/${journalName}/${rangeId}`;
-            resolve({ path, journalName, rangeId });
+            let path = `/home/journals/${journalName}/${rangeHash}`;
+            resolve({ path, journalName, rangeHash });
         })
     },
     /**
@@ -170,6 +209,24 @@ const actions = {
      */
     removeHit: ({ rootState }, hit) => {
         rootState.socket.emit('remove_hit', hit);
+    },
+    /**
+     * Update a range.
+     * 
+     * @param {Object} data - {
+     *                           {Number} rangeId - The ID of the range to update,
+     *                           {String} date - The date at which the range took place
+     *                                           [YYYY-MM-DD HH:mm:ss] (optional),
+     *                           {Boolean} protocoled - True if the range's data should be
+     *                                                  saved for performance analysis (optional)
+     *                        }
+     * @returns {Boolean} True if the process is successful.
+     */
+    updateRange: async ({ rootState }, data) => {
+        return new Promise(resolve => {
+            rootState.socket.once('update_range', res => resolve(res));
+            rootState.socket.emit('update_range', data);
+        })
     }
 };
 

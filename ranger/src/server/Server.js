@@ -139,6 +139,21 @@ CONSTANTS.FRONT_IO.on('connection', async socket => {
             let res = await ACTIONS.ranges.removeHit(data);
             socket.emit('remove_hit', res);
         })
+
+        socket.on('clear_range', async rangeId => {
+            let res = await ACTIONS.ranges.clearRange(rangeId);
+            socket.emit('clear_range', res);
+        })
+
+        socket.on('delete_range', async rangeId => {
+            let res = await ACTIONS.ranges.deleteRange(rangeId);
+            socket.emit('delete_range', res);
+        })
+
+        socket.on('update_range', async rangeId => {
+            let res = await ACTIONS.ranges.updateRange(rangeId);
+            socket.emit('update_range', res);
+        })
     });
 });
 

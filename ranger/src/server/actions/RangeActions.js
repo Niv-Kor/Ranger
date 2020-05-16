@@ -5,6 +5,9 @@ const GENERAL_ACTIONS = require('./GeneralActions');
 module.exports = {
     createRange,
     loadRanges,
+    clearRange,
+    deleteRange,
+    updateRange,
     rangeExists,
     loadHits,
     recordHit,
@@ -30,14 +33,22 @@ async function createRange(data) {
 
     return new Promise(resolve => {
         GENERAL_ACTIONS.runProcedure('CreateRange', params)
-            .then(() => resolve(true))
+            .then(res => {
+                resolve({
+                    success: true,
+                    id: res[0]['new_id']
+                });
+            })
             .catch(err => {
                 LOGGER.error('Could not create a new range for parameters:\n' +
                              'journal_id: ' + data.journalId + ',\n' +
                              'target_id: ' + data.targetId + ',\n' +
                              'date: ' + data.date, err);
     
-                resolve(false);
+                resolve({
+                    success: false,
+                    id: NaN
+                });
             });
     });
 }
@@ -76,13 +87,15 @@ async function loadRanges(data) {
                 let ranges = [];
                 
                 for (let obj of res) {
+                    let protocoled = obj['is_protocoled'] === 1;
+
                     ranges.push({
                         id: obj['id'],
                         date: obj['date'],
                         targetId: obj['target_id'],
-                        ends: obj['ends'],
                         score: obj['score'],
-                        total: obj['total']
+                        total: obj['total'],
+                        protocoled
                     })
                 }
 
@@ -213,7 +226,7 @@ async function loadHits(rangeId) {
 
     return new Promise((resolve, reject) => {
         if (!res) {
-            LOGGER.error(`Could not remove hit #${data.hitId} for range #${data.rangeId}`, err);
+            LOGGER.error(`Could not reload range ${rangeId}`, err);
             reject();
         }
         else {
@@ -243,5 +256,78 @@ async function loadHits(rangeId) {
             while (!!roundHits.length);
             resolve(completeArr);
         }
+    });
+}
+
+/**
+ * Clear a range from hits entirely.
+ * 
+ * @param {Number} rangeId - The ID of the range to clear
+ * @returns {Boolean} True if the process is successful.
+ */
+async function clearRange(rangeId) {
+    let params = [
+        { name: 'range_id', type: CONSTANTS.SQL.Int, value: rangeId, options: {} }
+    ];
+
+    return new Promise(resolve => {
+        GENERAL_ACTIONS.runProcedure('ClearRange', params)
+            .then(() => resolve(true))
+            .catch(err => {
+                LOGGER.error(`Could not clear range ${rangeId}`, err);
+                resolve(false);
+            });
+    });
+}
+
+/**
+ * Clear a range from hits entirely.
+ * 
+ * @param {Number} rangeId - The ID of the range to clear
+ * @returns {Boolean} True if the process is successful.
+ */
+async function deleteRange(rangeId) {
+    let params = [
+        { name: 'range_id', type: CONSTANTS.SQL.Int, value: rangeId, options: {} }
+    ];
+
+    return new Promise(resolve => {
+        GENERAL_ACTIONS.runProcedure('DeleteRange', params)
+            .then(() => resolve(true))
+            .catch(err => {
+                LOGGER.error(`Could not clear range ${rangeId}`, err);
+                resolve(false);
+            });
+    });
+}
+
+/**
+ * Clear a range from hits entirely.
+ * 
+ * @param {Object} data - {
+ *                           {Number} rangeId - The ID of the range to update,
+ *                           {String} date - The date at which the range took place
+ *                                           [YYYY-MM-DD HH:mm:ss] (optional),
+ *                           {Boolean} protocoled - True if the range's data should be
+ *                                                  saved for performance analysis (optional)
+ *                        }
+ * @returns {Boolean} True if the process is successful.
+ */
+async function updateRange(data) {
+    let protocoled = data.protocoled ? 1 : 0;
+
+    let params = [
+        { name: 'range_id', type: CONSTANTS.SQL.Int, value: data.rangeId, options: {} },
+        { name: 'date', type: CONSTANTS.SQL.VarChar(19), value: data.date, options: {} },
+        { name: 'protocoled', type: CONSTANTS.SQL.TinyInt, value: protocoled, options: {} }
+    ];
+
+    return new Promise(resolve => {
+        GENERAL_ACTIONS.runProcedure('UpdateRange', params)
+            .then(() => resolve(true))
+            .catch(err => {
+                LOGGER.error(`Could not update range ${rangeId}`, err);
+                resolve(false);
+            });
     });
 }

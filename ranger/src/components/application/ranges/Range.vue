@@ -62,7 +62,7 @@
         >
             <target-canvas
                 class='target'
-                v-if='range'
+                v-if='range && target'
                 predefOnly
                 :src='target.base64Data'
                 :size='targetSize'
@@ -226,7 +226,8 @@
                 return this.ranges[`journal #${journalId}`][this.rangeIndex];
             },
             target() {
-                return this.targets.find(x => x.id === this.range.targetId);
+                if (!this.targets) return null;
+                else return this.targets.find(x => x.id === this.range.targetId);
             },
             targetSize() {
                 return this.windowDim.width * .85;

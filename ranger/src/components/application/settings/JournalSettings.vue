@@ -576,32 +576,19 @@
              * If the dialog shows a successful message, reload all app data.
              * If this journal no longer exists, go back to the shooting journals page.
              */
-            onDialogClick: function() {
+            onDialogClick: async function() {
                 if (this.dialogSuccessful) {
+                    this.load = true;
+                    await this.$store.dispatch('reloadAllData');
+                    this.load = false;
+
                     if (this.journalDeleted) {
                         this.journalDeleted = false;
                         let journalsPage = '/home/journals';
                         this.$router.push({ path: journalsPage }).catch(() => {});
                     }
-
-                    this.$store.dispatch('reloadAllData');
                 }
 
-                this.dialogModel = false;
-            },
-            /**
-             * Activate when clicking the dialog's 'ok' button.
-             * Reload all journals, ranges and targets data.
-             * If this journal no longer exists, go back to the shooting journals page.
-             */
-            reloadAppData: async function() {
-                if (this.journalDeleted) {
-                    this.journalDeleted = false;
-                    let journalsPage = '/home/journals';
-                    this.$router.push({ path: journalsPage }).catch(() => {});
-                }
-
-                this.$store.dispatch('reloadAllData');
                 this.dialogModel = false;
             }
         }
