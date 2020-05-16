@@ -81,20 +81,20 @@
                 predefTarget: 'getNewJournalTarget',
                 customTarget: 'getNewJournalUploadedTarget',
                 usingCustomDiscipline: 'useCustomDiscipline',
-                usingCustomTarget: 'useUploadedCustomTarget',
+                usingNewTarget: 'useNewJournalNewCustomTarget',
                 colorTheme: 'getNewJournalColorTheme'
             }),
             discipline() {
-                let custom = this.usingCustomDiscipline;
-                return custom ? this.customDisciplineName : this.defaultDisciplineName;
+                let newTarget = this.usingCustomDiscipline;
+                return newTarget ? this.customDisciplineName : this.defaultDisciplineName;
             },
             defTarget() {
-                let custom = this.usingCustomTarget;
-                return custom ? this.customTarget.chosenName : this.predefTarget.name;
+                let newTarget = this.usingNewTarget;
+                return newTarget ? this.customTarget.chosenName : this.predefTarget.name;
             },
             targetThumbnail() {
-                let custom = this.usingCustomTarget;
-                return custom ? this.customTarget.base64Data : this.predefTarget.base64Data;
+                let newTarget = this.usingNewTarget;
+                return newTarget ? this.customTarget.base64Data : this.predefTarget.base64Data;
             }
         },
         methods: {

@@ -6,7 +6,7 @@
             :style='previewImageStyle'
             v-touch:moving='onTouch'
             v-touch:start='onTouch'
-            v-touch:end='() => { createHit(touchPos) }'
+            v-touch:end='() => { createHit(touchPos, true) }'
         >
             <div v-show='magnify && $props.maxHits !== 0 && !$props.readOnly'>
                 <v-img
@@ -191,6 +191,14 @@
                 type: Number,
                 required: false,
                 default: -1
+            },
+            /**
+             * The first index from which the assignment of indices start.
+             */
+            startIndex: {
+                type: Number,
+                required: false,
+                default: 0
             },
             /**
              * An array that's used as a trigger to delete a set of hits from the target.
@@ -438,6 +446,9 @@
             deleteTrigger(values) {
                 //only keep the hits that aren't contained in the array
                 this.allHits = this.allHits.filter(x => !values.includes(x.index));
+            },
+            startIndex(value) {
+                this.indexAssigner = value;
             }
         },
         methods: {
@@ -449,6 +460,8 @@
                     this.implementImages()
                         .then(() => { this.createPredefinedHits() });
                 }
+
+                this.indexAssigner = this.$props.startIndex;
             },
             /**
              * Create all the pre-defined hits from props.
@@ -462,13 +475,13 @@
                         let x = hit.point.x * this.imageData.width / 100;
                         let y = hit.point.y * this.imageData.height / 100;
 
-                        if (x && y) this.createHit({x, y});
+                        if (x && y) this.createHit({x, y}, false);
                     }
                 }
 
                 //add the center point as a pre-defined hit
                 if (this.$props.predefineCenter)
-                    this.createHit(this.center);
+                    this.createHit(this.center, false);
             },
             /**
              * Calculate the data needed to render the preview and zoom images.
@@ -684,6 +697,7 @@
              *                            {Number} x - x coordinate,
              *                            {Number} y - y coordinate
              *                         }
+             * @param {Boolean} emitEv - True to emit an event to the parent as a hit acknowledgement
              * @emits {Object} hit - {
              *                          {Number} index - The index of the hit (chronological order),
              *                          {Object} point - {
@@ -699,7 +713,7 @@
              *                                                  }
              *                       }
              */
-            createHit: function(point) {
+            createHit: function(point, emitEv) {
                 this.magnify = false;
 
                 if (!this.hitsFull || this.$props.readOnly) {
@@ -717,7 +731,7 @@
                     });
 
                     //emit an object to the parent
-                    if (xPerc && yPerc) {
+                    if (emitEv && xPerc && yPerc) {
                         this.$emit('hit', {
                             index,
                             point: { x: xPerc, y: yPerc },

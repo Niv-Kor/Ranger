@@ -21,6 +21,8 @@ CREATE TABLE Ranges (
 )
 GO
 
+EXEC sp_msforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all'
+
 ALTER TABLE Ranges
 ALTER COLUMN target_id INT
 
@@ -170,13 +172,3 @@ GO
 
 DROP TABLE Ranges
 GO
-
-DELETE FROM Targets t
-	WHERE t.id IN (SELECT t1.id
-				   FROM Targets t1
-				   WHERE t1.active = 0
-					 AND t1.id NOT IN (SELECT r.target_id
-				  					   FROM Ranges r
-									   INNER JOIN Journals j ON j.id = r.journal_id
-									   WHERE j.journal_owner = @user
-									   AND r.id != @id))

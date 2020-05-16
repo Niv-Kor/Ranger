@@ -4,6 +4,7 @@ import SignUpPage from './components/authentication/SignUpPage';
 import TargetsManager from './components/application/settings/TargetsManager';
 import GeneralSettings from './components/application/settings/GeneralSettings';
 import JournalSettings from './components/application/settings/JournalSettings';
+import RangeSettings from './components/application/settings/RangeSettings';
 import JournalsPage from './components/application/journals/JournalsPage';
 import Journal from './components/application/journals/Journal';
 import Range from './components/application/ranges/Range';
@@ -18,7 +19,7 @@ export const ROUTES = [
     { path: '/home/settings', component: GeneralSettings },
     { path: '/home/targets', component: TargetsManager },
     { path: '/home/journals/:journalId/settings', component: JournalSettings },
-    { path: '/home/journals/:journalId/:rangeId/settings', component: GeneralSettings },
+    { path: '/home/journals/:journalId/:rangeId/settings', component: RangeSettings },
 
     //application
     { path: '/home/journals', component: JournalsPage },

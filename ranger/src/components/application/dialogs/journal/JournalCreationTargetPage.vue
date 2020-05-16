@@ -41,7 +41,7 @@
                         align='center'
                         justify='center'
                     >
-                        <v-col v-if='!selectedTarget.custom'>
+                        <v-col v-if='!selectedTarget.new'>
                             <v-img
                                 v-if='selectedTarget && selectedTarget.base64Data'
                                 class='thumbnail'
@@ -53,7 +53,7 @@
                         <v-col v-else :key='croppedImageRefresher'>
                             <cropper
                                 v-if='selectedTarget.base64Data'
-                                class='thumbnail custom'
+                                class='thumbnail new'
                                 :src='selectedTarget.base64Data'
                                 :stencilProps="{ aspectRatio: 1 }"
                                 @change='onCustomTargetChange'
@@ -83,7 +83,7 @@
         <v-container :style="{ width: 200 + 'px' }">
             <v-row>
                 <v-text-field
-                    v-if='selectedTarget && !selectedTarget.custom'
+                    v-if='selectedTarget && !selectedTarget.new'
                     class='label-target colored'
                     min-width=100
                     height=10
@@ -97,7 +97,7 @@
                 />
                 <div v-else class='upload container'>
                     <v-text-field
-                        v-model='customTargetName'
+                        v-model='newTargetName'
                         height=10
                         dense
                         rounded
@@ -141,7 +141,7 @@
         data() {
             return {
                 selectedTargetIndex: 0,
-                customTargetName: '',
+                newTargetName: '',
                 croppedImageRefresher: false
             }
         },
@@ -150,7 +150,7 @@
             if (!this.storedTarget.base64Data) {
                 this.selectedTargetIndex = 0;
                 this.$store.commit('setNewJournalTargetName', this.selectedTarget.name);
-                this.$store.commit('setNewJournalTargetData', this.selectedTarget.src);
+                this.$store.commit('setNewJournalTargetData', this.selectedTarget.base64Data);
                 this.$store.commit('setNewJournalTargetResetFlag', false);
             }
         },
@@ -160,18 +160,20 @@
                 this.selectedTargetIndex = 0;
                 let firstTarget = this.targets[this.selectedTargetIndex];
                 this.$store.commit('setNewJournalTargetName', firstTarget.name);
-                this.$store.commit('setNewJournalTargetData', firstTarget.src);
+                this.$store.commit('setNewJournalTargetData', firstTarget.base64Data);
                 this.$store.commit('setNewJournalTargetResetFlag', false);
                 this.$store.commit('setNewJournalUploadedTargetData', '');
                 this.$store.commit('setNewJournalUploadedTargetName', '');
                 
                 //remove irrelevant thumbnails
-                this.targets.find(x => x.custom).base64Data = null;
+                this.targets.find(x => x.new).base64Data = null;
             }
 
             //determine the use of a custom target
+            let useNew = this.selectedTarget.new;
             let useCustom = this.selectedTarget.custom;
-            this.$store.commit('setUseUploadedCustomTarget', useCustom);
+            this.$store.commit('setUseNewJournalNewCustomTarget', useNew);
+            this.$store.commit('setUseNewJournalUploadedCustomTarget', useCustom);
         },
         computed: {
             ...mapGetters({
@@ -194,7 +196,10 @@
                 });
                 
                 //mark all as non-customable target
-                for (let target of list) target.custom = false;
+                for (let target of list) {
+                    target.custom = target.user !== 'default';
+                    target.new = false;
+                }
 
                 //sort personal targets first
                 list.sort((el1, el2) => {
@@ -212,13 +217,14 @@
                     else return 1;
                 });
 
-                //add the once customable target
+                //add the customable target
                 list.push({
                     name: 'Enter target name',
                     base64Data: '',
-                    custom: true
+                    custom: true,
+                    new: true
                 });
-
+                
                 return list;
             }
         },
@@ -228,7 +234,7 @@
                 this.$store.commit('setNewJournalTargetName', target.name);
                 this.$store.commit('setNewJournalTargetData', target.base64Data);
             },
-            customTargetName(value) {
+            newTargetName(value) {
                 this.$store.commit('setNewJournalUploadedTargetName', value);
             }
         },
@@ -317,7 +323,7 @@
     .thumbnail {
         margin: auto;
     }
-    .thumbnail.custom {
+    .thumbnail.new {
         max-width: 120px;
         max-height: 120px;
         background: #dddddd;

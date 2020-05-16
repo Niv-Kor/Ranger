@@ -32,33 +32,72 @@ const actions = {
     loadAllRanges: async ({ commit, state, rootState }) => {
         commit('setRangesListLoading', true);
 
-        let journalKeys = [];
-        let userJournals = rootState.Journals.journals;
-        let processes = userJournals.length;
-
-        if (processes === 0) {
-            commit('setRangesListLoading', false);
-            return;
-        }
-        else {
-            for (let journal of userJournals) journalKeys.push(journal.id);
-            for (let id of journalKeys) {
-                let data = {
-                    user: rootState.Auth.authEmail,
-                    journalId: id
-                }
-
-                rootState.socket.once('load_ranges', async res => {
-                    processes--;
-                    state.ranges[`journal #${res.journalId}`] = res.ranges;
-                    
-                    //finish
-                    if (processes === 0) commit('setRangesListLoading', false);
-                });
-
-                rootState.socket.emit('load_ranges', data);
+        return new Promise(resolve => {
+            let finish = () => {
+                commit('setRangesListLoading', false);
+                resolve();
             }
-        }
+    
+            let journalKeys = [];
+            let userJournals = rootState.Journals.journals;
+            let processes = userJournals.length;
+    
+            if (processes === 0) finish();
+            else {
+                for (let journal of userJournals) journalKeys.push(journal.id);
+                for (let id of journalKeys) {
+                    let data = {
+                        user: rootState.Auth.authEmail,
+                        journalId: id
+                    }
+
+                    rootState.socket.once('load_ranges', async res => {
+                        processes--;
+                        state.ranges[`journal #${res.journalId}`] = res.ranges;
+                        let journalObj = state.ranges[`journal #${res.journalId}`];
+                        
+                        //load all hits for each range
+                        if (journalObj.length) {
+                            for (let i in journalObj) {
+                                let range = journalObj[i];
+                                let rangeId = range.id;
+    
+                                rootState.socket.once(`load_hits_${rangeId}`, res => {
+                                    range.rounds = res
+                                    
+                                    //finish loading ranges and their hits
+                                    if (i == journalObj.length - 1 && processes === 0) finish();
+                                });
+                                
+                                rootState.socket.emit('load_hits', rangeId);
+                            }
+                        }
+                        //finish loading without ranges
+                        else if (processes === 0) finish();
+                    });
+    
+                    rootState.socket.emit('load_ranges', data);
+                }
+            }
+        })
+    },
+    /**
+     * Reload a single range.
+     * 
+     * @param {Number} rangeId - The ID of the range to load.
+     * @param {Number} journalId - The ID of the journal to which the range belongs.
+     */
+    reloadRangeHits: async ({ commit, state, rootState }, { rangeId, rangeIndex, journalId }) => {
+        commit('setRangesListLoading', true);
+
+        rootState.socket.once(`load_hits_${rangeId}`, res => {
+            let range = state.ranges[`journal #${journalId}`][rangeIndex];
+            range.rounds = res;
+
+            //finish loading
+            commit('setRangesListLoading', false);
+        });
+        rootState.socket.emit('load_hits', rangeId);
     },
     /**
      * Check if a range alredy exists in the data base.
@@ -103,6 +142,34 @@ const actions = {
             let path = `/home/journals/${journalName}/${rangeId}`;
             resolve({ path, journalName, rangeId });
         })
+    },
+    /**
+     * Record a hit in the database.
+     * 
+     * @param {Object} hit - {
+     *                          {Number} hitId - The ID of the hit (in range context),
+     *                          {Number} rangeId - The ID of the range,
+     *                          {Object} point - {
+     *                                              {Number} x - x coordinates [%],
+     *                                              {Number} y - y coordinates [%]
+     *                                           },
+     *                          {Number} score - The achieved score of the hit,
+     *                          {Number} round - The round number in which the hit was made
+     *                       }
+     */
+    recordHit: ({ rootState }, hit) => {
+        rootState.socket.emit('record_hit', hit);
+    },
+    /**
+     * Remove a hit from the database.
+     * 
+     * @param {Object} hit - {
+     *                          {Number} hitId - The ID of the hit (in range context),
+     *                          {Number} rangeId - The ID of the range
+     *                       }
+     */
+    removeHit: ({ rootState }, hit) => {
+        rootState.socket.emit('remove_hit', hit);
     }
 };
 

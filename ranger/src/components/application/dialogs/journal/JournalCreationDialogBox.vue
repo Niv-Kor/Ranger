@@ -216,7 +216,7 @@
                 journalName: 'getNewJournalName',
                 discipline: 'getNewJournalDiscipline',
                 useCustomDiscipline: 'useCustomDiscipline',
-                useCustomTarget: 'useUploadedCustomTarget',
+                useNewTarget: 'useNewJournalNewCustomTarget',
                 customDiscipline: 'getNewJournalCustomDiscipline',
                 customTarget: 'getNewJournalUploadedTarget',
                 regex: 'getNewJournalRegex'

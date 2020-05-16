@@ -5,7 +5,10 @@ const GENERAL_ACTIONS = require('./GeneralActions');
 module.exports = {
     createRange,
     loadRanges,
-    rangeExists
+    rangeExists,
+    loadHits,
+    recordHit,
+    removeHit
 };
 
 /**
@@ -35,8 +38,8 @@ async function createRange(data) {
                              'date: ' + data.date, err);
     
                 resolve(false);
-            })
-    })
+            });
+    });
 }
 
 /**
@@ -91,8 +94,8 @@ async function loadRanges(data) {
             .catch(err => {
                 LOGGER.error(`Could not load ${data.user}'s ranges`, err);
                 reject();
-            })
-    })
+            });
+    });
 }
 
 /**
@@ -107,10 +110,138 @@ async function loadRanges(data) {
 async function rangeExists(data) {
     let params = [
         { name: 'journal_id', type: CONSTANTS.SQL.Int, value: data.journalId, options: {} },
-        { name: 'date', type: CONSTANTS.SQL.VarChar(19), value: data.date, options: {} },
+        { name: 'date', type: CONSTANTS.SQL.VarChar(19), value: data.date, options: {} }
     ];
     
     let query = await GENERAL_ACTIONS.runProcedure('RangeExists', params);
     let exists = query[0]['range_exists'];
     return exists;
+}
+
+/**
+ * Record a range hit in the database.
+ * 
+ * @param {Object} data - {
+ *                           {Number} hitId - The ID of the hit (in range context),
+ *                           {Number} rangeId - The ID of the range,
+ *                           {Object} point - {
+ *                                               {Number} x - x coordinates [%],
+ *                                               {Number} y - y coordinates [%]
+ *                                            },
+ *                           {Number} score - The achieved score of the hit,
+ *                           {Number} round - The round number in which the hit was made
+ *                        }
+ * @returns {Boolean} True if the process is successful.
+ */
+async function recordHit(data) {
+    let params = [
+        { name: 'hit_id', type: CONSTANTS.SQL.Int, value: data.hitId, options: {} },
+        { name: 'range_id', type: CONSTANTS.SQL.Int, value: data.rangeId, options: {} },
+        { name: 'cx', type: CONSTANTS.SQL.Decimal(6, 3), value: data.point.x, options: {} },
+        { name: 'cy', type: CONSTANTS.SQL.Decimal(6, 3), value: data.point.y, options: {} },
+        { name: 'score', type: CONSTANTS.SQL.Int, value: data.score, options: {} },
+        { name: 'round', type: CONSTANTS.SQL.Int, value: data.round, options: {} }
+    ];
+
+    return new Promise(resolve => {
+        GENERAL_ACTIONS.runProcedure('RecordHit', params)
+            .then(() => resolve(true))
+            .catch(err => {
+                LOGGER.error(`Could not record hit #${data.hitId} for range #${data.rangeId}`, err);
+                resolve(false);
+            });
+    });
+}
+
+/**
+ * Remove a range hit from the database.
+ * 
+ * @param {Object} data - {
+ *                           {Number} hitId - The ID of the hit (in range context),
+ *                           {Number} rangeId - The ID of the range
+ *                        }
+ * @returns {Boolean} True if the process is successful.
+ */
+async function removeHit(data) {
+    let params = [
+        { name: 'hit_id', type: CONSTANTS.SQL.Int, value: data.hitId, options: {} },
+        { name: 'range_id', type: CONSTANTS.SQL.Int, value: data.rangeId, options: {} }
+    ];
+
+    return new Promise(resolve => {
+        GENERAL_ACTIONS.runProcedure('RemoveHit', params)
+            .then(() => resolve(true))
+            .catch(err => {
+                LOGGER.error(`Could not remove hit #${data.hitId} for range #${data.rangeId}`, err);
+                resolve(false);
+            });
+    });
+}
+
+/**
+ * Load all hits of a particular range.
+ * 
+ * @param {Object} rangeId - y
+ * @returns {Object} True if the process is successful.
+ */
+
+ /**
+ * Load all hits of a particular range.
+ * 
+ * @param {Object} rangeId - The ID of the range to which the hits belong.
+ * @returns {Array} [
+ *                     [
+ *                        {
+ *                           {Number} hitId - The ID of the hit (in range context),
+ *                           {Object} point - {
+ *                                               {Number} x - x coordinates [%],
+ *                                               {Number} y - y coordinates [%]
+ *                                            },
+ *                           {Number} score - The achieved score of the hit
+ *                        }
+ *                        ...
+ *                     ]
+ *                     ...
+ *                  ]  
+ */
+async function loadHits(rangeId) {
+    let params = [
+        { name: 'range_id', type: CONSTANTS.SQL.Int, value: rangeId, options: {} }
+    ];
+    let res = await GENERAL_ACTIONS.runProcedure('LoadHits', params);
+    let completeArr = [[]];
+
+    return new Promise((resolve, reject) => {
+        if (!res) {
+            LOGGER.error(`Could not remove hit #${data.hitId} for range #${data.rangeId}`, err);
+            reject();
+        }
+        else {
+            let roundHits = null;
+            let roundNo = 0;
+
+            do {
+                roundHits = res.filter(x => x['round_no'] === roundNo);
+                if (!roundHits.length) break;
+                else {
+                    completeArr[roundNo] = [];
+                    let roundArr = completeArr[roundNo];
+                    roundNo++;
+
+                    for (let hit of roundHits) {
+                        roundArr.push({
+                            hitId: hit['id'],
+                            point: {
+                                x: hit['x'],
+                                y: hit['y']
+                            },
+                            score: hit['score']
+                        })
+                    }
+                }
+            }
+            while (!!roundHits.length);
+            resolve(completeArr);
+        }
+    });
 }

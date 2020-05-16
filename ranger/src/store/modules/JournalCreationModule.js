@@ -9,7 +9,8 @@ const state = {
         name: ''
     },
     newJournalTargetResetFlag: false,
-    useUploadedCustomTarget: false,
+    newJournalUseUploadedCustomTarget: false,
+    newJournalUseNewCustomTarget: false,
     useCustomDiscipline: false,
     newJournaluploadedTarget: {
         base64Data: '',
@@ -80,8 +81,11 @@ const getters = {
     getNewJournalTargetResetFlag: state => {
         return state.newJournalTargetResetFlag;
     },
-    useUploadedCustomTarget: state => {
-        return state.useUploadedCustomTarget;
+    useNewJournalUploadedCustomTarget: state => {
+        return state.newJournalUseUploadedCustomTarget;
+    },
+    useNewJournalNewCustomTarget: state => {
+        return state.newJournalUseNewCustomTarget;
     },
     useCustomDiscipline: state => {
         return state.useCustomDiscipline;
@@ -133,8 +137,11 @@ const mutations = {
     setNewJournalTargetResetFlag: (state, flag) => {
         state.newJournalTargetResetFlag = flag;
     },
-    setUseUploadedCustomTarget: (state, flag) => {
-        state.useUploadedCustomTarget = flag;
+    setUseNewJournalUploadedCustomTarget: (state, flag) => {
+        state.newJournalUseUploadedCustomTarget = flag;
+    },
+    setUseNewJournalNewCustomTarget: (state, flag) => {
+        state.newJournalUseNewCustomTarget = flag
     },
     setUseCustomDiscipline: (state, flag) => {
         state.useCustomDiscipline = flag;
@@ -153,7 +160,8 @@ const actions = {
         commit('setNewJournalTargetData', '');
         commit('setNewJournalTargetName', '');
         commit('setNewJournalTargetResetFlag', false);
-        commit('setUseUploadedCustomTarget', false);
+        commit('setUseNewJournalUploadedCustomTarget', false);
+        commit('setUseNewJournalNewCustomTarget', false);
         commit('setUseCustomDiscipline', false);
         commit('setNewJournalUploadedTargetData', '');
         commit('setNewJournalUploadedTargetName', '');
@@ -224,7 +232,8 @@ const actions = {
                 name: state.newJournalName,
                 storedTarget: state.newJournalDefaultTarget.name,
                 customTarget: state.newJournaluploadedTarget,
-                isTargetCustom: state.useUploadedCustomTarget,
+                isTargetCustom: state.newJournalUseUploadedCustomTarget,
+                isTargetNew: state.newJournalUseNewCustomTarget,
                 colorTheme: state.newJournalColorTheme,
                 date: creationDate
             });

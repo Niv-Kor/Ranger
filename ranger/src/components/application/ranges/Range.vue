@@ -69,7 +69,8 @@
                 :predef-hits='roundHits'
                 :delete-trigger='deleteTrigger'
                 :select-hit='selectedHitIndex'
-                @hit='recordHit'
+                :start-index='hitStartIndex'
+                @hit='recordHit($event, selectedRound)'
                 @delete='deleteHit'
                 @touch='onHitTouch'
             />
@@ -96,7 +97,6 @@
                         @click='selectedRecord = index'
                     >
                         <p class='record-index' align=center>
-                            {{ selectedRecord }}
                             {{ index + 1 }}
                         </p>
                         <p
@@ -104,7 +104,7 @@
                             align=center
                             :style='createRecordScoreStyle(index)'
                         >
-                            {{ record.score }}
+                            {{ (record.score > 0) ? record.score : 'm' }}
                         </p>
                     </v-card>
                 </li>
@@ -185,7 +185,6 @@
     import ColorsHandler from '../../../util/ColorsHandler';
     import WarningDialog from '../../widgets/WarningDialog';
 
-    const MISS_LABEL = 'm';
     const ASSETS_CONTEXT = require.context('../../../assets/', true, /\.png$/);
 
     export default {
@@ -202,6 +201,7 @@
                 deleteTrigger: [],
                 selectedRecord: 0,
                 selectedRound: 0,
+                hitStartIndex: -1,
                 recordAdded: false,
                 warningModel: false,
                 warningTitle: '',
@@ -277,10 +277,7 @@
             },
             scoreboardSum() {
                 return this.scoreboard.reduce((a, b) => {
-                    return +a + b.reduce((c, d) => {
-                        if (d.score !== MISS_LABEL) return +c + +d.score
-                        else return +c;
-                    }, 0);
+                    return +a + b.reduce((c, d) => +c + +d.score, 0)
                 }, 0)
             },
             scoreboardTotal() {
@@ -292,6 +289,28 @@
                     height: '50px'
                 };
             }
+        },
+        created() {
+            //load previous hits from database
+            for (let i in this.range.rounds) {
+                if (i != 0) this.nextRound();
+                let round = this.range.rounds[i];
+
+                for (let hit of round) {
+                    //save as largest index so far
+                    if (hit.hitId > this.hitStartIndex) this.hitStartIndex = hit.hitId;
+                    this.recordHit(hit, i, true, hit.score);
+                }
+            }
+
+            this.hitStartIndex++;
+        },
+        destroyed() {
+            this.$store.dispatch('reloadRangeHits', {
+                rangeId: this.range.id,
+                rangeIndex: this.rangeIndex,
+                journalId: this.journal.id
+            });
         },
         updated() {
             //scroll scorboard to bottom
@@ -307,6 +326,7 @@
              * Add a new hit to the scoreboard.
              * 
              * @param {Object} hit - {
+             *                          {Number} index - The index of the hit,
              *                          {Object} point - {
              *                                              {Number} x - x coordinate,
              *                                              {Number} y - y coordinate
@@ -320,17 +340,29 @@
              *                                                  }
              *                       }
              */
-            recordHit: function(hit) {
-                let score = this.calculateScore(hit.bullseyeData.distance);
-                let color = this.findScoreColor(score, this.colors.secondary);
+            recordHit: function(hit, round, loaded=false, score=null) {
+                let hitScore = (score !== null) ? score : this.calculateScore(hit.bullseyeData.distance);
+                let color = this.findScoreColor(hitScore, this.colors.secondary);
                 this.selectedRecord = this.scoreboard[this.selectedRound].length;
 
                 //add hit to scoreboard
                 this.scoreboard[this.selectedRound].push({
-                    score,
+                    score: hitScore,
                     color,
                     hitData: hit
                 });
+
+                if (!loaded) {
+                    //add hit to database
+                    let hitDBData = {
+                        hitId: hit.index,
+                        rangeId: this.range.id,
+                        point: hit.point,
+                        score: hitScore,
+                        round: this.selectedRound
+                    }
+                    this.$store.dispatch('recordHit', hitDBData);
+                }
 
                 //activate a trigger so the scoreboard will scroll all the way down
                 this.recordAdded = true;
@@ -368,6 +400,13 @@
                 if (recordIndex !== -1) {
                     scores.splice(recordIndex, 1);
                     this.selectedRecord = scores.length - 1;
+
+                    //remove hit from database
+                    let hitDBData = {
+                        hitId: hit.index,
+                        rangeId: this.range.id
+                    }
+                    this.$store.dispatch('removeHit', hitDBData);
                 }
             },
             /**
@@ -377,7 +416,7 @@
              * @returns {Number} The score of the hit.
              */
             calculateScore: function(dist) {
-                let score = -1;
+                let score = 0;
                 let ringsRads = this.targetData.ringsRads;
 
                 for (let i in ringsRads) {
@@ -388,7 +427,7 @@
                     }
                 }
 
-                return (score > 0) ? ('' + score) : MISS_LABEL;
+                return score;
             },
             /**
              * Find the most dominant color around a particular hit.
@@ -399,7 +438,7 @@
              * @returns {String} Hexadecimal representation of the most dominant color in the hit area.
              */
             findScoreColor: function(score, highestScoreColor) {
-                if (score == MISS_LABEL) return '#ffffff';
+                if (!score) return '#ffffff';
                 else return ColorsHandler.lighten(highestScoreColor, (10 - score) * 5);
             },
             /**

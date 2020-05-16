@@ -33,6 +33,7 @@ module.exports = {
  *                                                      {Number} ringDiameter - Diameter of inner ring (in integer percentages)
  *                                                   },
  *                           {Boolean} isTargetCustom - True if the target is customized,
+ *                           {Boolean} isTargetNew - True if the target is new and needs to be registered,
  *                           {String} colorTheme - A hexadecimal representation of the journal's color theme
  *                           {String} date - creation date [YYYY-MM-DD HH:mm]
  *                        }
@@ -42,7 +43,7 @@ async function createJournal(data) {
     let targetName, targetUser;
     
     //store custom target if needed
-    if (data.isTargetCustom) {
+    if (data.isTargetNew) {
         targetName = data.customTarget.chosenName.split('.')[0];
         targetUser = data.user;
         let base64 = data.customTarget.base64Data;
@@ -72,7 +73,7 @@ async function createJournal(data) {
     }
     else {
         targetName = data.storedTarget;
-        targetUser = 'default';
+        targetUser = data.isTargetCustom ? data.user : 'default';
     }
 
     //create new journal
@@ -88,7 +89,7 @@ async function createJournal(data) {
         { name: 'discipline', type: CONSTANTS.SQL.VarChar(20), value: data.discipline, options: {} },
         { name: 'journal_name', type: CONSTANTS.SQL.VarChar(15), value: data.name, options: {} },
         { name: 'target', type: CONSTANTS.SQL.Int, value: targetId, options: {} },
-        { name: 'theme', type: CONSTANTS.SQL.VarChar(9), value: data.colorTheme, options: {} },
+        { name: 'theme', type: CONSTANTS.SQL.VarChar(9), value: data.colorTheme, options: {} }
     ];
 
     return new Promise(resolve => {

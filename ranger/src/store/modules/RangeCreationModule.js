@@ -101,8 +101,7 @@ const actions = {
             }
 
             rootState.socket.once('create_range', res => {
-                dispatch('loadAllRanges');
-                resolve(res)
+                dispatch('loadAllRanges').then(resolve(res));
             });
             rootState.socket.emit('create_range', data);
         });

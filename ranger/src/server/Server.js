@@ -124,6 +124,21 @@ CONSTANTS.FRONT_IO.on('connection', async socket => {
             let exists = await ACTIONS.ranges.rangeExists(data);
             socket.emit('range_exists', exists);
         })
+
+        socket.on('load_hits', async rangeId => {
+            let res = await ACTIONS.ranges.loadHits(rangeId);
+            socket.emit(`load_hits_${rangeId}`, res);
+        })
+
+        socket.on('record_hit', async data => {
+            let res = await ACTIONS.ranges.recordHit(data);
+            socket.emit('record_hit', res);
+        })
+
+        socket.on('remove_hit', async data => {
+            let res = await ACTIONS.ranges.removeHit(data);
+            socket.emit('remove_hit', res);
+        })
     });
 });
 
