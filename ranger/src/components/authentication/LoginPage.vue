@@ -36,13 +36,13 @@
                 Log in
             </v-btn>
         </v-layout>
-        <v-icon
+        <fa-icon
             class='close-icon'
-            large
+            icon='times-circle'
+            size='2x'
+            color='#ffffff'
             @click='cancel'
-        >
-            mdi-close-circle-outline
-        </v-icon>
+        />
         <v-dialog
             v-model='wrongInput'
             :max-width=290

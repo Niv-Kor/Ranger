@@ -10,6 +10,7 @@ import { longClickDirective } from 'vue-long-click'
 import ImageMagnifier from 'vue-image-magnifier';
 import FileSelector from 'vue-file-selector';
 import Sortable from 'vue-drag-sortable';
+import FaIcon from './components/widgets/FaIcon';
 
 const ROUTER = new VueRouter({
   routes: ROUTES
@@ -24,6 +25,7 @@ Vue.use(ImageMagnifier);
 Vue.use(FileSelector);
 Vue.use(VueRouter);
 Vue.use(VueKonva);
+Vue.component('FaIcon', FaIcon);
 
 new Vue({
   vuetify,

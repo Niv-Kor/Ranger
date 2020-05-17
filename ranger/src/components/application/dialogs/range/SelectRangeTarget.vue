@@ -9,15 +9,14 @@
             </p>
         </v-container>
         <v-row no-gutters>
-            <v-icon
-                class='nav-arrow'
-                size=64
+            <fa-icon
+                class='nav-arrow left'
+                icon='angle-left'
                 :color='colors.primary'
+                size='3x'
                 :disabled='selectedTargetIndex == 0'
                 @click='decrementTarget'
-            >
-                mdi-menu-left
-            </v-icon>
+            />
             <v-card
                 class='card'
                 id='card'
@@ -46,15 +45,14 @@
                     </v-row>
                 </v-container>
             </v-card>
-            <v-icon
-                class='nav-arrow'
-                size=64
+            <fa-icon
+                class='nav-arrow right'
+                icon='angle-right'
                 :color='colors.primary'
+                size='3x'
                 :disabled='selectedTargetIndex >= targets.length - 1'
                 @click='incrementTarget'
-            >
-                mdi-menu-right
-            </v-icon>
+            />
         </v-row>
         <v-container :style='{ width: 230 + "px" }'>
             <v-row>
@@ -159,6 +157,12 @@
     }
     .nav-arrow {
         margin: auto;
+    }
+    .nav-arrow.left {
+        margin-right: -10px;
+    }
+    .nav-arrow.right {
+        margin-left: -10px;
     }
     .default-label {
         position: absolute;

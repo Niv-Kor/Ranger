@@ -9,15 +9,14 @@
             </p>
         </v-container>
         <v-row no-gutters>
-            <v-icon
-                class='nav-arrow'
-                size=64
+            <fa-icon
+                class='nav-arrow left'
+                icon='angle-left'
                 :color='colors.primary'
+                size='3x'
                 :disabled='selectedDiscip == 0'
                 @click='decrementDiscip'
-            >
-                mdi-menu-left
-            </v-icon>
+            />
             <v-card
                 class='card'
                 width=130
@@ -44,15 +43,14 @@
                     </v-row>
                 </v-container>
             </v-card>
-            <v-icon
-                class='nav-arrow'
-                size=64
+            <fa-icon
+                class='nav-arrow right'
+                icon='angle-right'
                 :color='colors.primary'
+                size='3x'
                 :disabled='selectedDiscip >= disciplines.length - 1'
                 @click='incrementDiscip'
-            >
-                mdi-menu-right
-            </v-icon>
+            />
         </v-row>
         <v-container
             class='label-container'
@@ -225,6 +223,12 @@
     }
     .nav-arrow {
         margin: auto;
+    }
+    .nav-arrow.left {
+        margin-right: -10px;
+    }
+    .nav-arrow.right {
+        margin-left: -10px;
     }
     .label-container {
         width: 60%;

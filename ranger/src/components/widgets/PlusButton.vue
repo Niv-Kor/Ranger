@@ -8,12 +8,11 @@
             :style="{ backgroundImage: 'url(' + colors.gradient + ')' }"
             @click="$emit('click')"
         >
-            <v-icon
-                large
-                color='white'
-            >
-                mdi-plus-thick
-            </v-icon>
+            <fa-icon
+                icon='plus'
+                size='3x'
+                color='#ffffff'
+            />
         </v-btn>
     </div>
 </template>

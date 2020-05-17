@@ -27,7 +27,11 @@
                             <span class='irreversible-warning'>This action is irreversible!</span>
                             <br><br>
                         </span>
-                        <v-icon large :color='colors.secondary'>mdi-alert</v-icon>
+                        <fa-icon
+                            icon='exclamation-triangle'
+                            size='2x'
+                            :color='colors.secondary'
+                        />
                     </p>
                 </v-card-title>
                 <v-card-actions>

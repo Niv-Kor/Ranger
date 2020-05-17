@@ -15,7 +15,18 @@
                     @click='onItemClick(item)'
                 >
                     <v-list-item-icon>
-                        <v-icon :color='colors.secondary'>{{ item.icon }}</v-icon>
+                        <v-icon
+                            v-if='item.icon.type === 0'
+                            :color='colors.secondary'
+                        >
+                            {{ item.icon.name }}
+                        </v-icon>
+                        <fa-icon
+                            v-else
+                            :icon='item.icon.name'
+                            :color='colors.secondary'
+                            size='lg'
+                        />
                     </v-list-item-icon>
                     <v-list-item-content>
                         <v-list-item-title >{{ item.title }}</v-list-item-title>
@@ -31,7 +42,18 @@
                     @click='onItemClick(item)'
                 >
                     <v-list-item-icon>
-                        <v-icon :color='colors.secondary'>{{ item.icon }}</v-icon>
+                        <v-icon
+                            v-if='item.icon.type === 0'
+                            :color='colors.secondary'
+                        >
+                            {{ item.icon.name }}
+                        </v-icon>
+                        <fa-icon
+                            v-else
+                            :icon='item.icon.name'
+                            :color='colors.secondary'
+                            size='lg'
+                        />
                     </v-list-item-icon>
                     <v-list-item-content>
                         <v-list-item-title>{{ item.title }}</v-list-item-title>
@@ -90,19 +112,28 @@
                     functionality: [
                         { 
                             title: 'Dashboard',
-                            icon: 'mdi-home',
+                            icon: {
+                                name: 'home',
+                                type: 1
+                            },
                             path: '/home',
                             func: () => {}
                         },
                         { 
                             title: 'My Journals',
-                            icon: 'mdi-notebook',
+                            icon: {
+                                name: 'journal-whills',
+                                type: 1
+                            },
                             path: '/home/journals',
                             func: () => {}
                         },
                         {
                             title: 'Performance',
-                            icon: 'mdi-chart-arc',
+                            icon: {
+                                name: 'chart-pie',
+                                type: 1
+                            },
                             path: '/home/performance',
                             func: () => {}
                         },
@@ -110,13 +141,19 @@
                     system: [
                         {
                             title: 'Settings',
-                            icon: 'mdi-cog',
+                            icon: {
+                                name: 'mdi-cog',
+                                type: 0
+                            },
                             path: '/home/settings',
                             func: () => {}
                         },
                         {
                             title: 'Log out',
-                            icon: 'mdi-logout-variant',
+                            icon: {
+                                name: 'sign-out-alt',
+                                type: 1
+                            },
                             path: '',
                             func: () => { this.confirmLogout = true; }
                         }

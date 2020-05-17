@@ -223,7 +223,7 @@
                 let list = [];
                 for (let obj of journalRanges) {
                     //extract date and time
-                    let date = Moment(obj.date, 'YYYY-MM-DD HH:mm:ss').format('DD - MM - YYYY').toString();
+                    let date = Moment(obj.date, 'YYYY-MM-DD HH:mm:ss').format('DD-MM-YYYY').toString();
                     let time = Moment(obj.date, 'YYYY-MM-DD HH:mm:ss').format('HH:mm:ss').toString();
 
                     //extract target data

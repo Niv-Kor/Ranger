@@ -1,17 +1,22 @@
 <template>
     <div class='t'>
         <div class='ico'>
-            <transition
-                name='scale'
-                mode='out-in'
-            >
+            <transition name='scale' mode='out-in'>
                 <v-icon
+                    v-if='info[periodPtr].iconType === 0'
                     x-large
                     :color='colors.secondary'
-                    :key='periodPtr'
+                    :key='periodPtr + 0'
                 >
                     {{ info[periodPtr].icon }}
                 </v-icon>
+                <fa-icon
+                    v-else
+                    :icon='info[periodPtr].icon'
+                    :color='colors.secondary'
+                    size='2x'
+                    :key='periodPtr + 0'
+                />
             </transition>
         </div>
         <transition
@@ -59,19 +64,23 @@
                 info: [
                     {
                         text: 'Manage and document<br>all of your ranges<br> in one place!',
-                        icon: 'mdi-table-edit'
+                        icon: 'file-signature',
+                        iconType: 1
                     },
                     {
                         text: 'Select from a variaty of targets, or customize<br>one of your own',
-                        icon: 'mdi-bullseye'
+                        icon: 'mdi-bullseye',
+                        iconType: 0
                     },
                     {
                         text: 'Receive feedback<br>regarding your<br>performance and<br>personal progress',
-                        icon: 'mdi-graphql'
+                        icon: 'mdi-graphql',
+                        iconType: 0
                     },
                     {
                         text: 'It doesn\'t matter<br>what you shoot,<br>just enjoy shooting<br>and let us do the work!',
-                        icon: 'mdi-ammunition'
+                        icon: 'mdi-ammunition',
+                        iconType: 0
                     }
                 ]
             }
