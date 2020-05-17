@@ -22,6 +22,13 @@ CREATE TABLE Journals (
 );
 GO
 
+ALTER TABLE Journals
+ADD CONSTRAINT FK_Journals_Users_email
+FOREIGN KEY(journal_owner) REFERENCES Users(email) ON DELETE CASCADE ON UPDATE CASCADE
+
+ALTER TABLE Journals
+DROP CONSTRAINT FK_Journals_Users_email
+
 -- Procedures
 ALTER PROCEDURE JournalExists
 	@user VARCHAR(70),

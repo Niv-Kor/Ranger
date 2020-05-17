@@ -188,6 +188,10 @@ BEGIN
 		image_name = '~' + image_name
 	WHERE id = @id
 	  AND active = 1
+
+	SELECT COUNT(id) AS 'exists'
+	FROM Targets
+	WHERE id = @id
 END
 GO
 

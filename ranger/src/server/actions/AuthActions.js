@@ -1,5 +1,6 @@
 const CONSTANTS = require('../Constants');
 const GENERAL_ACTIONS = require('./GeneralActions');
+const LOGGER = require('../Logger');
 
 module.exports = {
     getHashedPassword,
