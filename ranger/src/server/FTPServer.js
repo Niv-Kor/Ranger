@@ -54,6 +54,9 @@ async function downloadImage(path) {
         CONSTANTS.FTP_CLIENT.get(path, async (err, stream) => {
             if (err) {
                 LOGGER.error(`Could not download an image from ${path}`, err);
+
+                //try again after 3 seconds
+                setTimeout(() => downloadImage(path), 3000);
                 reject();
             }
             else {

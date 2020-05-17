@@ -19,8 +19,18 @@ export class DataManager {
         let fetched = await this.fetchTarget(target.id);
         if (!fetched) {
             try { await this.targets.put(target); }
-            catch (ex) { console.error('Could not add the following target to indexedDB:', target, ex); }
+            catch (ex) { console.error(`Could not add target ${target.id} to indexedDB`, ex); }
         }
+    }
+
+    /**
+     * Delete a target from the indexedDB store.
+     * 
+     * @param {Number} id - The ID of the target (as inserted in the server DB)
+     */
+    async deleteTarget(id) {
+        try { await this.targets.delete(id); }
+        catch (ex) { console.error(`Could not delete target ${id} from indexedDB`, ex); }
     }
 
     /**

@@ -111,8 +111,16 @@ const actions = {
 
         return new Promise(resolve => {
             rootState.socket.once('delete_target', res => {
-                dispatch('reloadAllData');
-                resolve(res)
+                if (res.success) {
+                    //delete target cache from indexedDB
+                    if (res.permanent) {
+                        let dataManager = rootState.data;
+                        dataManager.deleteTarget(targetId);
+                    }
+
+                    dispatch('reloadAllData').then(() => resolve(true));
+                }
+                else resolve(false);
             });
             rootState.socket.emit('delete_target', data);
         })

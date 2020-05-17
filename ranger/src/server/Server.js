@@ -105,8 +105,8 @@ CONSTANTS.FRONT_IO.on('connection', async socket => {
         })
 
         socket.on('delete_target', async data => {
-            let success = await ACTIONS.targets.deleteTarget(data);
-            socket.emit('delete_target', success);
+            let res = await ACTIONS.targets.deleteTarget(data);
+            socket.emit('delete_target', res);
         })
 
         /* Ranges */

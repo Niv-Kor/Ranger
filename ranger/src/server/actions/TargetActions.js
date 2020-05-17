@@ -114,7 +114,6 @@ async function targetExists(user, name) {
  */
 async function getTargets(data) {
     let nonActiveParam = data.getNonActive ? 1 : 0;
-
     let params = [
         { name: 'user', type: CONSTANTS.SQL.VarChar(70), value: data.user, options: {} },
         { name: 'get_non_active', type: CONSTANTS.SQL.TinyInt, value: nonActiveParam, options: {} }
@@ -209,7 +208,11 @@ async function updateTarget(data) {
  *                           {String} user - User token
  *                           {Number} id - The ID of the target to be deleted
  *                        }
- * @returns {Boolean} True if the process is successful.
+ * @returns {Object} {
+ *                      {Boolean} success - True if the process is successful,
+ *                      {Boolean} permanent - True if the target was delete permanently,
+ *                                            or false if it was only deactivated.
+ *                   }
  */
 async function deleteTarget(data) {
     let params = [
@@ -219,10 +222,23 @@ async function deleteTarget(data) {
 
     return new Promise(resolve => {
         GENERAL_ACTIONS.runProcedure('DeleteTarget', params)
-            .then(() => resolve(true))
+            .then(res => {
+                let deletedPermanently = res[0]['exists'] === 0;
+                
+                //delete from server cache
+                if (deletedPermanently) delete TARGETS_CACHE[`target #${data.id}`]
+
+                resolve({
+                    success: true,
+                    permanent: deletedPermanently
+                });
+            })
             .catch(err => {
                 LOGGER.error(`Could not delete target #${data.id}`, err);
-                resolve(false);
+                resolve({
+                    success: false,
+                    permanent: false
+                });
             });
     })
 }
