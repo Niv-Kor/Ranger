@@ -30,9 +30,6 @@ class Analyzer:
         self.model_ring_diam = ring_diam
         self.model_rings = rings
 
-        # get a palette of the projectile's complementary grayscale shades over the target
-        self.grayscale_palette = ImageAct.get_projectile_complement_palette(img, bullseye, ring_diam, rings, projectile_shade)
-
         # set analysis components
         self.sift = cv2.xfeatures2d.SIFT_create()
         self.processor = None
@@ -161,7 +158,7 @@ class Analyzer:
                         if Matcher.is_true_homography(self.warped_vertices, self.warped_edges, (frame_w, frame_h)):
                             # detect hits on the filmed target
                             warped_img = cv2.warpPerspective(self.pad_model, homography, (frame_w, frame_h))
-                            hits_data = self.processor.process(warped_img, frame, self.grayscale_palette)
+                            hits_data = self.processor.process(warped_img, frame)
                             scale = self.processor.get_scale()
                             scale_percent = scale[2]
 

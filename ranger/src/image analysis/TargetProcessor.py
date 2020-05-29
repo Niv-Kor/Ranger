@@ -83,15 +83,13 @@ class Processor:
 
         return hor_percent, ver_percent, scale_percent
 
-    def _subtract_background(self, query, subtrahend, palette):
+    def _subtract_background(self, query, subtrahend):
         '''
         Subtract the background from the target, so only the difference between them is left.
 
         Parameters:
             {Numpy.array} query - The image from which the background is subtracted [RGB]
             {Numpy.array} subtrahend - The background to subtract from the query [RGB]
-            {list} palette - A list that consists of the grayscale values that should be remained
-                             after the subtraction of the two images
         '''
 
         # convert to grayscale
@@ -115,25 +113,9 @@ class Processor:
         diff = cv2.absdiff(gray_subtrahend, gray_query)
         diff_h, diff_w = diff.shape
 
-        # TEST
+        # TODO TEST
         diff_resized_0 = cv2.resize(diff, (769, 432))
         cv2.imshow('test bin 0', diff_resized_0)
-
-        # leave only the correct grayscale values for each of the target's rings
-        combined_diff = np.zeros((diff_h, diff_w), dtype=diff.dtype)
-        # grayscale_threshold = 20
-
-        # for i in range(len(palette)):
-        #     grayscale_shade = palette[i]
-        #     ring_img = diff.copy()
-
-        #     # threshold only the color that fits the particular ring
-        #     ring_img[self.distances[1] > (i + 1) * self.ring_diam] = 0
-        #     ring_img[self.distances[1] < i * self.ring_diam] = 0
-        #     minThresh = grayscale_shade - grayscale_threshold
-        #     maxThresh = grayscale_shade + grayscale_threshold
-        #     _, ring_img = cv2.threshold(ring_img, minThresh, maxThresh, cv2.THRESH_BINARY)
-        #     combined_diff = np.maximum(combined_diff, ring_img)
 
         _, diff = cv2.threshold(diff, 0x46, 0xff, cv2.THRESH_BINARY)
         kernel = np.ones((5,5), np.uint8)
@@ -145,109 +127,6 @@ class Processor:
         cv2.imshow('test bin 1', diff_resized_1)
 
         return diff
-
-    def _filter_homogeneous_contours(self, samples, threshold):
-        '''
-        Filter out any duplicated contour that is just a continuation of another contour.
-        If such two homogenous contours are detected, the one that's closer to the target's bull'seye remains.
-
-        Parameters:
-            {list} samples - [
-                                {tuple} (
-                                           {tuple} (
-                                                      {Number} x coordinates of point A (from one edge of the contour),
-                                                      {Number} y coordinates of point A (from one edge of the contour)
-                                                   )
-                                           {tuple} (
-                                                      {Number} x coordinates of point B (from the other edge of the contour),
-                                                      {Number} y coordinates of point B (from the other edge of the contour)
-                                                   )
-                                           {Number} The minimum distance of the contour from the target's bullseye
-                                        )
-                                ...
-                             ]
-            {Number} threshold - The smaller this number is, the more contours will be filtered
-
-        Returns:
-            {list} A list of the contours that remained after filtering out the homogenous ones.
-        '''
-
-        def _check_homogeneity(point_A, point_B, sample, threshold):
-            '''
-            Check if two contours are homogenous.
-
-            Parameters:
-                {tuple} point_A - (
-                                     {Number} x coordinates of the first point from the first contours
-                                     {Number} y coordinates of the first point from the first contours
-                                  )
-                {tuple} point_B - (
-                                     {Number} x coordinates of the second point from the first contours
-                                     {Number} y coordinates of the second point from the first contours
-                                  )
-                {tuple} sample - (
-                                    {Number} x coordinates of the sample point from the second contours
-                                    {Number} y coordinates of the sample point from the second contours
-                                 )
-                {Number} threshold - The maximum area of the triangle that's created
-                                     between two points from one contour and one point from the other
-
-            Returns:
-                {Boolean} True if both contours are homogenous.
-            '''
-
-            Ax = point_A[0]
-            Ay = point_A[1]
-            Bx = point_B[0]
-            By = point_B[1]
-            Cx = sample[0]
-            Cy = sample[1]
-            AB = ((Ax - Bx) ** 2 + (Ay - By) ** 2) ** .5
-            BC = ((Bx - Cx) ** 2 + (By - Cy) ** 2) ** .5
-            AC = ((Ax - Cx) ** 2 + (Ay - Cy) ** 2) ** .5
-            s = (AB + BC + AC) / 2
-            triangle_area = (s * (s - AB) * (s - BC) * (s - AC)) ** .5
-
-            return triangle_area < threshold
-        
-        res = []
-        for contour in samples:
-            is_homogeneous = False
-
-            for sample in samples:
-                if sample == contour:
-                    continue
-
-                elif _check_homogeneity(contour[0], contour[1], sample[0], threshold):
-                    
-
-                    # distance from this contour to the center
-                    a_center_dist = ((contour[2][0] - self.bullseye[0]) ** 2 + (contour[2][1] - self.bullseye[1]) ** 2) ** .5
-
-                    # distance from sample contour to the center
-                    s_center_dist = ((sample[2][0] - self.bullseye[0]) ** 2 + (sample[2][1] - self.bullseye[1]) ** 2) ** .5
-
-                    # maximal distance from this contour to sample contour
-                    b_s_dist = ((contour[1][0] - sample[2][0]) ** 2 + (contour[1][1] - sample[2][1]) ** 2) ** .5
-                    
-                    # both contours are on the same side of the target,
-                    # i.e represent the same projectile
-                    if b_s_dist <= a_center_dist:
-                        is_homogeneous = a_center_dist >= s_center_dist
-
-                        # this contour is closer
-                        if not is_homogeneous:
-                            samples.remove(sample)
-
-                        # sample contour is closer
-                        else:
-                            samples.remove(contour)
-                            break
-            
-            if not is_homogeneous:
-                res.append(contour[2])
-
-        return res
 
     def _find_hit_distances(self, img):
         '''
@@ -391,11 +270,6 @@ class Processor:
         not_oval = []
         res = []
         for cont in contours[0]:
-            # cont = cv2.convexHull(cont)
-
-            # epsilon = cv2.arcLength(cont, True) * .2
-            # cont = cv2.approxPolyDP(cont, epsilon, True)
-
             points = [[cont[m][0][0], cont[m][0][1], 0] for m in range(len(cont))]
             point_A = points[0] # some random point on the contour
 
@@ -408,19 +282,16 @@ class Processor:
             
             # if this point is outside the contour, it's convex,
             # if it's inside it, the contour is relatively straight
-            # if cv2.pointPolygonTest(cont, point_C, False) >= 0:
             if _is_rect(cont, point_A, point_B, 5):
-                not_oval.append(cont)
+                not_oval.append(cont) # TODO TEST
                 hit = _contour_distances_from(points, self.bullseye)[0]
+
+                # straighten the target's oval and find the real hit values
                 res_x = (hit[0] - self.vertices[0][0]) * self.scale[0] + self.vertices[0][0]
                 res_y = (hit[1] - self.vertices[0][1]) * self.scale[1] + self.vertices[0][1]
                 res_dist = ((hit[0] - self.bullseye[0]) ** 2 + (hit[1] - self.bullseye[1]) ** 2) ** .5
                 res_hit = (res_x,res_y,res_dist)
                 res.append(res_hit)
-                # homogeneous_samples.append((point_A, point_B, hit))
-
-        # filter all the contours are actually of the same object
-        # res = self._filter_homogeneous_contours(homogeneous_samples, 1000)
 
         # TODO TEST
         blank = np.zeros(img.shape, dtype=img.dtype)
@@ -429,7 +300,7 @@ class Processor:
         contour_homogenous_resize = cv2.resize(blank, (769, 432))
         cv2.imshow('homogenous lines', contour_homogenous_resize)
 
-        # straighten the target's oval and find the real hit values
+        
         # for hit in res:
         #     hit[0] = (hit[0] - self.vertices[0][0]) * self.scale[0] + self.vertices[0][0]
         #     hit[1] = (hit[1] - self.vertices[0][1]) * self.scale[1] + self.vertices[0][1]
@@ -437,15 +308,13 @@ class Processor:
             
         return res
 
-    def process(self, warped_img, frame, grayscale_palette):
+    def process(self, warped_img, frame):
         '''
         Process the target image and find its exact hits.
 
         Parameters:
             {Numpy.array} warped_img - The model image applied with homography
             {Numpy.array} frame - The taken shot of the actual target
-            {list} grayscale_palette - A list that consists of the grayscale values that should be remained
-                                       after the subtraction of the actual target's image from the model image
 
         Returns:
             {list} A list of the detected hits on the target
@@ -459,7 +328,7 @@ class Processor:
                 ]
         '''
 
-        binary_target = self._subtract_background(warped_img, frame, grayscale_palette)
+        binary_target = self._subtract_background(warped_img, frame)
         hits_data = self._find_hit_distances(binary_target)
         return hits_data
 
